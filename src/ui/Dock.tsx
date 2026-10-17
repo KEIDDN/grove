@@ -1,6 +1,8 @@
 import type { ComponentType } from 'react'
+import { motion } from 'motion/react'
 import { pendingRewards, useGrove, type Tab } from '../game/store'
 import { BagIcon, JournalIcon, SproutIcon, TimerIcon, UserIcon } from './icons'
+import { spring, tap } from './motion'
 
 const TABS: Array<{ id: Tab; label: string; Icon: ComponentType<{ size?: number }> }> = [
   { id: 'garden', label: 'Jardín', Icon: SproutIcon },
@@ -18,10 +20,19 @@ export function Dock() {
   const index = TABS.findIndex((t) => t.id === tab)
 
   return (
-    <nav className="dock glass" aria-label="Secciones">
-      {index >= 0 && <span className="dock-bubble" aria-hidden="true" style={{ transform: `translateX(${index * 62}px)` }} />}
+    <motion.nav
+      className="dock glass"
+      aria-label="Secciones"
+      initial={{ opacity: 0, y: 30, x: '-50%' }}
+      animate={{ opacity: 1, y: 0, x: '-50%' }}
+      exit={{ opacity: 0, y: 30, x: '-50%', transition: { duration: 0.18 } }}
+      transition={spring}
+    >
+      {index >= 0 && (
+        <motion.span className="dock-bubble" aria-hidden="true" initial={false} animate={{ x: index * 62, scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+      )}
       {TABS.map(({ id, label, Icon }) => (
-        <button key={id} className="dock-item" onClick={() => setTab(id)} aria-current={id === tab ? 'page' : undefined}>
+        <button key={id} className="dock-item" onClick={() => { tap(); setTab(id) }} aria-current={id === tab ? 'page' : undefined}>
           <Icon size={21} />
           {label}
           {id === 'you' && pending > 0 && <span className="badge" aria-label={`${pending} recompensas por recoger`}>{pending}</span>}
@@ -30,6 +41,6 @@ export function Dock() {
           )}
         </button>
       ))}
-    </nav>
+    </motion.nav>
   )
 }

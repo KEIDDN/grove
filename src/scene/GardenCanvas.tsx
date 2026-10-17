@@ -1,6 +1,6 @@
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, PerformanceMonitor } from '@react-three/drei'
 import { Bloom, EffectComposer, N8AO, SMAA, Vignette } from '@react-three/postprocessing'
 import type { Group, OrthographicCamera } from 'three'
 import { plotBounds } from '../game/garden'
@@ -75,6 +75,8 @@ export function GardenCanvas() {
   const theme = SEASONS[useSeason()]
   const visible = items
   const light = useDaylight()
+  // Calidad adaptativa: si el dispositivo no llega a 60 fps, bajamos resolución y quitamos la oclusión
+  const [low, setLow] = useState(false)
   const sunDistance = 10
   const sun: [number, number, number] = [
     Math.cos(light.sunAzimuth) * Math.cos(light.sunElevation) * sunDistance,
@@ -87,10 +89,11 @@ export function GardenCanvas() {
       className="garden-canvas"
       shadows
       orthographic
-      dpr={[1, 1.75]}
+      dpr={low ? 1 : [1, 1.75]}
       gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       camera={{ position: [9, 8.2, 9], zoom: 60, near: -50, far: 100 }}
     >
+      <PerformanceMonitor onDecline={() => setLow(true)} onIncline={() => setLow(false)} flipflops={3} onFallback={() => setLow(true)} />
       <CameraRig size={size} />
       <Sky light={light} />
       <hemisphereLight args={[light.skyTop, '#B49470', light.hemiIntensity]} />
@@ -135,7 +138,7 @@ export function GardenCanvas() {
         rotateSpeed={0.6}
       />
       <EffectComposer multisampling={0} enableNormalPass={false}>
-        <N8AO aoRadius={0.45} distanceFalloff={0.6} intensity={2.4} halfRes quality="medium" color="#3A2E22" />
+        <N8AO aoRadius={0.45} distanceFalloff={0.6} intensity={low ? 0 : 2.4} halfRes quality={low ? 'performance' : 'medium'} color="#3A2E22" />
         <Bloom mipmapBlur luminanceThreshold={0.82} luminanceSmoothing={0.2} intensity={0.35 + light.night * 0.6} />
         <Vignette offset={0.32} darkness={0.32} />
         <SMAA />

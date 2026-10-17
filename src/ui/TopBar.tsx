@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { AnimatedNumber } from './AnimatedNumber'
+import { spring } from './motion'
 import { nextDayReward } from '../game/config'
 import { SEASONS } from '../game/seasons'
 import { parcelsAllowed, useGrove, useSeason } from '../game/store'
@@ -52,7 +55,7 @@ export function TopBar() {
             {gardenName}
           </h1>
         </button>
-        {open && <WeekCard />}
+        <AnimatePresence>{open && <WeekCard key="week" />}</AnimatePresence>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button
@@ -73,7 +76,7 @@ function Coins({ coins }: { coins: number }) {
   return (
     <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: 7, height: 42, padding: '0 15px 0 11px', borderRadius: 999, fontWeight: 700, fontSize: 15 }}>
       <CoinIcon />
-      <span style={{ fontVariantNumeric: 'tabular-nums' }}>{coins}</span>
+      <AnimatedNumber value={coins} />
       <span className="sr-only">monedas</span>
     </div>
   )
@@ -94,7 +97,14 @@ function WeekCard() {
   const left = next ? next.days - totalDays : 0
 
   return (
-    <section className="glass fade-in" aria-label="Tu semana" style={{ width: 300, borderRadius: 26, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <motion.section
+      className="glass"
+      aria-label="Tu semana"
+      initial={{ opacity: 0, y: -10, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -8, scale: 0.97, transition: { duration: 0.15 } }}
+      transition={spring}
+      style={{ transformOrigin: 'top left', width: 300, borderRadius: 26, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span className="display" style={{ fontSize: 44 }}>
           {done}
@@ -138,6 +148,6 @@ function WeekCard() {
           </button>
         ))}
       </div>
-    </section>
+    </motion.section>
   )
 }

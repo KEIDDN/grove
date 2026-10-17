@@ -86,6 +86,10 @@ textarea:focus-visible {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.05) 35%, rgba(255, 255, 255, 0.02) 65%, rgba(255, 255, 255, 0.3));
 }
 
+.app.night {
+  --strong-ink: #1b1f1c;
+}
+
 .app.night .pill-dark {
   background: #f4f1ea;
   color: #1b1f1c;
@@ -263,7 +267,6 @@ textarea:focus-visible {
   position: absolute;
   left: 50%;
   bottom: calc(var(--safe-bottom) + 18px);
-  transform: translateX(-50%);
   display: flex;
   padding: 6px;
   border-radius: 999px;
@@ -299,7 +302,6 @@ textarea:focus-visible {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.85);
   box-shadow: 0 4px 14px rgba(45, 40, 30, 0.1), inset 0 1px 0 #fff;
-  transition: transform 0.55s var(--spring);
 }
 
 /* Fila de muestras (colores, suelos) encima de la barra de edición */
@@ -307,7 +309,6 @@ textarea:focus-visible {
   position: absolute;
   left: 50%;
   bottom: calc(var(--safe-bottom) + 92px);
-  translate: -50% 0;
   display: flex;
   gap: 4px;
   padding: 12px 12px 10px;
@@ -327,7 +328,35 @@ textarea:focus-visible {
   border-radius: 32px;
   display: flex;
   flex-direction: column;
-  animation: sheet-in 0.55s var(--spring) both;
+  will-change: transform;
+}
+
+/* Asa para arrastrar el panel hacia abajo en móvil */
+.sheet-grab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  z-index: 2;
+  touch-action: none;
+  cursor: grab;
+}
+
+.sheet-grab::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 38px;
+  height: 5px;
+  margin-left: -19px;
+  border-radius: 3px;
+  background: rgba(27, 31, 28, 0.18);
+}
+
+.app.night .sheet-grab::after {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .sheet-body {
@@ -370,26 +399,20 @@ textarea:focus-visible {
     margin-left: 0;
     width: 400px;
     max-height: none;
-    animation-name: panel-in;
-  }
-
-  @keyframes panel-in {
-    from {
-      opacity: 0;
-      transform: translateX(40px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
   }
 }
 
-.toast {
+.toast-wrap {
   position: absolute;
   top: calc(var(--safe-top) + 86px);
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
   padding: 12px 18px;
   border-radius: 999px;
   font-size: 14px;
@@ -398,7 +421,6 @@ textarea:focus-visible {
   max-width: calc(100vw - 32px);
   overflow: hidden;
   text-overflow: ellipsis;
-  animation: toast-in 0.5s var(--spring) both;
 }
 
 @keyframes toast-in {
@@ -503,6 +525,7 @@ textarea:focus-visible {
 }
 
 .segments button {
+  position: relative;
   flex: none;
   height: 34px;
   padding: 0 14px;
@@ -515,8 +538,15 @@ textarea:focus-visible {
 }
 
 .segments button[aria-selected='true'] {
+  background: transparent;
+  color: #fff;
+}
+
+.segment-pill {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
   background: var(--ink);
-  color: var(--bg, #fff);
 }
 
 .app.night .segments button {
@@ -524,8 +554,12 @@ textarea:focus-visible {
 }
 
 .app.night .segments button[aria-selected='true'] {
-  background: #f4f1ea;
+  background: transparent;
   color: #1b1f1c;
+}
+
+.app.night .segment-pill {
+  background: #f4f1ea;
 }
 
 .row-card {
@@ -595,13 +629,13 @@ input[type='range'].slider {
 /* ——— Inicio ——— */
 .splash {
   pointer-events: auto;
+  animation: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
   padding: calc(var(--safe-top) + 12vh) 24px calc(var(--safe-bottom) + 48px);
   text-align: center;
-  animation: fade-in 0.8s var(--ease) both;
 }
 
 .splash-top {
@@ -657,6 +691,7 @@ input[type='range'].slider {
 
 /* ——— Onboarding ——— */
 .onboarding {
+  animation: sheet-in 0.6s var(--spring) both;
   bottom: calc(var(--safe-bottom) + 16px);
   max-height: min(78vh, 680px);
 }

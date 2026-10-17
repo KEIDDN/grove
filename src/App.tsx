@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { SEASONS } from './game/seasons'
 import { useGrove, useSeason } from './game/store'
 import { AudioController } from './audio/AudioController'
@@ -31,25 +32,29 @@ export function App() {
       <GardenCanvas />
       <SessionWatcher />
       <AudioController />
-      {splash ? (
-        <Splash />
-      ) : !onboarded ? (
-        <div className="layer">
-          <Onboarding />
-        </div>
-      ) : rest ? (
-        <RestMode />
-      ) : (
-        <div className="layer">
-          <TopBar />
-          {tab === 'tend' && <TendSheet />}
-          {tab === 'roots' && <RootsSheet />}
-          {tab === 'nursery' && <NurserySheet />}
-          {tab === 'you' && <YouSheet />}
-          {tab === 'inventory' && <InventorySheet />}
-          {editMode ? <EditBar /> : <Dock />}
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {splash ? (
+          <Splash key="splash" />
+        ) : !onboarded ? (
+          <motion.div key="onboarding" className="layer" exit={{ opacity: 0, transition: { duration: 0.25 } }}>
+            <Onboarding />
+          </motion.div>
+        ) : rest ? (
+          <RestMode key="rest" />
+        ) : (
+          <motion.div key="main" className="layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+            <TopBar />
+            <AnimatePresence>
+              {tab === 'tend' && <TendSheet key="tend" />}
+              {tab === 'roots' && <RootsSheet key="roots" />}
+              {tab === 'nursery' && <NurserySheet key="nursery" />}
+              {tab === 'you' && <YouSheet key="you" />}
+              {tab === 'inventory' && <InventorySheet key="inventory" />}
+            </AnimatePresence>
+            <AnimatePresence mode="wait">{editMode ? <EditBar key="edit" /> : <Dock key="dock" />}</AnimatePresence>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Toast />
     </div>
   )

@@ -3,7 +3,7 @@ import { GROUP_NAMES, questionsFor } from '../../game/questions'
 import { useGrove, type RootAnswer, type RootEntry } from '../../game/store'
 import { dayKey } from '../../game/time'
 import { ChevronIcon, EditIcon, LockIcon } from '../icons'
-import { Sheet } from '../Sheet'
+import { Segments, Sheet, SwapIn } from '../Sheet'
 
 const longDate = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
@@ -18,15 +18,16 @@ export function RootsSheet() {
   const [view, setView] = useState<'today' | 'journal'>('today')
   return (
     <Sheet eyebrow={longDate.format(new Date())} title="Raíces">
-      <div className="segments" role="tablist">
-        <button role="tab" aria-selected={view === 'today'} onClick={() => setView('today')}>
-          Hoy
-        </button>
-        <button role="tab" aria-selected={view === 'journal'} onClick={() => setView('journal')}>
-          Diario
-        </button>
-      </div>
-      {view === 'today' ? <Today /> : <Journal />}
+      <Segments
+        id="roots"
+        items={[
+          { id: 'today', label: 'Hoy' },
+          { id: 'journal', label: 'Diario' },
+        ]}
+        value={view}
+        onChange={setView}
+      />
+      <SwapIn id={view}>{view === 'today' ? <Today /> : <Journal />}</SwapIn>
     </Sheet>
   )
 }

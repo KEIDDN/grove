@@ -5,7 +5,7 @@ import { SEASON_ORDER, SEASONS } from '../../game/seasons'
 import { parcelsAllowed, useGrove, type YouSection } from '../../game/store'
 import { iriStyle } from '../glyphs'
 import { CheckIcon, CoinIcon, TrophyIcon } from '../icons'
-import { Sheet } from '../Sheet'
+import { Segments, Sheet, SwapIn } from '../Sheet'
 import { AlbumContent } from './AlbumContent'
 
 const SECTIONS: Array<{ id: YouSection; label: string }> = [
@@ -31,18 +31,14 @@ export function YouSheet() {
   return (
     <Sheet eyebrow={eyebrow} title={title}>
       <ProfileCard />
-      <div className="segments" role="tablist">
-        {SECTIONS.map((s) => (
-          <button key={s.id} role="tab" aria-selected={section === s.id} onClick={() => open(s.id)}>
-            {s.label}
-          </button>
-        ))}
-      </div>
-      {section === 'today' && <Today />}
-      {section === 'achievements' && <Achievements />}
-      {section === 'album' && <AlbumContent />}
-      {section === 'progress' && <Progress />}
-      {section === 'settings' && <Settings />}
+      <Segments id="you" items={SECTIONS} value={section} onChange={open} />
+      <SwapIn id={section}>
+        {section === 'today' && <Today />}
+        {section === 'achievements' && <Achievements />}
+        {section === 'album' && <AlbumContent />}
+        {section === 'progress' && <Progress />}
+        {section === 'settings' && <Settings />}
+      </SwapIn>
     </Sheet>
   )
 }

@@ -294,3 +294,16 @@ automáticamente. Las explicaciones posteriores son contextuales y no invasivas.
 - **Tú** empieza con una tarjeta de perfil: inicial, nombre, jardín, días,
   minutos y logros.
 - Pendiente: recordatorio diario (necesita la PWA instalada y notificaciones).
+
+## Fluidez (17/10/2026)
+
+- Animaciones con **Motion** y una física de muelles común para toda la interfaz.
+- Los paneles entran y salen con muelle. En móvil **se cierran arrastrándolos
+  hacia abajo** desde la cabecera o el asa; en desktop entran desde la derecha.
+- Píldora deslizante en el dock y en las pestañas; contenido que cambia con
+  fundido; avisos que rebotan; las monedas cuentan hasta su nuevo valor.
+- Edición: los objetos se deslizan a su nueva celda, aterrizan con un pequeño
+  rebote, la vista previa sigue al dedo con inercia y las muestras de color
+  aparecen en cascada. Vibración breve en Android al tocar y colocar.
+- Calidad adaptativa: si el dispositivo baja de fps, se reduce la resolución y se
+  quita la oclusión ambiental para que todo siga fluido.

@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import { useGrove } from '../game/store'
 import { formatClock } from '../game/time'
 import { useSessionClock } from './sheets/TendSheet'
@@ -9,8 +10,12 @@ export function RestMode() {
   if (!clock) return null
   const free = clock.remaining === null
   return (
-    <button
-      className="layer fade-in"
+    <motion.button
+      className="layer"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
       onClick={() => setRest(false)}
       aria-label="Salir del modo reposo"
       style={{ pointerEvents: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 'calc(var(--safe-bottom) + 56px)', gap: 10 }}
@@ -22,6 +27,6 @@ export function RestMode() {
       <span className="muted" style={{ fontSize: 13, fontWeight: 600 }}>
         Toca para volver
       </span>
-    </button>
+    </motion.button>
   )
 }

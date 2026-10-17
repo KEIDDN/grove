@@ -1,11 +1,12 @@
 import { useMemo, useRef } from 'react'
-import type { ThreeEvent } from '@react-three/fiber'
-import { BufferGeometry, Float32BufferAttribute } from 'three'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import { BufferGeometry, Float32BufferAttribute, type Group, type Mesh } from 'three'
 import { canPlace, CELL, CELLS_PER_TILE, cellToWorld, footprint, plotBounds, plotKey, plotSlots, worldToCell, type Plot } from '../game/garden'
 import type { SeasonTheme } from '../game/seasons'
 import { parcelsAllowed, useGrove } from '../game/store'
 import { GROUND_Y } from './Island'
 import { ItemModel } from './items'
+import { tap } from '../ui/motion'
 import { hashString } from './lowpoly'
 
 /** Rejilla de celdas sobre cada parcela, visible al editar. */
@@ -29,11 +30,21 @@ function CellGrid({ plots }: { plots: Plot[] }) {
   )
 }
 
+/** Marca bajo un objeto; se desliza suavemente de una celda a otra. */
 function Footprint({ x, z, kind, color, opacity }: { x: number; z: number; kind: Parameters<typeof footprint>[0]; color: string; opacity: number }) {
+  const ref = useRef<Mesh>(null)
   const [wx, wz] = cellToWorld(x, z, kind)
   const side = footprint(kind) * CELL - 0.04
+  const start = useMemo<[number, number, number]>(() => [wx, GROUND_Y + 0.035, wz], [])
+  useFrame((_, delta) => {
+    const m = ref.current
+    if (!m) return
+    const k = 1 - Math.exp(-delta * 24)
+    m.position.x += (wx - m.position.x) * k
+    m.position.z += (wz - m.position.z) * k
+  })
   return (
-    <mesh position={[wx, GROUND_Y + 0.035, wz]} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={ref} position={start} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[side, side]} />
       <meshBasicMaterial color={color} transparent opacity={opacity} depthWrite={false} />
     </mesh>
@@ -60,6 +71,25 @@ function PlotSlots({ plots }: { plots: Plot[] }) {
           <meshStandardMaterial color="#FFFFFF" transparent opacity={0.45} />
         </mesh>
       ))}
+    </group>
+  )
+}
+
+/** Vista previa de lo que vas a colocar: sigue al dedo con un poco de inercia y flota. */
+function Ghost({ x, z, children }: { x: number; z: number; children: React.ReactNode }) {
+  const ref = useRef<Group>(null)
+  const start = useMemo<[number, number, number]>(() => [x, GROUND_Y + 0.2, z], [])
+  useFrame(({ clock }, delta) => {
+    const g = ref.current
+    if (!g) return
+    const k = 1 - Math.exp(-delta * 20)
+    g.position.x += (x - g.position.x) * k
+    g.position.z += (z - g.position.z) * k
+    g.position.y = GROUND_Y + 0.16 + Math.sin(clock.elapsedTime * 4) * 0.04
+  })
+  return (
+    <group ref={ref} position={start}>
+      {children}
     </group>
   )
 }
@@ -129,6 +159,7 @@ export function EditLayer({ plots, theme }: { plots: Plot[]; theme: SeasonTheme 
     const c = cellFor(e)
     if (c) {
       setHoverCell(c)
+      tap(12)
       placeAt(c[0], c[1])
     } else {
       select(null)
@@ -169,9 +200,9 @@ export function EditLayer({ plots, theme }: { plots: Plot[]; theme: SeasonTheme 
         <>
           <Footprint x={hoverCell[0]} z={hoverCell[1]} kind={placing.kind} color={valid ? '#7BD88F' : '#F08A7E'} opacity={0.55} />
           {placing.from === 'inventory' && ghost && (
-            <group position={[ghost[0], GROUND_Y + 0.1, ghost[1]]}>
+            <Ghost x={ghost[0]} z={ghost[1]}>
               <ItemModel kind={placing.kind} color={placing.color} seed={hashString(placing.invId)} theme={theme} growth={placing.growth} />
-            </group>
+            </Ghost>
           )}
         </>
       )}

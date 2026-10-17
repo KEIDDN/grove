@@ -4,6 +4,7 @@ import { BufferGeometry, ConeGeometry, CylinderGeometry, DodecahedronGeometry, D
 import { Html } from '@react-three/drei'
 import { cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
+import { tap } from '../ui/motion'
 import { paletteFor } from '../game/variants'
 import type { SeasonTheme } from '../game/seasons'
 import { GROUND_Y } from './Island'
@@ -631,6 +632,7 @@ export function ItemModel({ kind, color, seed, theme, growth }: { kind: ItemKind
 export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonTheme }) {
   const ref = useRef<Group>(null)
   const born = useRef<number | null>(null)
+  const landed = useRef<number | null>(null)
   const seed = hashString(item.id)
   const editMode = useGrove((s) => s.editMode)
   const selected = useGrove((s) => s.selectedId === item.id)
@@ -643,30 +645,53 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
   const [wx, wz] = cellToWorld(cx, cz, item.kind)
   const organic = ['tree', 'flower', 'bush', 'pine', 'tulips', 'reeds'].includes(item.kind)
   const yaw = (item.rot * Math.PI) / 2 + (organic ? (seed % 628) / 100 : 0)
+  // La posición inicial solo se usa al montar; después el objeto se desliza hasta su sitio
+  const initial = useMemo<[number, number, number]>(() => [wx, GROUND_Y, wz], [])
+  const target = useRef({ x: wx, z: wz })
+  if (target.current.x !== wx || target.current.z !== wz) {
+    target.current = { x: wx, z: wz }
+    if (!moving) landed.current = -1 // marca un aterrizaje en el próximo fotograma
+  }
 
-  useFrame(({ clock }) => {
-    if (!ref.current) return
-    if (born.current === null) born.current = clock.elapsedTime
-    const t = Math.min(1, (clock.elapsedTime - born.current) / 0.7)
+  useFrame(({ clock }, delta) => {
+    const g = ref.current
+    if (!g) return
+    const now = clock.elapsedTime
+    if (born.current === null) born.current = now
+    if (landed.current === -1) landed.current = now
+    const t = Math.min(1, (now - born.current) / 0.7)
     // easeOutBack: crece, se pasa un poco y se asienta
     const k = 1.7
-    const s = 1 + (k + 1) * Math.pow(t - 1, 3) + k * Math.pow(t - 1, 2)
-    ref.current.scale.setScalar(Math.max(0.001, s))
+    let s = Math.max(0.001, 1 + (k + 1) * Math.pow(t - 1, 3) + k * Math.pow(t - 1, 2))
+    let squash = 1
+    if (landed.current !== null) {
+      // Al soltarlo: se aplasta un poco y rebota, como algo que cae sobre la hierba
+      const lt = now - landed.current
+      if (lt < 0.6) squash = 1 - Math.sin(lt * 18) * Math.exp(-lt * 7) * 0.14
+      else landed.current = null
+    }
+    if (selected && !moving) s *= 1.04
+    g.scale.set(s / Math.sqrt(squash), s * squash, s / Math.sqrt(squash))
+    const follow = 1 - Math.exp(-delta * (moving ? 22 : 12))
+    g.position.x += (target.current.x - g.position.x) * follow
+    g.position.z += (target.current.z - g.position.z) * follow
     // Lo seleccionado o en movimiento flota un poco
-    const lift = selected || moving ? 0.16 + Math.sin(clock.elapsedTime * 4) * 0.04 : 0
-    ref.current.position.y += (GROUND_Y + lift - ref.current.position.y) * 0.25
-    ref.current.rotation.y += (yaw - ref.current.rotation.y) * 0.25
+    const lift = selected || moving ? 0.16 + Math.sin(now * 4) * 0.04 : 0
+    g.position.y += (GROUND_Y + lift - g.position.y) * (1 - Math.exp(-delta * 12))
+    g.rotation.y += (yaw - g.rotation.y) * (1 - Math.exp(-delta * 10))
   })
 
   return (
     <group
       ref={ref}
-      position={[wx, GROUND_Y, wz]}
+      position={initial}
       rotation={[0, yaw, 0]}
       onClick={
         editMode
           ? (e) => {
+              if (e.delta > 6) return
               e.stopPropagation()
+              tap()
               select(selected ? null : item.id)
             }
           : undefined
