@@ -23,15 +23,19 @@ import { useDaylight } from './useDaylight'
  */
 function CameraRig({ size }: { size: number }) {
   const { camera, size: viewport } = useThree()
-  const sheetOpen = useGrove((s) => s.tab !== 'garden' && !s.restMode)
+  const sheetOpen = useGrove((s) => !s.splash && !s.restMode && (s.tab !== 'garden' || !s.onboarded))
   const rest = useGrove((s) => s.restMode)
+  const splash = useGrove((s) => s.splash)
+  const onboarding = useGrove((s) => !s.splash && !s.onboarded)
   const offset = useRef(0)
   useFrame((_, delta) => {
     const cam = camera as OrthographicCamera
     const { width, height } = viewport
     const narrow = width < 1000
-    const lift = sheetOpen && narrow ? height * 0.27 : rest ? height * 0.07 : height * 0.02
-    const factor = sheetOpen && narrow ? 0.6 : 1
+    // En el inicio el jardín baja para dejar sitio al nombre
+    // La bienvenida ocupa más pantalla: el jardín sube más y se hace más pequeño
+    const lift = splash ? -height * 0.1 : onboarding && narrow ? height * 0.34 : sheetOpen && narrow ? height * 0.27 : rest ? height * 0.07 : height * 0.02
+    const factor = splash ? 0.85 : onboarding && narrow ? 0.45 : sheetOpen && narrow ? 0.6 : 1
     const usable = Math.min(width, height * 0.78, 780)
     const targetZoom = ((usable * 0.9) / (size * 1.42 + 0.4)) * factor
     const k = Math.min(1, delta * 4)

@@ -3,6 +3,7 @@ import { nextDayReward } from '../../game/config'
 import { ACHIEVEMENTS, missionsFor, rewardLabel } from '../../game/goals'
 import { SEASON_ORDER, SEASONS } from '../../game/seasons'
 import { parcelsAllowed, useGrove, type YouSection } from '../../game/store'
+import { iriStyle } from '../glyphs'
 import { CheckIcon, CoinIcon, TrophyIcon } from '../icons'
 import { Sheet } from '../Sheet'
 import { AlbumContent } from './AlbumContent'
@@ -29,6 +30,7 @@ export function YouSheet() {
   const [eyebrow, title] = TITLES[section]
   return (
     <Sheet eyebrow={eyebrow} title={title}>
+      <ProfileCard />
       <div className="segments" role="tablist">
         {SECTIONS.map((s) => (
           <button key={s.id} role="tab" aria-selected={section === s.id} onClick={() => open(s.id)}>
@@ -42,6 +44,38 @@ export function YouSheet() {
       {section === 'progress' && <Progress />}
       {section === 'settings' && <Settings />}
     </Sheet>
+  )
+}
+
+/** Cabecera personal: inicial, nombre y un resumen rápido. */
+function ProfileCard() {
+  const userName = useGrove((s) => s.userName)
+  const gardenName = useGrove((s) => s.gardenName)
+  const totalDays = useGrove((s) => s.totalDays)
+  const minutes = useGrove((s) => s.stats.focusMinutes)
+  const done = useGrove((s) => s.achievementsClaimed.length)
+  return (
+    <div className="iri" style={{ ...iriStyle(2), borderRadius: 24, padding: 16, display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+      <span style={{ position: 'relative', zIndex: 2, width: 52, height: 52, borderRadius: '50%', display: 'grid', placeItems: 'center', background: '#1B1F1C', color: '#fff', fontSize: 22, fontWeight: 700, flex: 'none' }}>
+        {(userName || 'T').slice(0, 1).toUpperCase()}
+      </span>
+      <div style={{ position: 'relative', zIndex: 2, minWidth: 0, flex: 1, color: '#1B1F1C' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{userName || 'Tú'}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#5D645E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{gardenName}</div>
+      </div>
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: 14, color: '#1B1F1C', textAlign: 'center' }}>
+        {[
+          [totalDays, 'días'],
+          [minutes, 'min'],
+          [done, 'logros'],
+        ].map(([v, l]) => (
+          <div key={l}>
+            <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.04em' }}>{v}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#5D645E', textTransform: 'uppercase' }}>{l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -202,6 +236,8 @@ function Settings() {
   const setName = useGrove((s) => s.setGardenName)
   const seasonOverride = useGrove((s) => s.seasonOverride)
   const resetAll = useGrove((s) => s.resetAll)
+  const userName = useGrove((s) => s.userName)
+  const replay = useGrove((s) => s.replayOnboarding)
   const [confirmReset, setConfirmReset] = useState(false)
 
   return (
@@ -225,7 +261,16 @@ function Settings() {
       <div className="eyebrow" style={{ margin: '22px 0 2px' }}>
         Tu jardín
       </div>
-      <Row label="Nombre">
+      <Row label="Tu nombre">
+        <input
+          value={userName}
+          onChange={(e) => useGrove.setState({ userName: e.target.value.slice(0, 24) })}
+          aria-label="Tu nombre"
+          placeholder="Opcional"
+          style={{ width: 150, height: 36, borderRadius: 12, border: '1px solid var(--line)', background: 'rgba(255,255,255,0.5)', padding: '0 10px', font: 'inherit', fontSize: 14, color: 'var(--ink)', textAlign: 'right' }}
+        />
+      </Row>
+      <Row label="Nombre del jardín">
         <input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 24))}
@@ -265,6 +310,11 @@ function Settings() {
       </div>
       <Row label="Tu diario" hint="Todo se guarda solo en este dispositivo">
         <span />
+      </Row>
+      <Row label="Bienvenida" hint="Vuelve a ver la introducción">
+        <button className="pill pill-ghost press" onClick={replay} style={{ height: 34, fontSize: 13 }}>
+          Ver de nuevo
+        </button>
       </Row>
       <div style={{ paddingTop: 14 }}>
         {confirmReset ? (

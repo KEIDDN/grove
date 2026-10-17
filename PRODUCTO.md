@@ -282,3 +282,15 @@ automáticamente. Las explicaciones posteriores son contextuales y no invasivas.
 - **Diario consultable:** todas las páginas agrupadas por mes; al tocar una se
   lee completa.
 - Ambiente sonoro: brisa muy suave y protagonismo de los pajarillos.
+
+## Inicio, bienvenida y perfil (17/10/2026)
+
+- **Pantalla de inicio** cada vez que se abre la app: el nombre Grove, el jardín
+  vivo detrás y un saludo según la hora ("Buenas tardes, Miguel").
+- **Onboarding** la primera vez, en 5 pasos: qué es Grove · tu nombre y el de tu
+  jardín · qué quieres cuidar (se guarda para personalizar Raíces) · objetivo
+  semanal · una semilla de regalo (flor, arbusto o pino) que se planta sola. Se
+  puede volver a ver desde Ajustes, sin un segundo regalo.
+- **Tú** empieza con una tarjeta de perfil: inicial, nombre, jardín, días,
+  minutos y logros.
+- Pendiente: recordatorio diario (necesita la PWA instalada y notificaciones).

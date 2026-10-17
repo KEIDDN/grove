@@ -81,6 +81,12 @@ interface Saved {
   achievementsClaimed: string[]
   audio: AudioSettings
   gardenName: string
+  userName: string
+  /** Lo que la persona quiere cuidar (onboarding); servirá para personalizar Raíces. */
+  focusAreas: string[]
+  onboarded: boolean
+  /** La semilla de regalo del onboarding solo se da una vez. */
+  giftGiven: boolean
 }
 
 interface GroveState extends Saved {
@@ -97,6 +103,8 @@ interface GroveState extends Saved {
   paintFloor: FloorKind
   /** Hora fijada a mano para probar el ciclo día/noche (null = hora real). */
   hourOverride: number | null
+  /** Pantalla de inicio visible (cada vez que se abre la app). */
+  splash: boolean
 
   setTab: (tab: Tab) => void
   openYou: (section: YouSection) => void
@@ -135,6 +143,9 @@ interface GroveState extends Saved {
   setWeekGoal: (goal: number) => void
   setGardenName: (name: string) => void
   resetAll: () => void
+  dismissSplash: () => void
+  completeOnboarding: (data: { userName: string; gardenName: string; focusAreas: string[]; weekGoal: number; firstSeed: string }) => void
+  replayOnboarding: () => void
 }
 
 /** Parcelas que puedes tener en total según tus días y logros. */
@@ -215,6 +226,10 @@ const initialSaved = (): Saved => ({
   achievementsClaimed: [],
   audio: { music: true, ambient: true, musicVolume: 0.5, ambientVolume: 0.6 },
   gardenName: 'Tu jardín',
+  userName: '',
+  focusAreas: [],
+  onboarded: false,
+  giftGiven: false,
 })
 
 let toastId = 0
@@ -258,6 +273,7 @@ export const useGrove = create<GroveState>()(
         hoverCell: null,
         editTool: 'select',
         paintFloor: 'path',
+        splash: true,
         hourOverride:
           typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('hour')
             ? Number(new URLSearchParams(window.location.search).get('hour'))
@@ -457,7 +473,27 @@ export const useGrove = create<GroveState>()(
         setAudio: (patch) => set({ audio: { ...get().audio, ...patch } }),
         setWeekGoal: (weekGoal) => set({ weekGoal }),
         setGardenName: (gardenName) => set({ gardenName }),
-        resetAll: () => set({ ...initialSaved(), tab: 'garden', editMode: false, selectedId: null, placing: null }),
+        resetAll: () => set({ ...initialSaved(), tab: 'garden', editMode: false, selectedId: null, placing: null, splash: true }),
+        dismissSplash: () => set({ splash: false }),
+        completeOnboarding: ({ userName, gardenName, focusAreas, weekGoal, firstSeed }) => {
+          const s = get()
+          const entry = s.giftGiven ? undefined : CATALOG.find((c) => c.id === firstSeed)
+          // La primera semilla es un regalo y se planta sola, cerca del centro
+          const items = entry ? autoPlace(s.items, s.plots, entry.kind, entry.color, { growth: entry.seed ? { ...entry.seed, progress: 0 } : undefined }) : null
+          set({
+            onboarded: true,
+            giftGiven: true,
+            userName: userName.trim(),
+            gardenName: gardenName.trim() || 'Tu jardín',
+            focusAreas,
+            weekGoal,
+            items: items ?? s.items,
+            stats: items ? { ...s.stats, seedsPlanted: s.stats.seedsPlanted + 1 } : s.stats,
+            tab: 'garden',
+          })
+          if (entry) setTimeout(() => toast(`Has plantado tu ${entry.name.toLowerCase()}. Cultivar la hará crecer.`), 700)
+        },
+        replayOnboarding: () => set({ onboarded: false, tab: 'garden' }),
       }
     },
     {

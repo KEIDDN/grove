@@ -48,7 +48,7 @@ export function TopBar() {
             {season.name} · Día {totalDays}
             <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .3s' }} />
           </span>
-          <h1 className="title" style={{ marginTop: 4 }}>
+          <h1 className="title" style={{ marginTop: 4, maxWidth: '58vw', fontSize: gardenName.length > 14 ? 24 : 30 }}>
             {gardenName}
           </h1>
         </button>

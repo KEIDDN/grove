@@ -5,6 +5,8 @@ import { AudioController } from './audio/AudioController'
 import { GardenCanvas } from './scene/GardenCanvas'
 import { useDaylight } from './scene/useDaylight'
 import { Dock } from './ui/Dock'
+import { Onboarding } from './ui/Onboarding'
+import { Splash } from './ui/Splash'
 import { EditBar } from './ui/EditBar'
 import { RestMode } from './ui/RestMode'
 import { InventorySheet } from './ui/sheets/InventorySheet'
@@ -19,6 +21,8 @@ export function App() {
   const tab = useGrove((s) => s.tab)
   const rest = useGrove((s) => s.restMode)
   const editMode = useGrove((s) => s.editMode)
+  const splash = useGrove((s) => s.splash)
+  const onboarded = useGrove((s) => s.onboarded)
   const theme = SEASONS[useSeason()]
   const night = useDaylight().night > 0.55
 
@@ -27,7 +31,13 @@ export function App() {
       <GardenCanvas />
       <SessionWatcher />
       <AudioController />
-      {rest ? (
+      {splash ? (
+        <Splash />
+      ) : !onboarded ? (
+        <div className="layer">
+          <Onboarding />
+        </div>
+      ) : rest ? (
         <RestMode />
       ) : (
         <div className="layer">
