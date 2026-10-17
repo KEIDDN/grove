@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { CylinderGeometry } from 'three'
-import { CELL } from '../game/garden'
+import { CELL, cellOwned, plotSet, type Plot } from '../game/garden'
 import { FLOORS, type FloorKind } from '../game/floors'
 import { GROUND_Y } from './Island'
 import { hashString, jitter, pick, seeded } from './lowpoly'
@@ -76,11 +76,11 @@ function Moss({ seed, colors }: { seed: number; colors: string[] }) {
   )
 }
 
-function FloorCell({ kind, x, z, size }: { kind: FloorKind; x: number; z: number; size: number }) {
+function FloorCell({ kind, x, z }: { kind: FloorKind; x: number; z: number }) {
   const style = BY_ID[kind]
   const seed = hashString(`${x},${z}`)
-  const wx = (x + 0.5) * CELL - size / 2
-  const wz = (z + 0.5) * CELL - size / 2
+  const wx = (x + 0.5) * CELL
+  const wz = (z + 0.5) * CELL
   return (
     <group position={[wx, GROUND_Y, wz]}>
       {kind === 'path' && <StonePath seed={seed} colors={style.colors} />}
@@ -91,14 +91,14 @@ function FloorCell({ kind, x, z, size }: { kind: FloorKind; x: number; z: number
   )
 }
 
-export function Floors({ floors, size }: { floors: Record<string, FloorKind>; size: number }) {
-  const cells = size * 2
+export function Floors({ floors, plots }: { floors: Record<string, FloorKind>; plots: Plot[] }) {
+  const owned = plotSet(plots)
   return (
     <group>
       {Object.entries(floors).map(([key, kind]) => {
         const [x, z] = key.split(',').map(Number)
-        if (x >= cells || z >= cells) return null
-        return <FloorCell key={key} kind={kind} x={x} z={z} size={size} />
+        if (!cellOwned(owned, x, z)) return null
+        return <FloorCell key={key} kind={kind} x={x} z={z} />
       })}
     </group>
   )

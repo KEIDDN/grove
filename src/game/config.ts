@@ -7,20 +7,24 @@ export const ECONOMY = {
   startingCoins: 140,
 } as const
 
-// Tamaño del jardín según los días acumulados cuidándote.
-export const GRID_MILESTONES = [
-  { days: 0, size: 3 },
-  { days: 7, size: 4 },
-  { days: 30, size: 5 },
-  { days: 100, size: 7 },
+/** Parcelas que se ganan por días acumulados cuidándote (además de las 9 iniciales). */
+export const DAY_PARCELS = [
+  { days: 7, parcels: 7 },
+  { days: 30, parcels: 9 },
+  { days: 100, parcels: 24 },
 ] as const
 
-export function gridSizeForDays(days: number): number {
-  let size: number = GRID_MILESTONES[0].size
-  for (const m of GRID_MILESTONES) if (days >= m.days) size = m.size
-  return size
+export const STARTING_PARCELS = 9
+
+export function parcelsFromDays(days: number): number {
+  return DAY_PARCELS.filter((m) => days >= m.days).reduce((sum, m) => sum + m.parcels, 0)
 }
 
-export function nextMilestone(days: number) {
-  return GRID_MILESTONES.find((m) => m.days > days) ?? null
+export function nextDayReward(days: number) {
+  return DAY_PARCELS.find((m) => m.days > days) ?? null
+}
+
+/** Tamaño del lado del jardín antiguo (cuadrado) según los días; solo para migrar partidas. */
+export function legacySide(days: number): number {
+  return days >= 100 ? 7 : days >= 30 ? 5 : days >= 7 ? 4 : 3
 }

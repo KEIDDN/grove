@@ -138,3 +138,24 @@ export const BrushIcon = (p: IconProps) => (
     <path d="M14.5 4.5l5 5-7.5 7.5-5-5zM7 12l-2.6 2.6a2.5 2.5 0 0 0 0 3.5l1.5 1.5a2.5 2.5 0 0 0 3.5 0L12 17" />
   </Icon>
 )
+
+export const UserIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8.5" r="3.8" />
+    <path d="M4.5 20.5c1.2-3.8 4-5.6 7.5-5.6s6.3 1.8 7.5 5.6" />
+  </Icon>
+)
+
+export const ExpandIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="13" width="7" height="7" rx="1.5" strokeDasharray="2.5 2" />
+    <path d="M13 4h7v7M4 13v7h7" strokeDasharray="2.5 2" />
+  </Icon>
+)
+
+export const TrophyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4" />
+  </Icon>
+)

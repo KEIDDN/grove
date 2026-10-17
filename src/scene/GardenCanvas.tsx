@@ -1,16 +1,21 @@
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { ContactShadows, OrbitControls } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
+import { Bloom, EffectComposer, N8AO, SMAA, Vignette } from '@react-three/postprocessing'
 import type { Group, OrthographicCamera } from 'three'
-import { useGrove, useGridSize, useSeason } from '../game/store'
+import { plotBounds } from '../game/garden'
+import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS } from '../game/seasons'
 import { Clouds } from './Clouds'
 import { Decor } from './Decor'
 import { EditLayer } from './EditLayer'
 import { Floors } from './Floors'
-import { Island, soilDepth } from './Island'
+import { Island } from './Island'
 import { PlacedItem } from './items'
+import { Life } from './Life'
 import { Particles } from './Particles'
+import { Sky } from './Sky'
+import { useDaylight } from './useDaylight'
 
 /**
  * Encuadre: el jardín siempre centrado y a buen tamaño. En pantallas estrechas, cuando
@@ -38,39 +43,58 @@ function CameraRig({ size }: { size: number }) {
   return null
 }
 
-function Floating({ children }: { children: React.ReactNode }) {
+/** Mece el jardín arriba y abajo y lo mantiene centrado (se desliza al añadir parcelas). */
+function Floating({ center, children }: { center: [number, number]; children: React.ReactNode }) {
   const ref = useRef<Group>(null)
-  useFrame(({ clock }) => {
-    if (ref.current) ref.current.position.y = Math.sin(clock.elapsedTime * 0.6) * 0.05
+  useFrame(({ clock }, delta) => {
+    const g = ref.current
+    if (!g) return
+    const k = Math.min(1, delta * 4)
+    g.position.x += (-center[0] - g.position.x) * k
+    g.position.z += (-center[1] - g.position.z) * k
+    g.position.y = Math.sin(clock.elapsedTime * 0.6) * 0.05
   })
-  return <group ref={ref}>{children}</group>
+  return (
+    <group ref={ref} position={[-center[0], 0, -center[1]]}>
+      {children}
+    </group>
+  )
 }
 
 export function GardenCanvas() {
   const items = useGrove((s) => s.items)
   const floors = useGrove((s) => s.floors)
   const painting = useGrove((s) => s.editMode && s.editTool === 'paint')
-  const size = useGridSize()
+  const plots = usePlots()
+  const bounds = useMemo(() => plotBounds(plots), [plots])
+  const size = bounds.span
   const theme = SEASONS[useSeason()]
   const visible = items
-  const shadowY = -soilDepth(size) - 0.55
+  const light = useDaylight()
+  const sunDistance = 10
+  const sun: [number, number, number] = [
+    Math.cos(light.sunAzimuth) * Math.cos(light.sunElevation) * sunDistance,
+    Math.sin(light.sunElevation) * sunDistance,
+    Math.sin(light.sunAzimuth) * Math.cos(light.sunElevation) * sunDistance,
+  ]
 
   return (
     <Canvas
       className="garden-canvas"
-      shadows="soft"
+      shadows
       orthographic
-      dpr={[1, 2]}
-      gl={{ antialias: true, alpha: true }}
+      dpr={[1, 1.75]}
+      gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       camera={{ position: [9, 8.2, 9], zoom: 60, near: -50, far: 100 }}
     >
       <CameraRig size={size} />
-      <hemisphereLight args={[theme.sky, '#B49470', 1.25]} />
-      <ambientLight intensity={0.3} />
+      <Sky light={light} />
+      <hemisphereLight args={[light.skyTop, '#B49470', light.hemiIntensity]} />
+      <ambientLight intensity={0.22 + light.night * 0.1} color={light.night > 0.5 ? '#9FB0E0' : '#FFFFFF'} />
       <directionalLight
-        position={[4, 9, 2.5]}
-        intensity={2}
-        color="#FFF1DC"
+        position={sun}
+        intensity={light.sunIntensity}
+        color={light.sunColor}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-6}
@@ -80,20 +104,20 @@ export function GardenCanvas() {
         shadow-bias={-0.0006}
         shadow-normalBias={0.025}
       />
-      <directionalLight position={[-6, 4, -5]} intensity={0.45} color="#DCE8FF" />
+      <directionalLight position={[-6, 4, -5]} intensity={0.35 + light.night * 0.25} color="#DCE8FF" />
 
-      <Floating>
-        <Island size={size} theme={theme} />
-        <Floors floors={floors} size={size} />
-        <Decor size={size} theme={theme} items={visible} floors={floors} />
+      <Floating center={[bounds.cx, bounds.cz]}>
+        <Island plots={plots} theme={theme} />
+        <Floors floors={floors} plots={plots} />
+        <Decor plots={plots} theme={theme} items={visible} floors={floors} />
         {visible.map((it) => (
-          <PlacedItem key={it.id} item={it} size={size} theme={theme} />
+          <PlacedItem key={it.id} item={it} theme={theme} />
         ))}
-        <EditLayer size={size} theme={theme} />
+        <EditLayer plots={plots} theme={theme} />
       </Floating>
-      <ContactShadows position={[0, shadowY, 0]} scale={size * 2.6} blur={2.6} opacity={0.28} far={2.5} resolution={512} color="#4A3B2C" />
       <Clouds size={size} />
       <Particles theme={theme} spread={size} />
+      <Life theme={theme} size={size} night={light.night} />
 
       <OrbitControls
         target={[0, 0.15, 0]}
@@ -106,6 +130,12 @@ export function GardenCanvas() {
         dampingFactor={0.08}
         rotateSpeed={0.6}
       />
+      <EffectComposer multisampling={0} enableNormalPass={false}>
+        <N8AO aoRadius={0.45} distanceFalloff={0.6} intensity={2.4} halfRes quality="medium" color="#3A2E22" />
+        <Bloom mipmapBlur luminanceThreshold={0.82} luminanceSmoothing={0.2} intensity={0.35 + light.night * 0.6} />
+        <Vignette offset={0.32} darkness={0.32} />
+        <SMAA />
+      </EffectComposer>
     </Canvas>
   )
 }

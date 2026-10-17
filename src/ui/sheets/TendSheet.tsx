@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
+import { KIND_NAMES } from '../../game/catalog'
 import { ECONOMY } from '../../game/config'
+import { paletteFor } from '../../game/variants'
+import { KindGlyph } from '../glyphs'
 import { useGrove } from '../../game/store'
 import { formatClock, TIME_SCALE } from '../../game/time'
 import { CoinIcon, MoonIcon } from '../icons'
@@ -56,6 +59,43 @@ function Setup() {
       <button className="pill pill-dark press" onClick={() => start(minutes)} style={{ height: 54, fontSize: 16 }}>
         Empezar a cultivar
       </button>
+      <Growing />
+    </div>
+  )
+}
+
+/** Semillas que crecen con Cultivar: cada sesión completada las riega todas a la vez. */
+function Growing() {
+  const items = useGrove((s) => s.items)
+  const growing = items.filter((it) => it.growth?.by === 'focus')
+  if (!growing.length)
+    return (
+      <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
+        Planta semillas del Vivero: crecerán con los minutos que dediques aquí.
+      </p>
+    )
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="eyebrow">Creciendo con tu tiempo</div>
+      {growing.map((it) => {
+        const g = it.growth!
+        return (
+          <div key={it.id} className="row-card" style={{ padding: 12, gap: 12 }}>
+            <KindGlyph kind={it.kind} color={paletteFor(it.kind, it.color)?.[0]} size={36} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700 }}>
+                <span>{KIND_NAMES[it.kind]}</span>
+                <span className="muted">
+                  {Math.floor(g.progress)}/{g.need} min
+                </span>
+              </div>
+              <div className="progress">
+                <span style={{ width: `${(g.progress / g.need) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -108,7 +148,7 @@ function Done() {
     ? `Las sesiones de menos de ${ECONOMY.minMinutesForCoins} minutos cuentan para ti, pero no dan monedas.`
     : reward.capped
       ? 'Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.'
-      : 'Ha brotado algo nuevo en tu jardín.'
+      : 'Tu tiempo ha regado las semillas que tienes plantadas.'
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

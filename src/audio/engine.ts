@@ -1,0 +1,307 @@
+// Motor de sonido con Web Audio. Dos canales independientes:
+// - Música: pistas reales si las hay (`MUSIC_TRACKS`); si no, una melodía suave generada.
+// - Ambiente: viento, pájaros, grillos y agua sintetizados según la estación y la hora.
+
+import type { Season } from '../game/seasons'
+
+export interface AmbientMood {
+  season: Season
+  /** 0 = día, 1 = noche */
+  night: number
+  hasWater: boolean
+}
+
+/** Rutas de pistas de música (en /public/audio). Vacío = melodía generada. */
+export const MUSIC_TRACKS: string[] = []
+
+// Escala pentatónica en Re mayor: suena tranquila con cualquier combinación de notas
+const SCALE = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25, 739.99, 880]
+
+class Engine {
+  private ctx: AudioContext | null = null
+  private musicGain!: GainNode
+  private ambientGain!: GainNode
+  private windGain!: GainNode
+  private waterGain!: GainNode
+  private cricketGain!: GainNode
+  private reverb!: ConvolverNode
+  private noise!: AudioBuffer
+  private timers: number[] = []
+  private mood: AmbientMood = { season: 'spring', night: 0, hasWater: false }
+  private trackEl: HTMLAudioElement | null = null
+  private musicOn = false
+  private ambientOn = false
+
+  /** El navegador solo permite sonar tras un gesto del usuario. */
+  unlock() {
+    if (this.ctx) {
+      if (this.ctx.state === 'suspended') void this.ctx.resume()
+      return
+    }
+    const ctx = new AudioContext()
+    this.ctx = ctx
+    this.noise = this.makeNoise(ctx)
+    this.reverb = ctx.createConvolver()
+    this.reverb.buffer = this.makeImpulse(ctx, 2.8)
+    const reverbOut = ctx.createGain()
+    reverbOut.gain.value = 0.5
+    this.reverb.connect(reverbOut).connect(ctx.destination)
+
+    this.musicGain = ctx.createGain()
+    this.musicGain.gain.value = 0
+    this.musicGain.connect(ctx.destination)
+    this.musicGain.connect(this.reverb)
+
+    this.ambientGain = ctx.createGain()
+    this.ambientGain.gain.value = 0
+    this.ambientGain.connect(ctx.destination)
+
+    this.windGain = this.loopNoise(ctx, 'lowpass', 380, 0.2)
+    this.waterGain = this.loopNoise(ctx, 'bandpass', 1800, 0.0)
+    this.cricketGain = ctx.createGain()
+    this.cricketGain.gain.value = 0
+    this.cricketGain.connect(this.ambientGain)
+
+    this.scheduleBirds()
+    this.scheduleCrickets()
+    this.scheduleMusic()
+    this.applyMood()
+  }
+
+  setMusic(on: boolean, volume: number) {
+    this.musicOn = on
+    if (!this.ctx) return
+    const target = on ? volume * 0.35 : 0
+    this.musicGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.8)
+    if (MUSIC_TRACKS.length) this.playTrack(on, volume)
+  }
+
+  setAmbient(on: boolean, volume: number) {
+    this.ambientOn = on
+    if (!this.ctx) return
+    this.ambientGain.gain.setTargetAtTime(on ? volume * 0.5 : 0, this.ctx.currentTime, 0.8)
+  }
+
+  setMood(mood: AmbientMood) {
+    this.mood = mood
+    this.applyMood()
+  }
+
+  private applyMood() {
+    if (!this.ctx) return
+    const t = this.ctx.currentTime
+    const { season, night, hasWater } = this.mood
+    // Viento muy de fondo: solo una brisa; el protagonismo es de los pájaros
+    const windy = season === 'autumn' ? 0.6 : season === 'winter' ? 0.5 : 0.25
+    this.windGain.gain.setTargetAtTime(0.09 * windy, t, 2)
+    this.waterGain.gain.setTargetAtTime(hasWater ? 0.012 : 0, t, 2)
+    const crickets = season === 'winter' ? 0 : night * (season === 'summer' ? 1 : 0.6)
+    this.cricketGain.gain.setTargetAtTime(crickets * 0.06, t, 2)
+  }
+
+  // ——— Ambiente ———
+
+  private makeNoise(ctx: AudioContext) {
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate)
+    const data = buf.getChannelData(0)
+    // Ruido rosa aproximado: más grave y suave que el ruido blanco
+    let b0 = 0, b1 = 0, b2 = 0
+    for (let i = 0; i < data.length; i++) {
+      const w = Math.random() * 2 - 1
+      b0 = 0.99765 * b0 + w * 0.099046
+      b1 = 0.963 * b1 + w * 0.2965164
+      b2 = 0.57 * b2 + w * 1.0526913
+      data[i] = (b0 + b1 + b2 + w * 0.1848) * 0.2
+    }
+    return buf
+  }
+
+  private makeImpulse(ctx: AudioContext, seconds: number) {
+    const len = ctx.sampleRate * seconds
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate)
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c)
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3)
+    }
+    return buf
+  }
+
+  /** Ruido en bucle filtrado con un vaivén lento de volumen (viento, agua). */
+  private loopNoise(ctx: AudioContext, type: BiquadFilterType, freq: number, gain: number) {
+    const src = ctx.createBufferSource()
+    src.buffer = this.noise
+    src.loop = true
+    const filter = ctx.createBiquadFilter()
+    filter.type = type
+    filter.frequency.value = freq
+    filter.Q.value = type === 'bandpass' ? 0.8 : 0.5
+    const g = ctx.createGain()
+    g.gain.value = gain
+    const lfo = ctx.createOscillator()
+    lfo.frequency.value = 0.07 + Math.random() * 0.05
+    const lfoGain = ctx.createGain()
+    lfoGain.gain.value = freq * 0.35
+    lfo.connect(lfoGain).connect(filter.frequency)
+    src.connect(filter).connect(g).connect(this.ambientGain)
+    src.start()
+    lfo.start()
+    return g
+  }
+
+  private later(fn: () => void, ms: number) {
+    this.timers.push(window.setTimeout(fn, ms))
+  }
+
+  /** Trinos cortos con barridos de frecuencia; más de día y en primavera. */
+  private scheduleBirds() {
+    const loop = () => {
+      const { season, night } = this.mood
+      const rate = night > 0.5 ? 0 : season === 'spring' ? 1 : season === 'summer' ? 0.85 : season === 'autumn' ? 0.55 : 0.3
+      if (this.ctx && this.ambientOn && Math.random() < rate) {
+        if (Math.random() < 0.35) this.song()
+        else this.chirp()
+      }
+      this.later(loop, 1200 + Math.random() * 2600)
+    }
+    loop()
+  }
+
+  /** Canto más largo y melódico: varias notas que suben y bajan, como un mirlo lejano. */
+  private song() {
+    const ctx = this.ctx!
+    const pan = ctx.createStereoPanner()
+    pan.pan.value = Math.random() * 1.4 - 0.7
+    const far = ctx.createGain()
+    far.gain.value = 0.55
+    pan.connect(far).connect(this.ambientGain)
+    const base = 1500 + Math.random() * 900
+    const notes = 4 + Math.floor(Math.random() * 4)
+    let t = ctx.currentTime
+    for (let i = 0; i < notes; i++) {
+      const dur = 0.12 + Math.random() * 0.14
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      const f = base * (1 + Math.sin(i * 1.7) * 0.25 + Math.random() * 0.1)
+      osc.frequency.setValueAtTime(f, t)
+      osc.frequency.exponentialRampToValueAtTime(f * (Math.random() < 0.5 ? 1.15 : 0.88), t + dur)
+      g.gain.setValueAtTime(0, t)
+      g.gain.linearRampToValueAtTime(0.035, t + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur)
+      osc.connect(g).connect(pan)
+      osc.start(t)
+      osc.stop(t + dur + 0.02)
+      t += dur + 0.03 + Math.random() * 0.08
+    }
+  }
+
+  private chirp() {
+    const ctx = this.ctx!
+    const notes = 2 + Math.floor(Math.random() * 4)
+    const base = 2200 + Math.random() * 1600
+    const pan = ctx.createStereoPanner()
+    pan.pan.value = Math.random() * 1.6 - 0.8
+    pan.connect(this.ambientGain)
+    for (let i = 0; i < notes; i++) {
+      const t = ctx.currentTime + i * (0.09 + Math.random() * 0.05)
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.setValueAtTime(base * (0.9 + Math.random() * 0.3), t)
+      osc.frequency.exponentialRampToValueAtTime(base * (1.2 + Math.random() * 0.4), t + 0.06)
+      g.gain.setValueAtTime(0, t)
+      g.gain.linearRampToValueAtTime(0.03, t + 0.01)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.08)
+      osc.connect(g).connect(pan)
+      osc.start(t)
+      osc.stop(t + 0.1)
+    }
+  }
+
+  /** Grillos: pulsos agudos y rápidos, solo por la noche. */
+  private scheduleCrickets() {
+    const loop = () => {
+      if (this.ctx && this.ambientOn && this.mood.night > 0.4) {
+        const ctx = this.ctx
+        const t = ctx.currentTime
+        for (let i = 0; i < 3; i++) {
+          const osc = ctx.createOscillator()
+          const g = ctx.createGain()
+          osc.frequency.value = 4400 + Math.random() * 300
+          g.gain.setValueAtTime(0, t + i * 0.05)
+          g.gain.linearRampToValueAtTime(1, t + i * 0.05 + 0.01)
+          g.gain.linearRampToValueAtTime(0, t + i * 0.05 + 0.035)
+          osc.connect(g).connect(this.cricketGain)
+          osc.start(t + i * 0.05)
+          osc.stop(t + i * 0.05 + 0.04)
+        }
+      }
+      this.later(loop, 700 + Math.random() * 900)
+    }
+    loop()
+  }
+
+  // ——— Música generada ———
+
+  /** Notas sueltas de piano suave sobre un acorde lento: nunca se repite igual. */
+  private scheduleMusic() {
+    let step = 0
+    const chords = [
+      [146.83, 220, 293.66],
+      [123.47, 185, 246.94],
+      [110, 164.81, 220],
+      [130.81, 196, 261.63],
+    ]
+    const loop = () => {
+      if (this.ctx && this.musicOn && !MUSIC_TRACKS.length) {
+        if (step % 8 === 0) chords[(step / 8) % chords.length].forEach((f) => this.pad(f))
+        if (Math.random() < 0.7) this.pluck(SCALE[Math.floor(Math.random() * SCALE.length)] * (this.mood.night > 0.5 ? 0.5 : 1))
+      }
+      step++
+      this.later(loop, 900 + Math.random() * 500)
+    }
+    loop()
+  }
+
+  private pad(freq: number) {
+    const ctx = this.ctx!
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'triangle'
+    osc.frequency.value = freq
+    g.gain.setValueAtTime(0, t)
+    g.gain.linearRampToValueAtTime(0.05, t + 2.5)
+    g.gain.linearRampToValueAtTime(0, t + 9)
+    osc.connect(g).connect(this.musicGain)
+    osc.start(t)
+    osc.stop(t + 9.5)
+  }
+
+  private pluck(freq: number) {
+    const ctx = this.ctx!
+    const t = ctx.currentTime
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+    g.gain.setValueAtTime(0, t)
+    g.gain.linearRampToValueAtTime(0.09, t + 0.015)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2)
+    osc.connect(g).connect(this.musicGain)
+    osc.start(t)
+    osc.stop(t + 2.3)
+  }
+
+  private playTrack(on: boolean, volume: number) {
+    if (!this.trackEl) {
+      this.trackEl = new Audio(MUSIC_TRACKS[Math.floor(Math.random() * MUSIC_TRACKS.length)])
+      this.trackEl.loop = true
+    }
+    this.trackEl.volume = volume * 0.6
+    if (on) void this.trackEl.play()
+    else this.trackEl.pause()
+  }
+}
+
+export const audio = new Engine()

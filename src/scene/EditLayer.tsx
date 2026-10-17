@@ -1,27 +1,27 @@
 import { useMemo, useRef } from 'react'
 import type { ThreeEvent } from '@react-three/fiber'
 import { BufferGeometry, Float32BufferAttribute } from 'three'
-import { canPlace, CELL, CELLS_PER_TILE, cellToWorld, footprint, worldToCell } from '../game/garden'
+import { canPlace, CELL, CELLS_PER_TILE, cellToWorld, footprint, plotBounds, plotKey, plotSlots, worldToCell, type Plot } from '../game/garden'
 import type { SeasonTheme } from '../game/seasons'
-import { useGrove } from '../game/store'
+import { parcelsAllowed, useGrove } from '../game/store'
 import { GROUND_Y } from './Island'
 import { ItemModel } from './items'
 import { hashString } from './lowpoly'
 
-/** Rejilla de celdas que aparece al editar. */
-function CellGrid({ size }: { size: number }) {
+/** Rejilla de celdas sobre cada parcela, visible al editar. */
+function CellGrid({ plots }: { plots: Plot[] }) {
   const geo = useMemo(() => {
-    const cells = size * CELLS_PER_TILE
-    const half = size / 2
     const v: number[] = []
-    for (let k = 1; k < cells; k++) {
-      const p = k * CELL - half
-      v.push(p, 0, -half, p, 0, half, -half, 0, p, half, 0, p)
+    for (const [tx, tz] of plots) {
+      for (let k = 0; k <= CELLS_PER_TILE; k++) {
+        const o = k * CELL
+        v.push(tx + o, 0, tz, tx + o, 0, tz + 1, tx, 0, tz + o, tx + 1, 0, tz + o)
+      }
     }
     const g = new BufferGeometry()
     g.setAttribute('position', new Float32BufferAttribute(v, 3))
     return g
-  }, [size])
+  }, [plots])
   return (
     <lineSegments geometry={geo} position={[0, GROUND_Y + 0.03, 0]}>
       <lineBasicMaterial color="#1B1F1C" transparent opacity={0.16} />
@@ -29,8 +29,8 @@ function CellGrid({ size }: { size: number }) {
   )
 }
 
-function Footprint({ x, z, kind, size, color, opacity }: { x: number; z: number; kind: Parameters<typeof footprint>[0]; size: number; color: string; opacity: number }) {
-  const [wx, wz] = cellToWorld(x, z, kind, size)
+function Footprint({ x, z, kind, color, opacity }: { x: number; z: number; kind: Parameters<typeof footprint>[0]; color: string; opacity: number }) {
+  const [wx, wz] = cellToWorld(x, z, kind)
   const side = footprint(kind) * CELL - 0.04
   return (
     <mesh position={[wx, GROUND_Y + 0.035, wz]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -40,8 +40,32 @@ function Footprint({ x, z, kind, size, color, opacity }: { x: number; z: number;
   )
 }
 
-/** Capa de interacción del modo edición: elegir celda, vista previa y selección. */
-export function EditLayer({ size, theme }: { size: number; theme: SeasonTheme }) {
+/** Huecos donde se puede añadir una parcela: placas translúcidas que se tocan para ampliar. */
+function PlotSlots({ plots }: { plots: Plot[] }) {
+  const addPlot = useGrove((s) => s.addPlot)
+  const slots = useMemo(() => plotSlots(plots), [plots])
+  return (
+    <group>
+      {slots.map(([tx, tz]) => (
+        <mesh
+          key={plotKey(tx, tz)}
+          position={[tx + 0.5, GROUND_Y - 0.02, tz + 0.5]}
+          onClick={(e) => {
+            if (e.delta > 6) return
+            e.stopPropagation()
+            addPlot(tx, tz)
+          }}
+        >
+          <boxGeometry args={[0.94, 0.04, 0.94]} />
+          <meshStandardMaterial color="#FFFFFF" transparent opacity={0.45} />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Capa de interacción del modo edición: elegir celda, vista previa, pintar y ampliar. */
+export function EditLayer({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) {
   const editMode = useGrove((s) => s.editMode)
   const placing = useGrove((s) => s.placing)
   const hoverCell = useGrove((s) => s.hoverCell)
@@ -53,24 +77,19 @@ export function EditLayer({ size, theme }: { size: number; theme: SeasonTheme })
   const tool = useGrove((s) => s.editTool)
   const paintCell = useGrove((s) => s.paintCell)
   const paintFloor = useGrove((s) => s.paintFloor)
+  const canExpand = useGrove((s) => s.plots.length < parcelsAllowed(s))
   const lastPainted = useRef<[number, number] | null>(null)
+  const bounds = useMemo(() => plotBounds(plots), [plots])
 
   if (!editMode) return null
 
   const cellFor = (e: ThreeEvent<PointerEvent | MouseEvent>): [number, number] | null => {
     if (!placing) return null
-    const cells = size * CELLS_PER_TILE
-    const fp = footprint(placing.kind)
-    const [x, z] = worldToCell(e.point.x, e.point.z, placing.kind, size)
-    return [Math.min(cells - fp, Math.max(0, x)), Math.min(cells - fp, Math.max(0, z))]
+    return worldToCell(e.point.x, e.point.z, placing.kind)
   }
 
   /** Celda de suelo (1×1) bajo el puntero. */
-  const floorCell = (e: ThreeEvent<PointerEvent>): [number, number] => {
-    const cells = size * CELLS_PER_TILE
-    const clamp = (v: number) => Math.min(cells - 1, Math.max(0, v))
-    return [clamp(Math.floor((e.point.x + size / 2) / CELL)), clamp(Math.floor((e.point.z + size / 2) / CELL))]
-  }
+  const floorCell = (e: ThreeEvent<PointerEvent>): [number, number] => [Math.floor(e.point.x / CELL), Math.floor(e.point.z / CELL)]
 
   const onDown = (e: ThreeEvent<PointerEvent>) => {
     if (tool !== 'paint') return
@@ -105,7 +124,7 @@ export function EditLayer({ size, theme }: { size: number; theme: SeasonTheme })
   }
 
   const onClick = (e: ThreeEvent<MouseEvent>) => {
-    if (tool === 'paint' || e.delta > 6) return // fue un arrastre para girar la cámara
+    if (tool !== 'select' || e.delta > 6) return // fue un arrastre para girar la cámara
     e.stopPropagation()
     const c = cellFor(e)
     if (c) {
@@ -117,33 +136,41 @@ export function EditLayer({ size, theme }: { size: number; theme: SeasonTheme })
   }
 
   const ignore = placing?.from === 'garden' ? placing.itemId : undefined
-  const valid = placing && hoverCell ? canPlace(items, size, placing.kind, hoverCell[0], hoverCell[1], ignore) : false
+  const valid = placing && hoverCell ? canPlace(items, plots, placing.kind, hoverCell[0], hoverCell[1], ignore) : false
   const selected = items.find((it) => it.id === selectedId)
-  const ghost = placing && hoverCell ? cellToWorld(hoverCell[0], hoverCell[1], placing.kind, size) : null
+  const ghost = placing && hoverCell ? cellToWorld(hoverCell[0], hoverCell[1], placing.kind) : null
+  const pad = 1.5
 
   return (
     <group>
-      <CellGrid size={size} />
-      <mesh position={[0, GROUND_Y + 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} onPointerDown={onDown} onPointerMove={onMove} onClick={onClick}>
-        <planeGeometry args={[size, size]} />
+      <CellGrid plots={plots} />
+      {tool === 'expand' && canExpand && <PlotSlots plots={plots} />}
+      <mesh
+        position={[bounds.cx, GROUND_Y + 0.02, bounds.cz]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onClick={onClick}
+      >
+        <planeGeometry args={[bounds.span + pad, bounds.span + pad]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
       {tool === 'paint' && hoverCell && (
-        <mesh position={[(hoverCell[0] + 0.5) * CELL - size / 2, GROUND_Y + 0.07, (hoverCell[1] + 0.5) * CELL - size / 2]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[(hoverCell[0] + 0.5) * CELL, GROUND_Y + 0.07, (hoverCell[1] + 0.5) * CELL]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[CELL - 0.03, CELL - 0.03]} />
           <meshBasicMaterial color={paintFloor === 'grass' ? '#7BD88F' : '#FFFFFF'} transparent opacity={0.6} depthWrite={false} />
         </mesh>
       )}
 
-      {selected && !placing && <Footprint x={selected.x} z={selected.z} kind={selected.kind} size={size} color="#FFFFFF" opacity={0.9} />}
+      {selected && !placing && <Footprint x={selected.x} z={selected.z} kind={selected.kind} color="#FFFFFF" opacity={0.9} />}
 
       {placing && hoverCell && (
         <>
-          <Footprint x={hoverCell[0]} z={hoverCell[1]} kind={placing.kind} size={size} color={valid ? '#7BD88F' : '#F08A7E'} opacity={0.55} />
+          <Footprint x={hoverCell[0]} z={hoverCell[1]} kind={placing.kind} color={valid ? '#7BD88F' : '#F08A7E'} opacity={0.55} />
           {placing.from === 'inventory' && ghost && (
             <group position={[ghost[0], GROUND_Y + 0.1, ghost[1]]}>
-              <ItemModel kind={placing.kind} color={placing.color} seed={hashString(placing.invId)} theme={theme} />
+              <ItemModel kind={placing.kind} color={placing.color} seed={hashString(placing.invId)} theme={theme} growth={placing.growth} />
             </group>
           )}
         </>

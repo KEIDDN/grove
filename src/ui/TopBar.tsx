@@ -1,17 +1,25 @@
 import { useState } from 'react'
-import { nextMilestone } from '../game/config'
+import { nextDayReward } from '../game/config'
 import { SEASONS } from '../game/seasons'
-import { useGrove, useGridSize, useSeason } from '../game/store'
+import { parcelsAllowed, useGrove, useSeason } from '../game/store'
 import { weekdayIndex } from '../game/time'
 import { ChevronIcon, CoinIcon, CycleIcon, EditIcon } from './icons'
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+const HOURS: Array<[string, number | null]> = [
+  ['Real', null],
+  ['Amanecer', 6.8],
+  ['Día', 12],
+  ['Atardecer', 19.4],
+  ['Noche', 23],
+]
 
 export function TopBar() {
   const coins = useGrove((s) => s.coins)
   const totalDays = useGrove((s) => s.totalDays)
   const season = SEASONS[useSeason()]
   const [open, setOpen] = useState(false)
+  const gardenName = useGrove((s) => s.gardenName)
   const editMode = useGrove((s) => s.editMode)
   const setEditMode = useGrove((s) => s.setEditMode)
   const placing = useGrove((s) => s.placing)
@@ -41,7 +49,7 @@ export function TopBar() {
             <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .3s' }} />
           </span>
           <h1 className="title" style={{ marginTop: 4 }}>
-            Tu jardín
+            {gardenName}
           </h1>
         </button>
         {open && <WeekCard />}
@@ -76,11 +84,13 @@ function WeekCard() {
   const weekGoal = useGrove((s) => s.weekGoal)
   const totalDays = useGrove((s) => s.totalDays)
   const cycleSeason = useGrove((s) => s.cycleSeason)
+  const hourOverride = useGrove((s) => s.hourOverride)
+  const setHour = useGrove((s) => s.setHourOverride)
   const season = SEASONS[useSeason()]
-  const size = useGridSize()
+  const freeParcels = useGrove((s) => parcelsAllowed(s) - s.plots.length)
   const today = weekdayIndex()
   const done = weekDays.filter(Boolean).length
-  const next = nextMilestone(totalDays)
+  const next = nextDayReward(totalDays)
   const left = next ? next.days - totalDays : 0
 
   return (
@@ -112,13 +122,22 @@ function WeekCard() {
       </div>
       <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.45 }}>
         {next
-          ? `${left === 1 ? 'Falta 1 día' : `Faltan ${left} días`} para que tu jardín crezca a ${next.size}×${next.size}.`
-          : `Tu jardín es ${size}×${size}, su tamaño máximo.`}
+          ? `${freeParcels > 0 ? `Tienes ${freeParcels} parcela${freeParcels > 1 ? 's' : ''} para ampliar. ` : ''}${left === 1 ? 'Falta 1 día' : `Faltan ${left} días`} para ganar ${next.parcels} parcelas más.`
+          : freeParcels > 0
+            ? `Tienes ${freeParcels} parcelas para ampliar tu jardín.`
+            : 'Sigue con misiones y logros para ganar parcelas.'}
       </p>
       <button className="pill pill-ghost press" onClick={cycleSeason} style={{ alignSelf: 'flex-start', height: 36, fontSize: 13 }}>
         <CycleIcon size={14} strokeWidth={2.2} />
         {season.name} · cambiar (demo)
       </button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-label="Hora del día (demo)">
+        {HOURS.map(([label, h]) => (
+          <button key={label} className="pill pill-ghost press" aria-pressed={hourOverride === h} onClick={() => setHour(h)} style={{ height: 30, padding: '0 12px', fontSize: 12 }}>
+            {label}
+          </button>
+        ))}
+      </div>
     </section>
   )
 }

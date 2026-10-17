@@ -2,13 +2,12 @@ import { SEASONS } from '../../game/seasons'
 import { useGrove } from '../../game/store'
 import { VISITORS } from '../../game/visitors'
 import { iriStyle, VisitorGlyph } from '../glyphs'
-import { Sheet } from '../Sheet'
 
-export function AlbumSheet() {
+export function AlbumContent() {
   const seen = useGrove((s) => s.visitorsSeen)
 
   return (
-    <Sheet eyebrow="Visitantes" title="Álbum">
+    <>
       <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
           <span className="display" style={{ fontSize: 64 }}>
@@ -52,6 +51,6 @@ export function AlbumSheet() {
           })}
         </div>
       </div>
-    </Sheet>
+    </>
   )
 }

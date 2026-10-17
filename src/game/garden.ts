@@ -30,6 +30,15 @@ export interface GardenItem {
   /** Giro en cuartos de vuelta (0–3). */
   rot: number
   color?: string
+  /** Si es una planta que aún está creciendo: cuánto necesita y cuánto lleva. */
+  growth?: Growth
+}
+
+export interface Growth {
+  by: 'focus' | 'roots'
+  /** Minutos de Cultivar o entradas de Raíces necesarias. */
+  need: number
+  progress: number
 }
 
 /** Un objeto que tienes pero no está colocado. */
@@ -37,6 +46,7 @@ export interface InventoryItem {
   id: string
   kind: ItemKind
   color?: string
+  growth?: Growth
 }
 
 export const CELLS_PER_TILE = 2
@@ -53,6 +63,68 @@ export function newId(kind: ItemKind): string {
   return `${kind}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
 }
 
+// ——— Parcelas ———
+// El jardín es un conjunto de parcelas de 1×1 casilla que se pueden añadir pegadas
+// a las que ya tienes, así que su forma es libre.
+
+export type Plot = [number, number]
+export const MAX_PLOTS = 49
+export const plotKey = (tx: number, tz: number) => `${tx},${tz}`
+
+export function starterPlots(side = 3): Plot[] {
+  const out: Plot[] = []
+  for (let x = 0; x < side; x++) for (let z = 0; z < side; z++) out.push([x, z])
+  return out
+}
+
+export function plotSet(plots: Plot[]): Set<string> {
+  return new Set(plots.map(([x, z]) => plotKey(x, z)))
+}
+
+export function cellOwned(owned: Set<string>, x: number, z: number): boolean {
+  return owned.has(plotKey(Math.floor(x / CELLS_PER_TILE), Math.floor(z / CELLS_PER_TILE)))
+}
+
+/** Huecos donde se puede añadir una parcela nueva (pegados por un lado). */
+export function plotSlots(plots: Plot[]): Plot[] {
+  const owned = plotSet(plots)
+  const seen = new Set<string>()
+  const out: Plot[] = []
+  for (const [x, z] of plots) {
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const k = plotKey(x + dx, z + dz)
+      if (!owned.has(k) && !seen.has(k)) {
+        seen.add(k)
+        out.push([x + dx, z + dz])
+      }
+    }
+  }
+  return out
+}
+
+export interface Bounds {
+  /** Centro del jardín en el mundo, para encuadrarlo. */
+  cx: number
+  cz: number
+  /** Lado mayor en casillas. */
+  span: number
+}
+
+export function plotBounds(plots: Plot[]): Bounds {
+  const xs = plots.map((p) => p[0])
+  const zs = plots.map((p) => p[1])
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs) + 1
+  const minZ = Math.min(...zs)
+  const maxZ = Math.max(...zs) + 1
+  return { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, span: Math.max(maxX - minX, maxZ - minZ) }
+}
+
 function occupied(items: GardenItem[], ignoreId?: string): Set<string> {
   const set = new Set<string>()
   for (const it of items) {
@@ -63,42 +135,45 @@ function occupied(items: GardenItem[], ignoreId?: string): Set<string> {
   return set
 }
 
-export function canPlace(items: GardenItem[], size: number, kind: ItemKind, x: number, z: number, ignoreId?: string): boolean {
+export function canPlace(items: GardenItem[], plots: Plot[], kind: ItemKind, x: number, z: number, ignoreId?: string): boolean {
   const fp = footprint(kind)
-  const cells = size * CELLS_PER_TILE
-  if (x < 0 || z < 0 || x + fp > cells || z + fp > cells) return false
+  const owned = plotSet(plots)
   const taken = occupied(items, ignoreId)
-  for (let a = 0; a < fp; a++) for (let b = 0; b < fp; b++) if (taken.has(`${x + a},${z + b}`)) return false
+  for (let a = 0; a < fp; a++)
+    for (let b = 0; b < fp; b++) {
+      if (!cellOwned(owned, x + a, z + b) || taken.has(`${x + a},${z + b}`)) return false
+    }
   return true
 }
 
 /** Busca el hueco libre más cercano al centro para un objeto nuevo. */
-export function findSpot(items: GardenItem[], size: number, kind: ItemKind): [number, number] | null {
+export function findSpot(items: GardenItem[], plots: Plot[], kind: ItemKind): [number, number] | null {
   const fp = footprint(kind)
-  const cells = size * CELLS_PER_TILE
-  const c = cells / 2
+  const { cx, cz } = plotBounds(plots)
   const spots: Array<[number, number]> = []
-  for (let x = 0; x + fp <= cells; x++) for (let z = 0; z + fp <= cells; z++) spots.push([x, z])
-  spots.sort((p, q) => Math.hypot(p[0] + fp / 2 - c, p[1] + fp / 2 - c) - Math.hypot(q[0] + fp / 2 - c, q[1] + fp / 2 - c))
-  return spots.find(([x, z]) => canPlace(items, size, kind, x, z)) ?? null
+  for (const [tx, tz] of plots)
+    for (let a = 0; a < CELLS_PER_TILE; a++) for (let b = 0; b < CELLS_PER_TILE; b++) spots.push([tx * CELLS_PER_TILE + a, tz * CELLS_PER_TILE + b])
+  const dist = ([x, z]: [number, number]) => Math.hypot((x + fp / 2) * CELL - cx, (z + fp / 2) * CELL - cz)
+  spots.sort((p, q) => dist(p) - dist(q))
+  return spots.find(([x, z]) => canPlace(items, plots, kind, x, z)) ?? null
 }
 
-export function autoPlace(items: GardenItem[], size: number, kind: ItemKind, color?: string): GardenItem[] | null {
-  const spot = findSpot(items, size, kind)
+export function autoPlace(items: GardenItem[], plots: Plot[], kind: ItemKind, color?: string, extra?: Partial<GardenItem>): GardenItem[] | null {
+  const spot = findSpot(items, plots, kind)
   if (!spot) return null
-  return [...items, { id: newId(kind), kind, color, x: spot[0], z: spot[1], rot: 0 }]
+  return [...items, { id: newId(kind), kind, color, x: spot[0], z: spot[1], rot: 0, ...extra }]
 }
 
 /** Centro en el mundo 3D de un objeto colocado en (x, z). */
-export function cellToWorld(x: number, z: number, kind: ItemKind, size: number): [number, number] {
+export function cellToWorld(x: number, z: number, kind: ItemKind): [number, number] {
   const fp = footprint(kind)
-  return [(x + fp / 2) * CELL - size / 2, (z + fp / 2) * CELL - size / 2]
+  return [(x + fp / 2) * CELL, (z + fp / 2) * CELL]
 }
 
 /** Celda de esquina para que el objeto quede centrado bajo el punto (wx, wz). */
-export function worldToCell(wx: number, wz: number, kind: ItemKind, size: number): [number, number] {
+export function worldToCell(wx: number, wz: number, kind: ItemKind): [number, number] {
   const fp = footprint(kind)
-  return [Math.round((wx + size / 2) / CELL - fp / 2), Math.round((wz + size / 2) / CELL - fp / 2)]
+  return [Math.round(wx / CELL - fp / 2), Math.round(wz / CELL - fp / 2)]
 }
 
 export const STARTER_GARDEN: GardenItem[] = [

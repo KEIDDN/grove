@@ -223,3 +223,62 @@ automáticamente. Las explicaciones posteriores son contextuales y no invasivas.
   Grava, Arena, Madera y Musgo. Donde hay suelo pintado no crece la hierba.
 - **Objetos nuevos:** banco, valla (se gira para hacer recintos), tocón, casita
   de pájaros, tulipanes y juncos.
+
+## Mundo vivo (17/10/2026)
+
+- **Ciclo día/noche con la hora real:** el cielo es un degradado que cambia con
+  la hora y la estación (amanecer, día, atardecer, noche con estrellas). La luz
+  del sol se mueve y, de noche, los faroles se encienden y hay luciérnagas. La
+  interfaz pasa sola a modo nocturno.
+- **Postprocesado:** oclusión ambiental, brillo suave y viñeta.
+- Hierba que se mece con el viento, agua animada y mariposas de día en primavera
+  y verano.
+- **Audio (pendiente):** música relajante y sonido ambiente de naturaleza según
+  la estación y la hora, con pistas de licencia libre (CC0/Pixabay) elegidas por
+  el usuario. Música y ambiente se controlan por separado.
+- **Menús (pendiente):** pantalla de inicio, onboarding, ajustes y perfil con
+  progreso.
+
+## Ideas en definición
+
+- **Parcelas:** el jardín se amplía colocando parcelas nuevas pegadas al jardín,
+  con un tope. Se consiguen con días acumulados y con hitos o misiones, nunca
+  con dinero.
+- **Semillas:** se compran y se plantan. Crecen acumulando minutos de Cultivar
+  (p. ej. un pino necesita 60 min en total, repartidos como quieras) o con otras
+  condiciones (p. ej. escribir en Raíces varios días). La decoración se coloca
+  al instante; las plantas se cultivan.
+
+## Parcelas, semillas, misiones y logros (17/10/2026)
+
+- **Parcelas:** el jardín empieza con 9 (3×3) y crece añadiendo parcelas de 1×1
+  casilla pegadas a las que ya hay, con forma libre y un tope de 49. Se ganan
+  con días acumulados (+7 a los 7 días, +9 a los 30, +24 a los 100) y con
+  logros. Nunca se compran.
+- **Semillas:** lo vivo se compra como semilla y se cultiva. Casi todo crece
+  con minutos de Cultivar (flor 15, juncos 20, arbusto 30, pino 60, árbol 120),
+  y algunas con días en Raíces (tulipanes: 2). Cada sesión completada riega
+  todas las semillas plantadas a la vez. Se ven las etapas (montículo con brote
+  y planta creciendo) y una etiqueta con el progreso. La decoración se coloca
+  ya hecha.
+- **Misiones diarias** (en Tú › Hoy): 3 al día (concentración, cuidado y
+  creatividad) que dan monedas. Cambian cada día y no se acumulan.
+- **Logros** (en Tú › Logros): permanentes. Dan parcelas y monedas.
+- **Menú Tú:** Hoy · Logros · Álbum · Progreso · Ajustes (sonido, nombre del
+  jardín, objetivo semanal, estación y empezar de cero).
+- **Audio:** motor propio con música y ambiente separados. Mientras se eligen
+  las pistas definitivas suena una melodía generada; el ambiente (viento,
+  pájaros, grillos de noche y agua si hay estanque) cambia con la estación y la
+  hora.
+
+## Raíces como diario (17/10/2026)
+
+- Cada día, **tres preguntas**: una de *Cómo estás*, una de *Lo bueno de hoy* y
+  una de *Para reflexionar*. Salen de un banco por categorías (ahora 30, la meta
+  es ~150) y son las mismas durante todo el día.
+- **Reflexión libre opcional** debajo de las preguntas.
+- Se guarda con al menos una respuesta. La página del día se puede editar, pero
+  editar no vuelve a dar recompensas.
+- **Diario consultable:** todas las páginas agrupadas por mes; al tocar una se
+  lee completa.
+- Ambiente sonoro: brisa muy suave y protagonismo de los pajarillos.

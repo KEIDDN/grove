@@ -1,12 +1,14 @@
 import { useMemo, useRef, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { BufferGeometry, ConeGeometry, CylinderGeometry, DodecahedronGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group } from 'three'
-import { cellToWorld, footprint, type GardenItem, type ItemKind } from '../game/garden'
+import { BufferGeometry, ConeGeometry, CylinderGeometry, DodecahedronGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group, type Mesh } from 'three'
+import { Html } from '@react-three/drei'
+import { cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
 import { paletteFor } from '../game/variants'
 import type { SeasonTheme } from '../game/seasons'
 import { GROUND_Y } from './Island'
 import { hashString, jitter, pick, seeded } from './lowpoly'
+import { useDaylight } from './useDaylight'
 
 /** Escala global de los objetos respecto a la casilla. */
 const ITEM_SCALE = 1.3
@@ -170,6 +172,24 @@ function discGeometry(radius: number, rings: number, segments: number, seed: num
 
 function Pond({ seed, theme }: PartProps) {
   const water = useMemo(() => discGeometry(0.4, 3, 12, seed, 0.18), [seed])
+  const waterRef = useRef<Mesh>(null)
+  const base = useMemo(() => Float32Array.from(water.attributes.position.array), [water])
+  // Ondas suaves: cada vértice sube y baja según su posición (el borde queda fijo)
+  useFrame(({ clock }) => {
+    const mesh = waterRef.current
+    if (!mesh) return
+    const pos = mesh.geometry.attributes.position
+    const t = clock.elapsedTime
+    for (let i = 0; i < pos.count; i++) {
+      const x = base[i * 3]
+      const z = base[i * 3 + 2]
+      const r = Math.hypot(x, z)
+      const edge = Math.max(0, 1 - r / 0.36)
+      pos.setY(i, base[i * 3 + 1] + Math.sin(t * 1.4 + x * 14 + z * 9) * 0.01 * edge)
+    }
+    pos.needsUpdate = true
+    mesh.geometry.computeVertexNormals()
+  })
   const bank = useMemo(() => discGeometry(0.46, 1, 12, seed, 0.18), [seed])
   const frozen = theme.particleKind === 'snow'
   const pads = useMemo(() => {
@@ -185,7 +205,7 @@ function Pond({ seed, theme }: PartProps) {
       <mesh geometry={bank} position={[0, 0.006, 0]} receiveShadow>
         <Mat color="#8F6E4E" />
       </mesh>
-      <mesh geometry={water} position={[0, 0.016, 0]} receiveShadow>
+      <mesh ref={waterRef} geometry={water} position={[0, 0.016, 0]} receiveShadow>
         <meshStandardMaterial color={frozen ? '#CFE4EC' : WATER} flatShading roughness={0.25} metalness={0.1} />
       </mesh>
       {!frozen &&
@@ -339,6 +359,7 @@ function Pumpkin({ seed, palette }: PartProps) {
 
 function Lantern({ palette }: PartProps) {
   const light = palette?.[0] ?? '#F6C766'
+  const { night } = useDaylight()
   return (
     <group>
       <mesh position={[0, 0.3, 0]} castShadow>
@@ -347,8 +368,9 @@ function Lantern({ palette }: PartProps) {
       </mesh>
       <mesh position={[0, 0.66, 0]}>
         <boxGeometry args={[0.18, 0.18, 0.18]} />
-        <Mat color={light} emissive={light} />
+        <meshStandardMaterial color={light} emissive={light} emissiveIntensity={0.6 + night * 2.4} flatShading toneMapped={night < 0.3} />
       </mesh>
+      {night > 0.3 && <pointLight position={[0, 0.66, 0]} color={light} intensity={night * 1.2} distance={1.6} decay={1.6} />}
       <mesh position={[0, 0.8, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[0.17, 0.12, 4]} />
         <Mat color="#3E3128" />
@@ -570,18 +592,43 @@ function kindScale(kind: ItemKind) {
   return footprint(kind) === 1 ? ITEM_SCALE * 0.8 : ITEM_SCALE
 }
 
-/** Solo el modelo, sin posición: lo usan el jardín y la vista previa al colocar. */
-export function ItemModel({ kind, color, seed, theme }: { kind: ItemKind; color?: string; seed: number; theme: SeasonTheme }) {
-  const Part = PARTS[kind]
+/** Montoncito de tierra con un brote: el aspecto de cualquier semilla recién plantada. */
+function Seedling({ seed, theme }: { seed: number; theme: SeasonTheme }) {
+  const mound = useMemo(() => jitter(new IcosahedronGeometry(0.11, 0), 0.015, seed), [seed])
   return (
-    <group scale={kindScale(kind)}>
+    <group>
+      <mesh geometry={mound} position={[0, 0.01, 0]} scale={[1.3, 0.35, 1.3]} receiveShadow>
+        <Mat color="#8C6442" />
+      </mesh>
+      <group position={[0, 0.02, 0]} scale={0.7}>
+        <Sapling theme={theme} seed={seed} />
+      </group>
+    </group>
+  )
+}
+
+/** Solo el modelo, sin posición: lo usan el jardín y la vista previa al colocar. */
+export function ItemModel({ kind, color, seed, theme, growth }: { kind: ItemKind; color?: string; seed: number; theme: SeasonTheme; growth?: Growth }) {
+  const Part = PARTS[kind]
+  const ratio = growth ? Math.min(1, growth.progress / growth.need) : 1
+  if (growth && ratio < 0.34) {
+    return (
+      <group scale={ITEM_SCALE * 0.8}>
+        <Seedling seed={seed} theme={theme} />
+      </group>
+    )
+  }
+  // Mientras crece, la planta va ganando tamaño hasta el adulto
+  const stage = growth ? 0.4 + ratio * 0.5 : 1
+  return (
+    <group scale={kindScale(kind) * stage}>
       <Part theme={theme} seed={seed} palette={paletteFor(kind, color)} />
     </group>
   )
 }
 
 /** Coloca un objeto en su celda y lo hace aparecer con un pequeño rebote. */
-export function PlacedItem({ item, size, theme }: { item: GardenItem; size: number; theme: SeasonTheme }) {
+export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonTheme }) {
   const ref = useRef<Group>(null)
   const born = useRef<number | null>(null)
   const seed = hashString(item.id)
@@ -590,9 +637,10 @@ export function PlacedItem({ item, size, theme }: { item: GardenItem; size: numb
   const moving = useGrove((s) => s.placing?.from === 'garden' && s.placing.itemId === item.id)
   const hoverCell = useGrove((s) => s.hoverCell)
   const select = useGrove((s) => s.select)
+  const showGrowth = useGrove((s) => s.tab === 'tend')
 
   const [cx, cz] = moving && hoverCell ? hoverCell : [item.x, item.z]
-  const [wx, wz] = cellToWorld(cx, cz, item.kind, size)
+  const [wx, wz] = cellToWorld(cx, cz, item.kind)
   const organic = ['tree', 'flower', 'bush', 'pine', 'tulips', 'reeds'].includes(item.kind)
   const yaw = (item.rot * Math.PI) / 2 + (organic ? (seed % 628) / 100 : 0)
 
@@ -624,7 +672,17 @@ export function PlacedItem({ item, size, theme }: { item: GardenItem; size: numb
           : undefined
       }
     >
-      <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} />
+      <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} growth={item.growth} />
+      {item.growth && (selected || showGrowth) && (
+        <Html position={[0, 0.75, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
+          <div className="growth-chip">
+            <span className="growth-bar">
+              <span style={{ width: `${Math.round((item.growth.progress / item.growth.need) * 100)}%` }} />
+            </span>
+            {item.growth.by === 'focus' ? `${Math.floor(item.growth.progress)}/${item.growth.need} min` : `${item.growth.progress}/${item.growth.need} días`}
+          </div>
+        </Html>
+      )}
     </group>
   )
 }

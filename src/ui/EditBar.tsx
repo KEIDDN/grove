@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { FLOORS } from '../game/floors'
-import { useGrove } from '../game/store'
+import { parcelsAllowed, useGrove } from '../game/store'
 import { VARIANTS } from '../game/variants'
-import { BagIcon, BoxIcon, BrushIcon, CheckIcon, CloseIcon, MoveIcon, PaletteIcon, RotateIcon } from './icons'
+import { BagIcon, BoxIcon, BrushIcon, CheckIcon, CloseIcon, ExpandIcon, MoveIcon, PaletteIcon, RotateIcon } from './icons'
 
 function Action({ label, onClick, children, strong, active }: { label: string; onClick: () => void; children: ReactNode; strong?: boolean; active?: boolean }) {
   return (
@@ -69,6 +69,7 @@ export function EditBar() {
   const cancelPlacing = useGrove((s) => s.cancelPlacing)
   const select = useGrove((s) => s.select)
   const [colorOpenFor, setColorOpenFor] = useState<string | null>(null)
+  const freeParcels = useGrove((s) => parcelsAllowed(s) - s.plots.length)
 
   const variants = selected ? VARIANTS[selected.kind] : undefined
   const colorOpen = !!selected && colorOpenFor === selected.id && !!variants
@@ -88,6 +89,22 @@ export function EditBar() {
           </Action>
         </nav>
       </>
+    )
+  }
+
+  if (tool === 'expand') {
+    return (
+      <nav className="dock glass" aria-label="Ampliar jardín" style={{ gap: 2 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 14px', maxWidth: 200 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Toca un hueco para ampliar</span>
+          <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>
+            {freeParcels > 0 ? `Te quedan ${freeParcels} parcela${freeParcels > 1 ? 's' : ''}` : 'No te quedan parcelas'}
+          </span>
+        </div>
+        <Action label="Listo" onClick={() => setEditTool('select')} strong>
+          <CheckIcon size={20} />
+        </Action>
+      </nav>
     )
   }
 
@@ -145,6 +162,10 @@ export function EditBar() {
       </Action>
       <Action label="Suelos" onClick={() => setEditTool('paint')}>
         <BrushIcon size={20} />
+      </Action>
+      <Action label="Ampliar" onClick={() => setEditTool('expand')}>
+        <ExpandIcon size={20} />
+        {freeParcels > 0 && <span className="badge">{freeParcels}</span>}
       </Action>
       <Action label="Listo" onClick={() => setEditMode(false)} strong>
         <CheckIcon size={20} />

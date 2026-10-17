@@ -62,6 +62,49 @@ textarea:focus-visible {
   transition: background 0.8s ease;
 }
 
+.app {
+  color: var(--ink);
+}
+
+/* De noche la interfaz se aclara para leerse sobre el cielo oscuro */
+.app.night {
+  --ink: #f4f1ea;
+  --ink-soft: #c9ccd8;
+  --ink-faint: #9ea3b8;
+  --line: rgba(255, 255, 255, 0.14);
+}
+
+.app.night .glass {
+  background: linear-gradient(160deg, rgba(60, 64, 104, 0.55), rgba(30, 34, 64, 0.35) 60%, rgba(40, 44, 80, 0.45));
+  box-shadow:
+    0 18px 40px rgba(5, 8, 25, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.app.night .glass::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.05) 35%, rgba(255, 255, 255, 0.02) 65%, rgba(255, 255, 255, 0.3));
+}
+
+.app.night .pill-dark {
+  background: #f4f1ea;
+  color: #1b1f1c;
+}
+
+.app.night .pill-ghost {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app.night .pill-ghost[aria-pressed='true'] {
+  background: #f4f1ea;
+  color: #1b1f1c;
+}
+
+.app.night .dock-bubble {
+  background: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
 .garden-canvas {
   position: absolute !important;
   inset: 0;
@@ -399,4 +442,152 @@ textarea:focus-visible {
   .toast {
     animation: none;
   }
+}
+
+/* Etiqueta de crecimiento sobre una semilla */
+.growth-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 6px 16px rgba(40, 40, 30, 0.15);
+  font: 700 11px var(--font);
+  color: #1b1f1c;
+  white-space: nowrap;
+}
+
+.growth-bar {
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(27, 31, 28, 0.12);
+  overflow: hidden;
+}
+
+.growth-bar > span {
+  display: block;
+  height: 100%;
+  background: #3fa066;
+}
+
+.badge {
+  position: absolute;
+  top: 5px;
+  right: 12px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e0605a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+/* Pestañas segmentadas dentro de un panel */
+.segments {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: -4px -22px 18px;
+  padding: 0 22px;
+}
+
+.segments::-webkit-scrollbar {
+  display: none;
+}
+
+.segments button {
+  flex: none;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 650;
+  background: rgba(27, 31, 28, 0.06);
+  color: var(--ink-soft);
+  transition: background 0.25s, color 0.25s;
+}
+
+.segments button[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--bg, #fff);
+}
+
+.app.night .segments button {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app.night .segments button[aria-selected='true'] {
+  background: #f4f1ea;
+  color: #1b1f1c;
+}
+
+.row-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 20px;
+  background: rgba(27, 31, 28, 0.04);
+}
+
+.app.night .row-card {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.progress {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(27, 31, 28, 0.08);
+  overflow: hidden;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: #3fa066;
+  transition: width 0.4s var(--ease);
+}
+
+.switch {
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(27, 31, 28, 0.15);
+  position: relative;
+  flex: none;
+  transition: background 0.25s;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  transition: transform 0.3s var(--spring);
+}
+
+.switch[aria-checked='true'] {
+  background: #3fa066;
+}
+
+.switch[aria-checked='true']::after {
+  transform: translateX(18px);
+}
+
+input[type='range'].slider {
+  width: 100%;
+  accent-color: #3fa066;
 }
