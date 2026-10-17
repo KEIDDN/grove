@@ -159,3 +159,15 @@ export const TrophyIcon = (p: IconProps) => (
     <path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4" />
   </Icon>
 )
+
+export const BookIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 5.5c2.8-1.2 5.6-1.2 8.5.5v13c-2.9-1.7-5.7-1.7-8.5-.5zM20.5 5.5c-2.8-1.2-5.6-1.2-8.5.5v13c2.9-1.7 5.7-1.7 8.5-.5z" />
+  </Icon>
+)
+
+export const HeartIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 20s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7.6 4.2 4.2 0 0 1 19.5 10c0 5.6-7.5 10-7.5 10z" />
+  </Icon>
+)

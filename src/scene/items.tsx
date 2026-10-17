@@ -369,9 +369,10 @@ function Lantern({ palette }: PartProps) {
       </mesh>
       <mesh position={[0, 0.66, 0]}>
         <boxGeometry args={[0.18, 0.18, 0.18]} />
-        <meshStandardMaterial color={light} emissive={light} emissiveIntensity={0.6 + night * 2.4} flatShading toneMapped={night < 0.3} />
+        <meshStandardMaterial color={light} emissive={light} emissiveIntensity={0.6 + night * 2.4} flatShading toneMapped />
       </mesh>
-      {night > 0.3 && <pointLight position={[0, 0.66, 0]} color={light} intensity={night * 1.2} distance={1.6} decay={1.6} />}
+      {/* La luz está siempre montada (apagada de día): añadir o quitar luces obliga a recompilar todos los materiales */}
+      <pointLight position={[0, 0.66, 0]} color={light} intensity={night > 0.3 ? night * 1.2 : 0} distance={1.6} decay={1.6} />
       <mesh position={[0, 0.8, 0]} rotation={[0, Math.PI / 4, 0]} castShadow>
         <coneGeometry args={[0.17, 0.12, 4]} />
         <Mat color="#3E3128" />

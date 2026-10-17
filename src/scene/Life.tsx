@@ -55,7 +55,7 @@ function Fireflies({ size, night }: { size: number; night: number }) {
     flies.forEach((f, i) => {
       const blink = Math.max(0, Math.sin(t * 1.3 + f.p)) * night
       dummy.position.set(f.x + Math.sin(t * 0.4 + f.p) * 0.3, f.y + Math.sin(t * 0.9 + f.p) * 0.1, f.z + Math.cos(t * 0.35 + f.p) * 0.3)
-      dummy.scale.setScalar(0.4 + blink)
+      dummy.scale.setScalar(night > 0 ? 0.4 + blink : 0)
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
     })
@@ -69,16 +69,18 @@ function Fireflies({ size, night }: { size: number; night: number }) {
   )
 }
 
-/** Vida ambiental según la estación y la hora. */
+/** Vida ambiental según la estación y la hora. Todo queda montado y solo se oculta, para no recompilar shaders. */
 export function Life({ theme, size, night }: { theme: SeasonTheme; size: number; night: number }) {
   const warm = theme.particleKind === 'petal' || theme.particleKind === 'pollen'
   const day = night < 0.4
   return (
     <group>
-      {warm &&
-        day &&
-        [0, 1, 2].map((i) => <Butterfly key={i} seed={i + 1} radius={size * 0.7} color={WING_COLORS[i % WING_COLORS.length]} />)}
-      {theme.particleKind !== 'snow' && night > 0.3 && <Fireflies size={size} night={night} />}
+      <group visible={warm && day}>
+        {[0, 1, 2].map((i) => (
+          <Butterfly key={i} seed={i + 1} radius={size * 0.7} color={WING_COLORS[i % WING_COLORS.length]} />
+        ))}
+      </group>
+      <Fireflies size={size} night={theme.particleKind === 'snow' ? 0 : Math.max(0, night - 0.3) / 0.7} />
     </group>
   )
 }

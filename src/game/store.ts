@@ -27,7 +27,7 @@ import { SEASON_ORDER, seasonForDate, type Season } from './seasons'
 import { rewardFor, type FocusSession, type SessionReward } from './session'
 import { dayKey, TIME_SCALE, weekdayIndex, weekKey } from './time'
 
-export type Tab = 'garden' | 'tend' | 'roots' | 'nursery' | 'inventory' | 'you'
+export type Tab = 'garden' | 'tend' | 'roots' | 'read' | 'nursery' | 'inventory' | 'you'
 export type YouSection = 'today' | 'achievements' | 'album' | 'progress' | 'settings'
 
 export interface RootAnswer {
@@ -87,6 +87,7 @@ interface Saved {
   onboarded: boolean
   /** La semilla de regalo del onboarding solo se da una vez. */
   giftGiven: boolean
+  articlesRead: string[]
 }
 
 interface GroveState extends Saved {
@@ -146,6 +147,7 @@ interface GroveState extends Saved {
   dismissSplash: () => void
   completeOnboarding: (data: { userName: string; gardenName: string; focusAreas: string[]; weekGoal: number; firstSeed: string }) => void
   replayOnboarding: () => void
+  markArticleRead: (id: string) => void
 }
 
 /** Parcelas que puedes tener en total según tus días y logros. */
@@ -230,6 +232,7 @@ const initialSaved = (): Saved => ({
   focusAreas: [],
   onboarded: false,
   giftGiven: false,
+  articlesRead: [],
 })
 
 let toastId = 0
@@ -494,6 +497,13 @@ export const useGrove = create<GroveState>()(
           if (entry) setTimeout(() => toast(`Has plantado tu ${entry.name.toLowerCase()}. Cultivar la hará crecer.`), 700)
         },
         replayOnboarding: () => set({ onboarded: false, tab: 'garden' }),
+        markArticleRead: (id) => {
+          const s = fresh()
+          if (s.articlesRead.includes(id)) return
+          // Leer una lectura también cuenta como día cumplido
+          set({ ...rollover(get()), ...withDay(s), articlesRead: [...s.articlesRead, id] })
+          toast('Lectura terminada. Gracias por dedicarte este rato.')
+        },
       }
     },
     {

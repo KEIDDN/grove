@@ -75,8 +75,11 @@ export function GardenCanvas() {
   const theme = SEASONS[useSeason()]
   const visible = items
   const light = useDaylight()
-  // Calidad adaptativa: si el dispositivo no llega a 60 fps, bajamos resolución y quitamos la oclusión
+  // Calidad adaptativa en un solo sentido: si el dispositivo va justo, bajamos la calidad una vez y no
+  // volvemos a subirla. Alternar resolución o efectos obliga a recrear buffers y shaders, y eso se ve
+  // como parpadeos en negro.
   const [low, setLow] = useState(false)
+  const degrade = () => setLow(true)
   const sunDistance = 10
   const sun: [number, number, number] = [
     Math.cos(light.sunAzimuth) * Math.cos(light.sunElevation) * sunDistance,
@@ -93,7 +96,7 @@ export function GardenCanvas() {
       gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       camera={{ position: [9, 8.2, 9], zoom: 60, near: -50, far: 100 }}
     >
-      <PerformanceMonitor onDecline={() => setLow(true)} onIncline={() => setLow(false)} flipflops={3} onFallback={() => setLow(true)} />
+      <PerformanceMonitor ms={1000} iterations={6} onDecline={degrade} onFallback={degrade} />
       <CameraRig size={size} />
       <Sky light={light} />
       <hemisphereLight args={[light.skyTop, '#B49470', light.hemiIntensity]} />
@@ -138,7 +141,7 @@ export function GardenCanvas() {
         rotateSpeed={0.6}
       />
       <EffectComposer multisampling={0} enableNormalPass={false}>
-        <N8AO aoRadius={0.45} distanceFalloff={0.6} intensity={low ? 0 : 2.4} halfRes quality={low ? 'performance' : 'medium'} color="#3A2E22" />
+        <N8AO aoRadius={0.45} distanceFalloff={0.6} intensity={low ? 1.4 : 2.4} halfRes quality="medium" color="#3A2E22" />
         <Bloom mipmapBlur luminanceThreshold={0.82} luminanceSmoothing={0.2} intensity={0.35 + light.night * 0.6} />
         <Vignette offset={0.32} darkness={0.32} />
         <SMAA />

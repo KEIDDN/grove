@@ -12,6 +12,7 @@ import { EditBar } from './ui/EditBar'
 import { RestMode } from './ui/RestMode'
 import { InventorySheet } from './ui/sheets/InventorySheet'
 import { NurserySheet } from './ui/sheets/NurserySheet'
+import { ReadSheet } from './ui/sheets/ReadSheet'
 import { RootsSheet } from './ui/sheets/RootsSheet'
 import { SessionWatcher, TendSheet } from './ui/sheets/TendSheet'
 import { YouSheet } from './ui/sheets/YouSheet'
@@ -47,6 +48,7 @@ export function App() {
             <AnimatePresence>
               {tab === 'tend' && <TendSheet key="tend" />}
               {tab === 'roots' && <RootsSheet key="roots" />}
+              {tab === 'read' && <ReadSheet key="read" />}
               {tab === 'nursery' && <NurserySheet key="nursery" />}
               {tab === 'you' && <YouSheet key="you" />}
               {tab === 'inventory' && <InventorySheet key="inventory" />}
