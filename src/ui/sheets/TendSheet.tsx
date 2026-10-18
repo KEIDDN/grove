@@ -1,3 +1,4 @@
+import { audio } from '../../audio/engine'
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { KIND_NAMES } from '../../game/catalog'
@@ -35,7 +36,9 @@ export function TendSheet() {
 
 const MIN_CUSTOM = 5
 const MAX_CUSTOM = 180
-const clampMinutes = (m: number) => Math.min(MAX_CUSTOM, Math.max(MIN_CUSTOM, Math.round(m / 5) * 5))
+const clampMinutes = (m: number) => Math.min(MAX_CUSTOM, Math.max(MIN_CUSTOM, Math.round(m)))
+/** Píxeles de arrastre por minuto: fino al principio y más rápido cuanto más lejos llevas el dedo. */
+const PX_PER_MINUTE = 7
 
 function Setup() {
   const [minutes, setMinutes] = useState<number | null>(25)
@@ -44,7 +47,7 @@ function Setup() {
   const start = useGrove((s) => s.startSession)
   const drag = useRef<{ y: number; base: number } | null>(null)
 
-  // Arrastrar el número grande hacia arriba o abajo cambia los minutos de 5 en 5
+  // Arrastrar el número grande hacia arriba o abajo cambia los minutos de uno en uno, con un "tic" en cada cambio
   const onPointerDown = (e: React.PointerEvent) => {
     if (minutes === null) return
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -52,11 +55,14 @@ function Setup() {
   }
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current) return
-    const steps = Math.round((drag.current.y - e.clientY) / 14)
-    const next = clampMinutes(drag.current.base + steps * 5)
+    const dy = drag.current.y - e.clientY
+    // Aceleración suave: con recorridos largos se avanza más deprisa, sin perder la precisión cerca
+    const steps = Math.sign(dy) * Math.round(Math.abs(dy) / PX_PER_MINUTE + Math.max(0, Math.abs(dy) - 120) / 18)
+    const next = clampMinutes(drag.current.base + steps)
     if (next !== minutes) {
       setMinutes(next)
       setCustom(!DURATIONS.includes(next))
+      audio.sfx('tick', next)
     }
   }
   const onPointerUp = () => {
@@ -118,20 +124,23 @@ function Setup() {
             style={{ overflow: 'hidden' }}
           >
             <div className="stepper" data-no-sheet-drag="">
-              <button className="stepper-btn press" aria-label="Menos" onClick={() => setMinutes(clampMinutes(minutes - 5))}>
+              <button className="stepper-btn press" aria-label="Menos" onClick={() => { setMinutes(clampMinutes(minutes - 1)); audio.sfx('tick', minutes - 1) }}>
                 −
               </button>
               <input
                 type="range"
                 min={MIN_CUSTOM}
                 max={MAX_CUSTOM}
-                step={5}
+                step={1}
                 value={minutes}
-                onChange={(e) => setMinutes(Number(e.target.value))}
+                onChange={(e) => {
+                  setMinutes(Number(e.target.value))
+                  audio.sfx('tick', Number(e.target.value))
+                }}
                 aria-label="Minutos"
                 style={{ '--fill': `${((minutes - MIN_CUSTOM) / (MAX_CUSTOM - MIN_CUSTOM)) * 100}%` } as React.CSSProperties}
               />
-              <button className="stepper-btn press" aria-label="Más" onClick={() => setMinutes(clampMinutes(minutes + 5))}>
+              <button className="stepper-btn press" aria-label="Más" onClick={() => { setMinutes(clampMinutes(minutes + 1)); audio.sfx('tick', minutes + 1) }}>
                 +
               </button>
             </div>

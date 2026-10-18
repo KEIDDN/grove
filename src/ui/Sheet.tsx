@@ -131,6 +131,8 @@ function MobileSheet({ contentKey, children }: { contentKey: string; children: R
   useEffect(() => {
     if (isPresent) return
     anim.current?.stop()
+    // El jardín vuelve a dibujarse desde que el panel empieza a irse, no cuando ya se ha ido
+    setExpandedState(false)
     animate(y, geo.current.full + 40, { type: 'spring', stiffness: 380, damping: 40, restDelta: 2 }).then(() => safeToRemove?.())
   }, [isPresent])
 
@@ -317,12 +319,32 @@ export function SwapIn({ id, children }: { id: string; children: ReactNode }) {
 }
 
 /** Pestañas segmentadas con una píldora que se desliza hasta la elegida. */
-export function Segments<T extends string>({ id, items, value, onChange }: { id: string; items: Array<{ id: T; label: string }>; value: T; onChange: (v: T) => void }) {
+export function Segments<T extends string>({ items, value, onChange }: { id: string; items: Array<{ id: T; label: string }>; value: T; onChange: (v: T) => void }) {
+  // Una sola píldora que se mueve a la posición del botón elegido. Se mide con offsetLeft, que no
+  // cambia con el scroll del panel (una animación de layout sí se descolocaba al hacer scroll).
+  const row = useRef<HTMLDivElement>(null)
+  const x = useMotionValue(0)
+  const w = useMotionValue(0)
+  const placed = useRef(false)
+  useLayoutEffect(() => {
+    const btn = row.current?.querySelector<HTMLElement>(`[data-seg="${value}"]`)
+    if (!btn) return
+    if (!placed.current) {
+      x.set(btn.offsetLeft)
+      w.set(btn.offsetWidth)
+      placed.current = true
+      return
+    }
+    animate(x, btn.offsetLeft, spring)
+    animate(w, btn.offsetWidth, spring)
+    // Que la elegida quede a la vista si la fila tiene scroll horizontal
+    btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+  }, [value, x, w])
   return (
-    <div className="segments" role="tablist">
+    <div className="segments" role="tablist" ref={row}>
+      <motion.span className="segment-pill" style={{ x, width: w }} aria-hidden="true" />
       {items.map((it) => (
-        <button key={it.id} role="tab" aria-selected={value === it.id} onClick={() => onChange(it.id)}>
-          {value === it.id && <motion.span layoutId={`seg-${id}`} className="segment-pill" transition={spring} />}
+        <button key={it.id} data-seg={it.id} role="tab" aria-selected={value === it.id} onClick={() => onChange(it.id)}>
           <span style={{ position: 'relative' }}>{it.label}</span>
         </button>
       ))}

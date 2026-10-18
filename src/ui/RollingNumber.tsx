@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react'
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-const roll = { type: 'spring', stiffness: 260, damping: 26, mass: 0.8 } as const
+// Muelle rápido y sin rebote: al arrastrar, cada cifra sigue al dedo sin quedarse atrás
+const roll = { type: 'spring', stiffness: 520, damping: 40, mass: 0.6 } as const
 
 /** Una columna de 0 a 9 que se desliza hasta la cifra, como un contador mecánico. */
 function Digit({ value }: { value: number }) {

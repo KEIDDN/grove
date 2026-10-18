@@ -81,7 +81,7 @@ class Engine {
     sfxTone.connect(this.reverb)
 
     this.calmGain = ctx.createGain()
-    this.calmGain.gain.value = 0.8
+    this.calmGain.gain.value = 0.34
     this.calmGain.connect(ctx.destination)
 
     this.windGain = this.loopNoise(ctx, 'lowpass', 380, 0.2)
@@ -121,7 +121,8 @@ class Engine {
   setSoundscape(id: SoundscapeId, volume = 0.8) {
     const ctx = this.ctx
     if (!ctx) return
-    this.calmGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.2)
+    // Calma tiene que ser sutil: el máximo del control queda bastante por debajo del resto
+    this.calmGain.gain.setTargetAtTime(volume * 0.42, ctx.currentTime, 0.2)
     if (id === this.scapeId) return
     this.scape?.stop()
     this.scapeId = id
@@ -161,7 +162,7 @@ class Engine {
         const g = ctx.createGain()
         osc.type = 'sine'
         osc.frequency.value = pitch * ratio + beat * ratio
-        const peak = 0.05 * amp * strength
+        const peak = 0.075 * amp * strength
         g.gain.setValueAtTime(0, t)
         g.gain.linearRampToValueAtTime(peak, t + 0.012)
         g.gain.exponentialRampToValueAtTime(0.0001, t + decay)
@@ -185,7 +186,7 @@ class Engine {
     osc.type = 'sine'
     osc.frequency.value = freq
     g.gain.setValueAtTime(0, t)
-    g.gain.linearRampToValueAtTime(phase === 'hold' ? 0.018 : 0.03, t + 0.08)
+    g.gain.linearRampToValueAtTime(phase === 'hold' ? 0.022 : 0.036, t + 0.12)
     g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2)
     osc.connect(g)
     g.connect(this.calmGain)
@@ -206,12 +207,20 @@ class Engine {
    * música, para que una celebración nunca desentone con lo que suena.
    * `coin` sube una nota por cada moneda que llega (i), como una escala que se completa.
    */
-  sfx(name: 'coin' | 'small' | 'medium' | 'big', i = 0) {
+  sfx(name: 'coin' | 'small' | 'medium' | 'big' | 'tick', i = 0) {
     const ctx = this.ctx
     if (!ctx || !this.sfxOn || ctx.state !== 'running') return
     const t = ctx.currentTime + 0.01
     const D5 = 587.33
     const PENTA = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2, 9 / 4, 5 / 2, 3]
+    if (name === 'tick') {
+      // El "clic" de una rueda de iOS: un golpecito seco y corto, casi sin tono
+      const now = performance.now()
+      if (now - this.lastTick < 28) return
+      this.lastTick = now
+      this.click(t, i % 2 === 0 ? 1 : 0.85)
+      return
+    }
     if (name === 'coin') {
       this.bell(D5 * 2 * PENTA[Math.min(i, PENTA.length - 1)], t, 0.07, 0.32)
     } else if (name === 'small') {
@@ -226,6 +235,34 @@ class Engine {
       // Destellos sueltos al final, muy bajitos
       for (let k = 0; k < 5; k++) this.bell(D5 * 4 * PENTA[(k * 3) % PENTA.length], t + 0.9 + k * 0.16 + Math.random() * 0.05, 0.025, 0.8)
     }
+  }
+
+  private lastTick = 0
+
+  /** Golpe muy corto de ruido filtrado más un pellizco de tono: suena a mecanismo, no a pitido. */
+  private click(t: number, tone: number) {
+    const ctx = this.ctx!
+    const src = ctx.createBufferSource()
+    src.buffer = this.noise
+    const bp = ctx.createBiquadFilter()
+    bp.type = 'bandpass'
+    bp.frequency.value = 3200 * tone
+    bp.Q.value = 1.2
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0, t)
+    g.gain.linearRampToValueAtTime(0.22, t + 0.001)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.018)
+    src.connect(bp).connect(g).connect(this.sfxGain)
+    src.start(t, Math.random() * 2, 0.03)
+    const osc = ctx.createOscillator()
+    const og = ctx.createGain()
+    osc.frequency.value = 1500 * tone
+    og.gain.setValueAtTime(0, t)
+    og.gain.linearRampToValueAtTime(0.025, t + 0.001)
+    og.gain.exponentialRampToValueAtTime(0.0001, t + 0.025)
+    osc.connect(og).connect(this.sfxGain)
+    osc.start(t)
+    osc.stop(t + 0.04)
   }
 
   /** Una campana suave: fundamental, octava y un parcial de cristal que se apaga antes. */

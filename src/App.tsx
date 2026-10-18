@@ -15,7 +15,7 @@ import { EditBar } from './ui/EditBar'
 import { RestMode } from './ui/RestMode'
 import { InventorySheet } from './ui/sheets/InventorySheet'
 import { NurserySheet } from './ui/sheets/NurserySheet'
-import { CalmController, CalmSheet } from './ui/sheets/CalmSheet'
+import { CalmController, CalmSheet, CalmSpace } from './ui/sheets/CalmSheet'
 import { ReadSheet } from './ui/sheets/ReadSheet'
 import { RootsSheet } from './ui/sheets/RootsSheet'
 import { SessionWatcher, TendSheet } from './ui/sheets/TendSheet'
@@ -72,6 +72,7 @@ export function App() {
             {tab === 'garden' && !editMode && <InspectCard />}
             <AnimatePresence mode="wait">{editMode ? <EditBar key="edit" /> : <Dock key="dock" />}</AnimatePresence>
             <Celebrations />
+            <CalmSpace />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion, useAnimationFrame, useMotionValue, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useTransform } from 'motion/react'
 import { audio } from '../../audio/engine'
 import { SOUNDSCAPES, type SoundscapeId } from '../../audio/soundscapes'
 import { BREATH_PATTERNS, PHASE_LABELS, phaseAt, type BreathPatternId } from '../../game/calm'
@@ -21,7 +21,6 @@ const BREATH_MINUTES = [1, 2, 3, 5]
 const MEDITATE_MINUTES = [3, 5, 10, 20]
 
 export function CalmSheet() {
-  const calm = useGrove((s) => s.calm)
   const [section, setSection] = useState<Section>('breath')
 
   // Al cerrar Calma sin nada en marcha, la vista previa del sonido se apaga
@@ -31,14 +30,6 @@ export function CalmSheet() {
     },
     [],
   )
-
-  if (calm) {
-    return (
-      <Sheet eyebrow={calm.kind === 'breath' ? 'Respirando' : 'Meditando'} title="Calma" accent="calm">
-        {calm.kind === 'breath' ? <BreathRunning /> : <MeditateRunning />}
-      </Sheet>
-    )
-  }
 
   return (
     <Sheet eyebrow="Respira y medita" title="Calma" accent="calm">
@@ -199,7 +190,7 @@ function PatternShape({ id }: { id: string }) {
   )
 }
 
-// ——— En marcha ———
+// ——— En marcha: el espacio de calma ———
 
 function useCalmClock() {
   const calm = useGrove((s) => s.calm)
@@ -210,93 +201,158 @@ function useCalmClock() {
   return { elapsed, total, remaining: Math.max(0, total - elapsed), progress: Math.min(1, elapsed / total) }
 }
 
+/**
+ * Mientras respiras o meditas, todo lo demás se apaga: un degradado a pantalla completa (claro de
+ * día, profundo de noche) con el círculo y los números en el centro. Al terminar se funde y
+ * aparece el jardín con la celebración.
+ */
+export function CalmSpace() {
+  const calm = useGrove((s) => s.calm)
+  return (
+    <AnimatePresence>
+      {calm && (
+        <motion.div
+          key={calm.startedAt}
+          className="calm-space"
+          role="dialog"
+          aria-label={calm.kind === 'breath' ? 'Respirando' : 'Meditando'}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0, transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] } }}
+          transition={{ duration: 1.2, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <div className="calm-aurora" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          {calm.kind === 'breath' ? <BreathSpace /> : <MeditateSpace />}
+          <SpaceActions />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
+
+/** Cifra que entra desenfocada y se aclara, y se va desenfocándose: como respirar. */
+function SoftNumber({ value, size }: { value: string; size: number }) {
+  return (
+    <span className="soft-number" style={{ fontSize: size, height: size }}>
+      <AnimatePresence mode="popLayout" initial={false}>
+        <motion.span
+          key={value}
+          className="display"
+          initial={{ opacity: 0, filter: 'blur(10px)', scale: 1.18 }}
+          animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
+          exit={{ opacity: 0, filter: 'blur(10px)', scale: 0.86 }}
+          transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          {value}
+        </motion.span>
+      </AnimatePresence>
+    </span>
+  )
+}
+
+function SpaceTop({ label, clock }: { label: string; clock: ReturnType<typeof useCalmClock> }) {
+  return (
+    <div className="calm-space-top">
+      <span className="calm-space-eyebrow">{label}</span>
+      <span className="calm-space-time">{formatClock(clock?.remaining ?? 0)}</span>
+      <div className="calm-space-progress">
+        <span style={{ transform: `scaleX(${clock?.progress ?? 0})` }} />
+      </div>
+    </div>
+  )
+}
+
 /** El círculo que respira: crece al inspirar, se queda quieto al retener y vuelve al soltar. */
-function BreathRunning() {
+function BreathSpace() {
   const calm = useGrove((s) => s.calm)
   const clock = useCalmClock()
   const pattern = BREATH_PATTERNS.find((p) => p.id === calm?.pattern) ?? BREATH_PATTERNS[0]
   const fill = useMotionValue(0)
-  const scale = useTransform(fill, (f) => 0.5 + f * 0.5)
-  const glow = useTransform(fill, (f) => 0.35 + f * 0.65)
+  const scale = useTransform(fill, (f) => 0.46 + f * 0.54)
+  const glow = useTransform(fill, (f) => 0.25 + f * 0.75)
+  const ring = useTransform(fill, (f) => 0.62 + f * 0.4)
+  const ringOpacity = useTransform(fill, (f) => f * 0.22)
   const [phase, setPhase] = useState(() => phaseAt(pattern, 0))
   useAnimationFrame(() => {
     if (!calm) return
     const elapsed = ((Date.now() - calm.startedAt) / 1000) * TIME_SCALE
     const p = phaseAt(pattern, elapsed)
     fill.set(p.fill)
-    if (p.phase !== phase.phase || p.left !== phase.left || p.index !== phase.index) setPhase(p)
+    if (p.left !== phase.left || p.index !== phase.index || p.cycle !== phase.cycle) setPhase(p)
   })
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center' }}>
-      <div className="breath-stage" aria-live="polite">
-        <div className="breath-guide" />
-        <motion.div className="breath-halo" style={{ scale, opacity: glow }} />
-        <motion.div className="breath-orb" style={{ scale }} />
-        <div className="breath-text">
-          <motion.span key={`${phase.cycle}-${phase.index}`} className="breath-phase" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-            {PHASE_LABELS[phase.phase]}
-          </motion.span>
-          <span className="display breath-count">{phase.left}</span>
+    <>
+      <SpaceTop label={`${pattern.name} · ${pattern.phases.map((p) => p.seconds).join(' · ')}`} clock={clock} />
+      <div className="calm-space-center" aria-live="polite">
+        <div className="breath-stage breath-stage-xl">
+          <motion.div className="breath-ripple" style={{ scale: ring, opacity: ringOpacity }} />
+          <motion.div className="breath-halo" style={{ scale, opacity: glow }} />
+          <motion.div className="breath-orb" style={{ scale }} />
+          <div className="breath-text">
+            <SoftNumber value={String(phase.left)} size={92} />
+          </div>
+        </div>
+        <div className="calm-space-phase">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={`${phase.cycle}-${phase.index}`}
+              initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
+              transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
+            >
+              {PHASE_LABELS[phase.phase]}
+            </motion.span>
+          </AnimatePresence>
         </div>
       </div>
-      <div className="muted" style={{ fontSize: 13, fontWeight: 600 }}>
-        {pattern.name} · quedan {formatClock(clock?.remaining ?? 0)}
-      </div>
-      <RunningActions />
-    </div>
+    </>
   )
 }
 
-function MeditateRunning() {
+function MeditateSpace() {
   const clock = useCalmClock()
+  const remaining = clock?.remaining ?? 0
+  const [m, sec] = formatClock(remaining).split(':')
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18, alignItems: 'center' }}>
-      <div className="breath-stage meditate-stage">
-        <div className="meditate-ring" />
-        <div className="meditate-ring meditate-ring-2" />
-        <svg className="meditate-progress" viewBox="0 0 200 200" aria-hidden="true">
-          <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" strokeOpacity={0.1} strokeWidth="3" />
-          <circle
-            cx="100"
-            cy="100"
-            r="92"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={2 * Math.PI * 92}
-            strokeDashoffset={2 * Math.PI * 92 * (1 - (clock?.progress ?? 0))}
-            transform="rotate(-90 100 100)"
-            style={{ transition: 'stroke-dashoffset .3s linear' }}
-          />
-        </svg>
-        <div className="breath-text">
-          <span className="display breath-count" style={{ fontSize: 58 }}>
-            {formatClock(clock?.remaining ?? 0)}
-          </span>
+    <>
+      <SpaceTop label="Meditación" clock={clock} />
+      <div className="calm-space-center">
+        <div className="breath-stage breath-stage-xl meditate-stage">
+          <div className="meditate-ring" />
+          <div className="meditate-ring meditate-ring-2" />
+          <div className="breath-orb meditate-orb" />
+          <div className="breath-text meditate-time">
+            <SoftNumber value={m} size={60} />
+            <span className="display meditate-colon">:</span>
+            <SoftNumber value={sec} size={60} />
+          </div>
         </div>
+        <div className="calm-space-phase">Respira a tu ritmo</div>
       </div>
-      <div className="muted" style={{ fontSize: 13, fontWeight: 600 }}>
-        Respira a tu ritmo. No hay nada que hacer bien.
-      </div>
-      <RunningActions />
-    </div>
+    </>
   )
 }
 
-function RunningActions() {
+function SpaceActions() {
   const complete = useGrove((s) => s.completeCalm)
   const cancel = useGrove((s) => s.cancelCalm)
   const clock = useCalmClock()
   const minutes = Math.floor((clock?.elapsed ?? 0) / 60)
   return (
-    <div style={{ display: 'flex', gap: 10, width: '100%' }}>
-      <button className="pill pill-ghost press" onClick={cancel} style={{ flex: 1, height: 50 }}>
+    <div className="calm-space-actions">
+      <button className="calm-space-btn press" onClick={cancel}>
         Parar
       </button>
-      <button className="pill pill-dark press" onClick={() => (minutes >= 1 ? complete(true) : cancel())} style={{ flex: 1, height: 50 }}>
-        {minutes >= 1 ? 'Terminar ya' : 'Terminar'}
-      </button>
+      {minutes >= 1 && (
+        <button className="calm-space-btn calm-space-btn-strong press" onClick={() => complete(true)}>
+          Terminar ya
+        </button>
+      )}
     </div>
   )
 }

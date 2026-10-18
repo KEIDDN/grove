@@ -626,6 +626,7 @@ textarea:focus-visible {
 
 /* Pestañas segmentadas dentro de un panel */
 .segments {
+  position: relative;
   display: flex;
   gap: 6px;
   overflow-x: auto;
@@ -654,11 +655,15 @@ textarea:focus-visible {
 .segments button[aria-selected='true'] {
   background: transparent;
   color: #fff;
+  transition: background 0s, color 0.25s 0.05s;
 }
 
 .segment-pill {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  height: 38px;
+  z-index: 0;
   border-radius: 999px;
   background: var(--ink);
 }
@@ -1740,7 +1745,8 @@ input[type='range'].slider {
   z-index: 2;
   transform-origin: top left;
   width: min(320px, calc(100vw - 32px));
-  max-height: calc(100dvh - var(--safe-top) - 190px);
+  /* Termina por encima del dock, nunca debajo */
+  max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 220px);
   overflow-y: auto;
   overscroll-behavior: contain;
   border-radius: 28px;
@@ -2207,6 +2213,246 @@ input[type='range'].slider {
 @media (prefers-reduced-motion: reduce) {
   .meditate-ring,
   .calm-eq i {
+    animation: none;
+  }
+}
+
+/* ——— Espacio de calma: a pantalla completa, solo el círculo y la respiración ——— */
+
+.calm-space {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(var(--safe-top) + 28px) 24px calc(var(--safe-bottom) + 28px);
+  overflow: hidden;
+  color: #2a2740;
+  background: radial-gradient(120% 80% at 50% 45%, #fdfbff 0%, #f2eefb 45%, #e6eef0 100%);
+}
+
+.app.night .calm-space {
+  color: #ece9ff;
+  background: radial-gradient(120% 80% at 50% 45%, #2a2a52 0%, #17182f 50%, #0b0c1a 100%);
+}
+
+/* Manchas de luz que se mueven muy despacio, para que el fondo esté vivo sin distraer */
+.calm-aurora {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.calm-aurora span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  animation: aurora 26s ease-in-out infinite alternate;
+}
+
+.calm-aurora span:nth-child(1) {
+  left: -30vmax;
+  top: -25vmax;
+  background: #e4dafc;
+}
+
+.calm-aurora span:nth-child(2) {
+  right: -32vmax;
+  bottom: -28vmax;
+  background: #d5efe6;
+  animation-delay: -9s;
+}
+
+.calm-aurora span:nth-child(3) {
+  left: 10vmax;
+  bottom: -40vmax;
+  background: #fde3ea;
+  opacity: 0.4;
+  animation-delay: -17s;
+}
+
+.app.night .calm-aurora span:nth-child(1) {
+  background: #4b3f9a;
+  opacity: 0.45;
+}
+
+.app.night .calm-aurora span:nth-child(2) {
+  background: #1f5a5a;
+  opacity: 0.4;
+}
+
+.app.night .calm-aurora span:nth-child(3) {
+  background: #5a3a6e;
+  opacity: 0.3;
+}
+
+@keyframes aurora {
+  to {
+    transform: translate(12vmax, 8vmax) scale(1.15);
+  }
+}
+
+.calm-space-top {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: min(220px, 60vw);
+}
+
+.calm-space-eyebrow {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.calm-space-time {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.calm-space-progress {
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0.25;
+  overflow: hidden;
+}
+
+.calm-space-progress span {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  transform-origin: left;
+  transition: transform 0.3s linear;
+}
+
+.calm-space-center {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 44px;
+}
+
+.breath-stage-xl {
+  width: min(310px, 76vw);
+  margin: 0;
+}
+
+.calm-space .breath-text {
+  color: inherit;
+}
+
+.breath-ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+}
+
+.app.night .calm-space .breath-orb {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 40%),
+    linear-gradient(150deg, #7b6fd0 0%, #9b74b4 45%, #4f9a90 100%);
+  box-shadow:
+    0 30px 80px rgba(110, 90, 220, 0.35),
+    inset 0 -10px 30px rgba(20, 10, 60, 0.25),
+    inset 0 2px 2px rgba(255, 255, 255, 0.5);
+}
+
+.soft-number {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.soft-number > span {
+  grid-area: 1 / 1;
+  font-weight: 200;
+  letter-spacing: -0.04em;
+}
+
+.calm-space-phase {
+  position: relative;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  font-weight: 300;
+  letter-spacing: 0.02em;
+}
+
+.calm-space-phase > span {
+  grid-area: 1 / 1;
+}
+
+.meditate-time {
+  flex-direction: row;
+  align-items: center;
+}
+
+.meditate-colon {
+  font-size: 52px;
+  font-weight: 200;
+  opacity: 0.5;
+  margin: 0 2px 8px;
+}
+
+.meditate-orb {
+  inset: 8%;
+  opacity: 0.85;
+}
+
+.calm-space-actions {
+  position: relative;
+  display: flex;
+  gap: 10px;
+}
+
+.calm-space-btn {
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 0;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(42, 39, 64, 0.08);
+}
+
+.app.night .calm-space-btn {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.calm-space-btn-strong {
+  background: #2a2740;
+  color: #fdfbff;
+}
+
+.app.night .calm-space-btn-strong {
+  background: #ece9ff;
+  color: #17182f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calm-aurora span {
     animation: none;
   }
 }

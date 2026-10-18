@@ -125,7 +125,10 @@ export function GardenCanvas() {
   const [low, setLow] = useState(false)
   const garden = useRef<Group>(null)
   // Con un panel a pantalla completa encima no se ve el jardín: no se dibuja y el móvil descansa
-  const paused = useSheetExpanded()
+  const expanded = useSheetExpanded()
+  // Durante la calma el espacio a pantalla completa tapa la isla: tampoco hace falta dibujarla
+  const calming = useGrove((s) => !!s.calm)
+  const paused = expanded || calming
   const degrade = () => setLow(true)
   const sunDistance = 10
   const sun: [number, number, number] = [

@@ -486,8 +486,9 @@ export const useGrove = create<GroveState>()(
           })
           announceGrown(watered.grown)
         },
-        startCalm: (kind, minutes, pattern) => set({ calm: { kind, minutes, pattern, startedAt: Date.now() } }),
-        cancelCalm: () => set({ calm: null }),
+        // El panel se cierra: la calma ocupa toda la pantalla. Al parar se vuelve a Calma
+        startCalm: (kind, minutes, pattern) => set({ calm: { kind, minutes, pattern, startedAt: Date.now() }, tab: 'garden' }),
+        cancelCalm: () => set({ calm: null, tab: 'calm' }),
         setCalmPrefs: (patch) => set({ calmPrefs: { ...get().calmPrefs, ...patch } }),
         completeCalm: (early = false) => {
           const s = fresh()
@@ -495,7 +496,7 @@ export const useGrove = create<GroveState>()(
           const elapsed = ((Date.now() - s.calm.startedAt) / 60000) * TIME_SCALE
           const minutes = early ? Math.floor(elapsed) : s.calm.minutes
           // Menos de un minuto no cuenta: se cierra sin más
-          if (minutes < 1) return set({ calm: null })
+          if (minutes < 1) return set({ calm: null, tab: 'calm' })
           const reward = calmRewardFor(minutes, s.coinsToday)
           const seeds = s.items.filter((it) => it.growth?.by === 'focus')
           const watered = water(s.items, 'focus', minutes)
