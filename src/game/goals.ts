@@ -1,4 +1,5 @@
 import { hashString } from './hash'
+import { localize, t, tn } from '../i18n'
 
 /** Contadores totales que alimentan los logros. */
 export interface Stats {
@@ -89,11 +90,14 @@ export const ACHIEVEMENTS: Achievement[] = [
 
 export function rewardLabel(r: Reward): string {
   const parts: string[] = []
-  if (r.parcels) parts.push(`${r.parcels} parcela${r.parcels > 1 ? 's' : ''}`)
-  if (r.coins) parts.push(`${r.coins} monedas`)
+  if (r.parcels) parts.push(tn('{n} parcela', '{n} parcelas', r.parcels))
+  if (r.coins) parts.push(t('{n} monedas', { n: r.coins }))
   return parts.join(' · ')
 }
 
 export const emptyDaily = (day: string): DailyStats => ({ day, focusMinutes: 0, sessions: 0, roots: 0, planted: 0, placed: 0, painted: 0, recolored: 0, calmMinutes: 0 })
 
 export const emptyStats = (): Stats => ({ sessions: 0, focusMinutes: 0, roots: 0, seedsPlanted: 0, plantsGrown: 0, decorPlaced: 0, weeksCompleted: 0, visitors: 1, calmMinutes: 0 })
+
+localize(MISSIONS, ['title'])
+localize(ACHIEVEMENTS, ['title', 'detail'])

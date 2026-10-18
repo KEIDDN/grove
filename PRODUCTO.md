@@ -435,3 +435,11 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
 **Orden:** 1 Celebraciones + "Mientras no estabas" → 2 Modo dev, demos y Tu
 semana → 3 Calma → 4 Ánimo → 5 Onboarding → 6 Clima, visitantes animados y
 economía → 7 Renombrar a Tendu.
+
+**Idiomas (18/10/2026):** la app está en **español e inglés** con un selector en
+Tú › Ajustes › Idioma (por defecto, el del navegador). El texto se escribe en
+español y se traduce con `t()` desde `src/i18n/en.ts`; lo que falte se ve en
+español y avisa en la consola de desarrollo. Las partidas guardan los textos en
+español (emociones, preguntas), así que cambiar de idioma no rompe nada. En el
+futuro el idioma irá por región; el selector se queda para grabar y probar.
+

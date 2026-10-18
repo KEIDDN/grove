@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion, useMotionValueEvent, useTransform, type MotionValue } from 'motion/react'
+import { t } from '../i18n'
 
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 // Muelle rápido y sin rebote: al arrastrar, cada cifra sigue al dedo sin quedarse atrás
@@ -28,7 +29,7 @@ function Digit({ value }: { value: number }) {
 export function RollingNumber({ value }: { value: number | null }) {
   const digits = value === null ? [] : String(value).split('').map(Number)
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'flex-end', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }} aria-label={value === null ? 'sin límite' : String(value)}>
+    <span style={{ display: 'inline-flex', alignItems: 'flex-end', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }} aria-label={value === null ? t('sin límite') : String(value)}>
       <AnimatePresence initial={false} mode="popLayout">
         {value === null ? (
           <motion.span key="inf" initial={{ opacity: 0, scale: 0.7 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.7 }} transition={roll}>

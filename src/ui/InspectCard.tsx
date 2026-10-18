@@ -5,11 +5,12 @@ import { paletteFor } from '../game/variants'
 import { KindGlyph } from './glyphs'
 import { CloseIcon } from './icons'
 import { bouncy } from './motion'
+import { t, tn } from '../i18n'
 
 /** Cuánto le falta a algo que está creciendo, en palabras. */
 function remaining(by: 'focus' | 'roots', left: number) {
-  if (by === 'focus') return left === 1 ? 'Falta 1 min de Cultivar' : `Faltan ${left} min de Cultivar`
-  return left === 1 ? 'Falta 1 día escribiendo en Raíces' : `Faltan ${left} días escribiendo en Raíces`
+  if (by === 'focus') return tn('Falta {n} min de Cultivar', 'Faltan {n} min de Cultivar', left)
+  return tn('Falta {n} día escribiendo en Raíces', 'Faltan {n} días escribiendo en Raíces', left)
 }
 
 /**
@@ -44,15 +45,15 @@ export function InspectCard() {
             <KindGlyph kind={item.kind} color={paletteFor(item.kind, item.color)?.[0]} size={46} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="eyebrow">{g ? (ratio >= 1 ? 'Ya ha crecido' : 'Creciendo') : 'Decoración'}</div>
-            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 2 }}>{KIND_NAMES[item.kind]}</div>
+            <div className="eyebrow">{g ? (ratio >= 1 ? t('Ya ha crecido') : t('Creciendo')) : t('Decoración')}</div>
+            <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 2 }}>{t(KIND_NAMES[item.kind])}</div>
             {g ? (
               <>
                 <div className="progress" style={{ marginTop: 10 }}>
                   <span style={{ width: `${ratio * 100}%` }} />
                 </div>
                 <div className="muted" style={{ fontSize: 12, fontWeight: 600, marginTop: 6 }}>
-                  {left > 0 ? remaining(g.by, left) : 'Ha terminado de crecer'}
+                  {left > 0 ? remaining(g.by, left) : t('Ha terminado de crecer')}
                 </div>
               </>
             ) : (
@@ -62,12 +63,12 @@ export function InspectCard() {
             )}
           </div>
           <div className="inspect-actions">
-            <button className="icon-btn press hit" onClick={() => inspect(null)} aria-label="Cerrar">
+            <button className="icon-btn press hit" onClick={() => inspect(null)} aria-label={t("Cerrar")}>
               <CloseIcon size={15} strokeWidth={2.4} />
             </button>
             {g && left > 0 ? (
               <button className="pill pill-dark press" onClick={() => setTab(g.by === 'focus' ? 'tend' : 'roots')} style={{ height: 36, padding: '0 14px', fontSize: 13 }}>
-                {g.by === 'focus' ? 'Cultivar' : 'Escribir'}
+                {g.by === 'focus' ? t('Cultivar') : t('Escribir')}
               </button>
             ) : (
               !g && (
@@ -79,7 +80,7 @@ export function InspectCard() {
                   }}
                   style={{ height: 36, padding: '0 14px', fontSize: 13 }}
                 >
-                  Editar
+                  {t('Editar')}
                 </button>
               )
             )}

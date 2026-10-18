@@ -10,6 +10,7 @@ import { GROUND_Y } from './Island'
 import { hashString, jitter, pick, seeded } from './lowpoly'
 import { Model, MODEL_KINDS, paintFor } from './models'
 import { useDaylight } from './useDaylight'
+import { t } from '../i18n'
 
 /** Lo vivo: se sacude al tocarlo y suelta hojas. */
 const ORGANIC: ItemKind[] = ['tree', 'pine', 'birch', 'willow', 'roundtree', 'cherry', 'tallpine', 'palm', 'bush', 'berrybush', 'fern', 'flower', 'tulips', 'reeds', 'wheat', 'tallgrass', 'corn', 'cactus']
@@ -441,7 +442,7 @@ export const PlacedItem = memo(function PlacedItem({ item, theme }: { item: Gard
             <span className="growth-bar">
               <span style={{ width: `${Math.round((item.growth.progress / item.growth.need) * 100)}%` }} />
             </span>
-            {item.growth.by === 'focus' ? `${Math.floor(item.growth.progress)}/${item.growth.need} min` : `${item.growth.progress}/${item.growth.need} días`}
+            {item.growth.by === 'focus' ? `${Math.floor(item.growth.progress)}/${item.growth.need} min` : `${item.growth.progress}/${item.growth.need} ${t('días')}`}
           </div>
         </Html>
       )}

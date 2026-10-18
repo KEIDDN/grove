@@ -1,3 +1,4 @@
+import { localize } from '../i18n'
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter'
 
 export const SEASON_ORDER: Season[] = ['spring', 'summer', 'autumn', 'winter']
@@ -73,3 +74,5 @@ export function seasonForDate(date = new Date(), hemisphere: 'north' | 'south' =
   if (hemisphere === 'north') return north
   return SEASON_ORDER[(SEASON_ORDER.indexOf(north) + 2) % 4]
 }
+
+localize(Object.values(SEASONS), ['name'])

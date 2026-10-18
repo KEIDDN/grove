@@ -9,6 +9,7 @@ import { iriStyle } from '../glyphs'
 import { CheckIcon, CoinIcon, TrophyIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
 import { AlbumContent } from './AlbumContent'
+import { setLang, t, useLang } from '../../i18n'
 
 const SECTIONS: Array<{ id: YouSection; label: string }> = [
   { id: 'today', label: 'Hoy' },
@@ -29,11 +30,11 @@ const TITLES: Record<YouSection, [string, string]> = {
 export function YouSheet() {
   const section = useGrove((s) => s.youSection)
   const open = useGrove((s) => s.openYou)
-  const [eyebrow, title] = TITLES[section]
+  const [eyebrow, title] = TITLES[section].map((x) => t(x))
   return (
     <Sheet eyebrow={eyebrow} title={title}>
       <ProfileCard />
-      <Segments id="you" items={SECTIONS} value={section} onChange={open} />
+      <Segments id="you" items={SECTIONS.map((s) => ({ ...s, label: t(s.label) }))} value={section} onChange={open} />
       <SwapIn id={section}>
         {section === 'today' && <Today />}
         {section === 'achievements' && <Achievements />}
@@ -58,8 +59,8 @@ function ProfileCard() {
         {(userName || 'T').slice(0, 1).toUpperCase()}
       </span>
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0, flex: 1, color: '#1B1F1C' }}>
-        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{userName || 'Tú'}</div>
-        <div style={{ fontSize: 12, fontWeight: 600, color: '#5D645E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{gardenName}</div>
+        <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>{userName || t('Tú')}</div>
+        <div style={{ fontSize: 12, fontWeight: 600, color: '#5D645E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{gardenName === 'Tu jardín' ? t('Tu jardín') : gardenName}</div>
       </div>
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', gap: 14, color: '#1B1F1C', textAlign: 'center' }}>
         {[
@@ -69,7 +70,7 @@ function ProfileCard() {
         ].map(([v, l]) => (
           <div key={l}>
             <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: '-0.04em' }}>{v}</div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: '#5D645E', textTransform: 'uppercase' }}>{l}</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#5D645E', textTransform: 'uppercase' }}>{t(String(l))}</div>
           </div>
         ))}
       </div>
@@ -81,12 +82,12 @@ function ClaimButton({ done, claimed, onClick }: { done: boolean; claimed: boole
   if (claimed)
     return (
       <span className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700 }}>
-        <CheckIcon size={15} strokeWidth={2.4} /> Hecho
+        <CheckIcon size={15} strokeWidth={2.4} /> {t('Hecho')}
       </span>
     )
   return (
     <button className="pill pill-dark press" disabled={!done} onClick={onClick} style={{ height: 34, padding: '0 14px', fontSize: 13 }}>
-      Recoger
+      {t('Recoger')}
     </button>
   )
 }
@@ -99,7 +100,7 @@ function Today() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p className="muted" style={{ margin: '0 0 6px', fontSize: 13, lineHeight: 1.5 }}>
-        Tres pequeñas cosas para hoy. Si no te da tiempo, mañana habrá otras: no se acumulan ni caducan con culpa.
+        {t('Tres pequeñas cosas para hoy. Si no te da tiempo, mañana habrá otras: no se acumulan ni caducan con culpa.')}
       </p>
       {missions.map((m) => {
         const value = Math.min(m.target, Math.floor(m.value(daily)))
@@ -133,7 +134,7 @@ function Achievements() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       <p className="muted" style={{ margin: '0 0 6px', fontSize: 13, lineHeight: 1.5 }}>
-        Los logros te dan parcelas para ampliar tu jardín. Se quedan contigo para siempre.
+        {t('Los logros te dan parcelas para ampliar tu jardín. Se quedan contigo para siempre.')}
       </p>
       {sorted.map((a) => {
         const value = Math.min(a.target, Math.floor(a.value(all)))
@@ -181,11 +182,11 @@ function Progress() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 18 }}>
-        <Stat value={s.totalDays} label="días cuidándote" />
-        <Stat value={s.stats.focusMinutes} label="minutos cultivados" />
-        <Stat value={s.stats.sessions} label="sesiones" />
-        <Stat value={s.entries.length} label="días en Raíces" />
-        <Stat value={s.stats.plantsGrown} label="plantas crecidas" />
+        <Stat value={s.totalDays} label={t("días cuidándote")} />
+        <Stat value={s.stats.focusMinutes} label={t("minutos cultivados")} />
+        <Stat value={s.stats.sessions} label={t("sesiones")} />
+        <Stat value={s.entries.length} label={t("días en Raíces")} />
+        <Stat value={s.stats.plantsGrown} label={t("plantas crecidas")} />
         <Stat
           value={
             <>
@@ -193,12 +194,12 @@ function Progress() {
               <span style={{ fontSize: 22, color: 'var(--ink-faint)' }}>/{allowed}</span>
             </>
           }
-          label="parcelas"
+          label={t("parcelas")}
         />
       </div>
       {next && (
         <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-          A los {next.days} días cuidándote ganas {next.parcels} parcelas más. Te faltan {next.days - s.totalDays}.
+          {t('A los {days} días cuidándote ganas {parcels} parcelas más. Te faltan {left}.', { days: next.days, parcels: next.parcels, left: next.days - s.totalDays })}
         </p>
       )}
     </div>
@@ -238,71 +239,85 @@ function Settings() {
   const replay = useGrove((s) => s.replayOnboarding)
   const [confirmReset, setConfirmReset] = useState(false)
   const dev = useDev((s) => s.on)
+  const lang = useLang((s) => s.lang)
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
       {dev && <DevPanel />}
       <div className="eyebrow" style={{ marginBottom: 2 }}>
-        Sonido
+        {t('Idioma')}
       </div>
-      <Row label="Música" hint="Melodías tranquilas de fondo">
-        <Switch on={audio.music} onChange={(music) => setAudio({ music })} label="Música" />
+      <Row label={t('Idioma de la app')}>
+        <div className="lang-switch" role="radiogroup" aria-label={t('Idioma de la app')}>
+          {(['es', 'en'] as const).map((l) => (
+            <button key={l} role="radio" aria-checked={lang === l} className="pill pill-ghost press" aria-pressed={lang === l} onClick={() => setLang(l)}>
+              {l === 'es' ? 'Español' : 'English'}
+            </button>
+          ))}
+        </div>
+      </Row>
+
+      <div className="eyebrow" style={{ margin: '22px 0 2px' }}>
+        {t('Sonido')}
+      </div>
+      <Row label={t("Música")} hint={t("Melodías tranquilas de fondo")}>
+        <Switch on={audio.music} onChange={(music) => setAudio({ music })} label={t("Música")} />
       </Row>
       {audio.music && (
-        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.musicVolume} onChange={(e) => setAudio({ musicVolume: Number(e.target.value) })} aria-label="Volumen de la música" style={{ margin: '10px 0' }} />
+        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.musicVolume} onChange={(e) => setAudio({ musicVolume: Number(e.target.value) })} aria-label={t("Volumen de la música")} style={{ margin: '10px 0' }} />
       )}
-      <Row label="Sonido ambiente" hint="Naturaleza según la estación y la hora">
-        <Switch on={audio.ambient} onChange={(ambient) => setAudio({ ambient })} label="Sonido ambiente" />
+      <Row label={t("Sonido ambiente")} hint={t("Naturaleza según la estación y la hora")}>
+        <Switch on={audio.ambient} onChange={(ambient) => setAudio({ ambient })} label={t("Sonido ambiente")} />
       </Row>
       {audio.ambient && (
-        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.ambientVolume} onChange={(e) => setAudio({ ambientVolume: Number(e.target.value) })} aria-label="Volumen del ambiente" style={{ margin: '10px 0' }} />
+        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.ambientVolume} onChange={(e) => setAudio({ ambientVolume: Number(e.target.value) })} aria-label={t("Volumen del ambiente")} style={{ margin: '10px 0' }} />
       )}
-      <Row label="Efectos" hint="Celebraciones y monedas">
-        <Switch on={audio.sfx} onChange={(sfx) => setAudio({ sfx })} label="Efectos" />
+      <Row label={t("Efectos")} hint={t("Celebraciones y monedas")}>
+        <Switch on={audio.sfx} onChange={(sfx) => setAudio({ sfx })} label={t("Efectos")} />
       </Row>
       {audio.sfx && (
-        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.sfxVolume} onChange={(e) => setAudio({ sfxVolume: Number(e.target.value) })} aria-label="Volumen de los efectos" style={{ margin: '10px 0' }} />
+        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.sfxVolume} onChange={(e) => setAudio({ sfxVolume: Number(e.target.value) })} aria-label={t("Volumen de los efectos")} style={{ margin: '10px 0' }} />
       )}
 
       <div className="eyebrow" style={{ margin: '22px 0 2px' }}>
-        Tu jardín
+        {t('Tu jardín')}
       </div>
-      <Row label="Tu nombre">
+      <Row label={t("Tu nombre")}>
         <input
           value={userName}
           onChange={(e) => useGrove.setState({ userName: e.target.value.slice(0, 24) })}
-          aria-label="Tu nombre"
-          placeholder="Opcional"
+          aria-label={t("Tu nombre")}
+          placeholder={t("Opcional")}
           style={{ width: 150, height: 36, borderRadius: 12, border: '1px solid var(--line)', background: 'rgba(255,255,255,0.5)', padding: '0 10px', font: 'inherit', fontSize: 14, color: 'var(--ink)', textAlign: 'right' }}
         />
       </Row>
-      <Row label="Nombre del jardín">
+      <Row label={t("Nombre del jardín")}>
         <input
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 24))}
-          aria-label="Nombre del jardín"
+          aria-label={t("Nombre del jardín")}
           style={{ width: 150, height: 36, borderRadius: 12, border: '1px solid var(--line)', background: 'rgba(255,255,255,0.5)', padding: '0 10px', font: 'inherit', fontSize: 14, color: 'var(--ink)', textAlign: 'right' }}
         />
       </Row>
-      <Row label="Objetivo semanal" hint="Días a la semana que quieres dedicarte">
+      <Row label={t("Objetivo semanal")} hint={t("Días a la semana que quieres dedicarte")}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button className="pill pill-ghost press" onClick={() => setWeekGoal(Math.max(1, weekGoal - 1))} aria-label="Menos días" style={{ width: 34, height: 34, padding: 0 }}>
+          <button className="pill pill-ghost press" onClick={() => setWeekGoal(Math.max(1, weekGoal - 1))} aria-label={t("Menos días")} style={{ width: 34, height: 34, padding: 0 }}>
             −
           </button>
           <span style={{ fontSize: 17, fontWeight: 700, width: 16, textAlign: 'center' }}>{weekGoal}</span>
-          <button className="pill pill-ghost press" onClick={() => setWeekGoal(Math.min(7, weekGoal + 1))} aria-label="Más días" style={{ width: 34, height: 34, padding: 0 }}>
+          <button className="pill pill-ghost press" onClick={() => setWeekGoal(Math.min(7, weekGoal + 1))} aria-label={t("Más días")} style={{ width: 34, height: 34, padding: 0 }}>
             +
           </button>
         </div>
       </Row>
-      <Row label="Estación" hint="La del calendario, o tu favorita siempre">
+      <Row label={t("Estación")} hint={t("La del calendario, o tu favorita siempre")}>
         <select
           value={seasonOverride ?? 'auto'}
           onChange={(e) => useGrove.setState({ seasonOverride: e.target.value === 'auto' ? null : (e.target.value as typeof seasonOverride) })}
-          aria-label="Estación"
+          aria-label={t("Estación")}
           style={{ height: 36, borderRadius: 12, border: '1px solid var(--line)', background: 'rgba(255,255,255,0.5)', padding: '0 8px', font: 'inherit', fontSize: 14, color: 'var(--ink)' }}
         >
-          <option value="auto">Del calendario</option>
+          <option value="auto">{t("Del calendario")}</option>
           {SEASON_ORDER.map((s) => (
             <option key={s} value={s}>
               {SEASONS[s].name}
@@ -312,29 +327,29 @@ function Settings() {
       </Row>
 
       <div className="eyebrow" style={{ margin: '22px 0 2px' }}>
-        Datos
+        {t('Datos')}
       </div>
-      <Row label="Tu diario" hint="Todo se guarda solo en este dispositivo">
+      <Row label={t("Tu diario")} hint={t("Todo se guarda solo en este dispositivo")}>
         <span />
       </Row>
-      <Row label="Bienvenida" hint="Vuelve a ver la introducción">
+      <Row label={t("Bienvenida")} hint={t("Vuelve a ver la introducción")}>
         <button className="pill pill-ghost press" onClick={replay} style={{ height: 34, fontSize: 13 }}>
-          Ver de nuevo
+          {t('Ver de nuevo')}
         </button>
       </Row>
       <div style={{ paddingTop: 14 }}>
         {confirmReset ? (
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="pill press" onClick={() => { resetAll(); setConfirmReset(false) }} style={{ flex: 1, background: '#E0605A', color: '#fff' }}>
-              Sí, borrar todo
+              {t('Sí, borrar todo')}
             </button>
             <button className="pill pill-ghost press" onClick={() => setConfirmReset(false)} style={{ flex: 1 }}>
-              Cancelar
+              {t('Cancelar')}
             </button>
           </div>
         ) : (
           <button className="pill pill-ghost press" onClick={() => setConfirmReset(true)} style={{ width: '100%', color: '#C2453F' }}>
-            Empezar de cero
+            {t('Empezar de cero')}
           </button>
         )}
       </div>
@@ -353,12 +368,12 @@ function VersionLine() {
     if (taps.current.length >= 7) {
       taps.current = []
       setDevMode(true)
-      useGrove.getState().showToast('Modo desarrollador activado')
+      useGrove.getState().showToast(t('Modo desarrollador activado'))
     }
   }
   return (
-    <button className="version-line" onClick={onTap} aria-label="Versión de la app">
-      Tendu · versión 0.9
+    <button className="version-line" onClick={onTap} aria-label={t("Versión de la app")}>
+      {t('Tendu · versión 0.9')}
     </button>
   )
 }

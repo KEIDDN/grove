@@ -4,6 +4,7 @@ import { paletteFor } from '../../game/variants'
 import { iriStyle, KindGlyph } from '../glyphs'
 import { CoinIcon } from '../icons'
 import { Sheet } from '../Sheet'
+import { t } from '../../i18n'
 
 export function NurserySheet() {
   const coins = useGrove((s) => s.coins)
@@ -13,7 +14,7 @@ export function NurserySheet() {
   const decor = CATALOG.filter((c) => !c.limited && !c.seed)
 
   return (
-    <Sheet eyebrow="Tienda" title="Vivero">
+    <Sheet eyebrow={t("Tienda")} title={t("Vivero")}>
       <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {limited.map((c) => (
           <button key={c.id} className="iri press" onClick={() => buy(c.id)} style={{ ...iriStyle(1), borderRadius: 26, padding: 18, display: 'flex', alignItems: 'center', gap: 16, textAlign: 'left' }}>
@@ -28,8 +29,8 @@ export function NurserySheet() {
           </button>
         ))}
 
-        <Section title="Semillas" hint="Se plantan y crecen con tu tiempo de Cultivar o tus días en Raíces." items={seeds} coins={coins} buy={buy} />
-        <Section title="Decoración" hint="Llega lista para colocar." items={decor} coins={coins} buy={buy} offset={3} />
+        <Section title={t("Semillas")} hint={t("Se plantan y crecen con tu tiempo de Cultivar o tus días en Raíces.")} items={seeds} coins={coins} buy={buy} />
+        <Section title={t("Decoración")} hint={t("Llega lista para colocar.")} items={decor} coins={coins} buy={buy} offset={3} />
       </div>
     </Sheet>
   )
@@ -50,7 +51,7 @@ function Section({ title, hint, items, coins, buy, offset = 0 }: { title: string
             key={c.id}
             className="iri press"
             onClick={() => buy(c.id)}
-            aria-label={`${c.name}, ${c.price} monedas`}
+            aria-label={t('{name}, {price} monedas', { name: c.name, price: c.price })}
             style={{ ...iriStyle(i + offset), borderRadius: 22, padding: '16px 14px 14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8, textAlign: 'left' }}
           >
             <KindGlyph kind={c.kind} color={paletteFor(c.kind, c.color)?.[0]} size={56} />

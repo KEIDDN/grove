@@ -34,6 +34,7 @@ import { rewardFor, type FocusSession } from './session'
 import { visitWhileAway } from './visitors'
 import type { Weather } from './weather'
 import { dayKey, TIME_SCALE, weekdayIndex, weekKey } from './time'
+import { t, tn } from '../i18n'
 
 export type Tab = 'garden' | 'tend' | 'roots' | 'calm' | 'read' | 'nursery' | 'inventory' | 'you'
 export type YouSection = 'today' | 'achievements' | 'album' | 'progress' | 'settings'
@@ -370,9 +371,9 @@ export const useGrove = create<GroveState>()(
           celebrateAfter({
             level: 'big',
             icon: 'parcel',
-            eyebrow: 'Has desbloqueado',
-            title: `${n} parcelas nuevas`,
-            detail: `${days} días cuidándote. Tu jardín ya puede crecer.`,
+            eyebrow: t('Has desbloqueado'),
+            title: tn('{n} parcela nueva', '{n} parcelas nuevas', n),
+            detail: t('{days} días cuidándote. Tu jardín ya puede crecer.', { days }),
             action: 'expand',
           })
         }
@@ -383,11 +384,11 @@ export const useGrove = create<GroveState>()(
       const dayLine = (s: Saved, day: Partial<Saved>): CelebrationLine[] => {
         if (!day.weekDays) return []
         const done = day.weekDays.filter(Boolean).length
-        return [{ text: done >= s.weekGoal ? `Semana cumplida · ${done} de ${s.weekGoal} días` : `Día cumplido · ${done} de ${s.weekGoal} esta semana` }]
+        return [{ text: done >= s.weekGoal ? t('Semana cumplida · {done} de {goal} días', { done, goal: s.weekGoal }) : t('Día cumplido · {done} de {goal} esta semana', { done, goal: s.weekGoal }) }]
       }
 
       const grownLines = (grown: GardenItem[]): CelebrationLine[] =>
-        grown.map((g) => ({ text: `${KIND_NAMES[g.kind] ?? 'Tu planta'} · planta adulta`, kind: g.kind, color: g.color }))
+        grown.map((g) => ({ text: t('{name} · planta adulta', { name: KIND_NAMES[g.kind] ?? t('Tu planta') }), kind: g.kind, color: g.color }))
 
       /** La primera planta adulta se celebra a pantalla completa; las siguientes van en la tarjeta. */
       const announceGrown = (grown: GardenItem[]) => {
@@ -396,9 +397,9 @@ export const useGrove = create<GroveState>()(
         celebrateAfter({
           level: 'big',
           icon: 'plant',
-          eyebrow: 'Tu primera planta adulta',
-          title: KIND_NAMES[g.kind] ?? 'Tu planta',
-          detail: 'Cada rato que te dedicas se nota aquí.',
+          eyebrow: t('Tu primera planta adulta'),
+          title: KIND_NAMES[g.kind] ?? t('Tu planta'),
+          detail: t('Cada rato que te dedicas se nota aquí.'),
           focus: { kind: g.kind, color: g.color, x: g.x, z: g.z },
         })
       }
@@ -448,7 +449,7 @@ export const useGrove = create<GroveState>()(
           // Abandonar no da monedas ni riega, pero 10 minutos o más sí cuentan como día cumplido.
           const counts = elapsedMinutes(s.session) >= ECONOMY.minMinutesForCoins
           set({ ...rollover(get()), ...(counts ? withDay(s) : {}), session: null, restMode: false })
-          toast(counts ? 'Sesión abandonada. Tu tiempo cuenta para hoy.' : 'Sesión abandonada. No pasa nada, vuelve cuando quieras.')
+          toast(counts ? t('Sesión abandonada. Tu tiempo cuenta para hoy.') : t('Sesión abandonada. No pasa nada, vuelve cuando quieras.'))
         },
         completeSession: () => {
           const s = fresh()
@@ -476,17 +477,17 @@ export const useGrove = create<GroveState>()(
           const growing = seeds.length - watered.grown.length
           const lines: CelebrationLine[] = [
             ...grownLines(watered.grown),
-            ...(growing > 0 && reward.grew ? [{ text: growing === 1 ? 'Has regado tu semilla' : `Has regado tus ${growing} semillas`, kind: 'sapling' as ItemKind }] : []),
+            ...(growing > 0 && reward.grew ? [{ text: tn('Has regado tu semilla', 'Has regado tus {n} semillas', growing), kind: 'sapling' as ItemKind }] : []),
             ...dayLine(s, day),
-            ...(!reward.grew ? [{ text: `Las sesiones de menos de ${ECONOMY.minMinutesForCoins} minutos cuentan para ti, pero no dan monedas.` }] : []),
-            ...(reward.capped ? [{ text: 'Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.' }] : []),
+            ...(!reward.grew ? [{ text: t('Las sesiones de menos de {n} minutos cuentan para ti, pero no dan monedas.', { n: ECONOMY.minMinutesForCoins }) }] : []),
+            ...(reward.capped ? [{ text: t('Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.') }] : []),
           ]
           const look = watered.grown[0] ?? watered.items.find((it) => it.growth?.by === 'focus')
           celebrate({
             level: 'medium',
             icon: 'focus',
-            eyebrow: first ? 'Tu primera sesión' : 'Sesión completada',
-            title: `${minutes} minuto${minutes === 1 ? '' : 's'} para ti`,
+            eyebrow: first ? t('Tu primera sesión') : t('Sesión completada'),
+            title: tn('{n} minuto para ti', '{n} minutos para ti', minutes),
             coins: reward.coins,
             lines,
             first,
@@ -499,7 +500,7 @@ export const useGrove = create<GroveState>()(
         startCalm: (kind, minutes, pattern) => set({ calm: { kind, minutes, pattern, startedAt: Date.now() }, tab: 'garden' }),
         cancelCalm: () => {
           set({ calm: null, tab: 'calm' })
-          toast('Vuelve cuando quieras')
+          toast(t('Vuelve cuando quieras'))
         },
         setCalmPrefs: (patch) => set({ calmPrefs: { ...get().calmPrefs, ...patch } }),
         completeCalm: (early = false) => {
@@ -510,7 +511,7 @@ export const useGrove = create<GroveState>()(
           // Menos de un minuto no cuenta: se cierra sin más
           if (minutes < 1) {
             set({ calm: null, tab: 'calm' })
-            return toast('Vuelve cuando quieras')
+            return toast(t('Vuelve cuando quieras'))
           }
           const reward = calmRewardFor(minutes, s.coinsToday)
           const seeds = s.items.filter((it) => it.growth?.by === 'focus')
@@ -535,14 +536,14 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'medium',
             icon: 'calm',
-            eyebrow: first ? 'Tu primer rato de calma' : breath ? 'Respiración completada' : 'Meditación completada',
-            title: `${minutes} minuto${minutes === 1 ? '' : 's'} de calma`,
+            eyebrow: first ? t('Tu primer rato de calma') : breath ? t('Respiración completada') : t('Meditación completada'),
+            title: tn('{n} minuto de calma', '{n} minutos de calma', minutes),
             coins: reward.coins,
             lines: [
               ...grownLines(watered.grown),
-              ...(growing > 0 ? [{ text: growing === 1 ? 'Tu calma ha regado tu semilla' : `Tu calma ha regado tus ${growing} semillas`, kind: 'sapling' as ItemKind }] : []),
+              ...(growing > 0 ? [{ text: tn('Tu calma ha regado tu semilla', 'Tu calma ha regado tus {n} semillas', growing), kind: 'sapling' as ItemKind }] : []),
               ...dayLine(s, day),
-              ...(reward.capped ? [{ text: 'Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.' }] : []),
+              ...(reward.capped ? [{ text: t('Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.') }] : []),
             ],
             first,
             focus: look ? { kind: look.kind, color: look.color, x: look.x, z: look.z } : undefined,
@@ -566,11 +567,11 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'medium',
             icon: 'visitor',
-            eyebrow: 'Mientras no estabas',
-            title: n === 1 ? `${visit.visitors[0].name} ha pasado a verte` : `${n} visitantes han pasado a verte`,
-            detail: first ? 'Lo que pones en tu jardín atrae a visitantes. Te dejan un detalle al irse.' : undefined,
+            eyebrow: t('Mientras no estabas'),
+            title: n === 1 ? t('{name} ha pasado a verte', { name: visit.visitors[0].name }) : t('{n} visitantes han pasado a verte', { n }),
+            detail: first ? t('Lo que pones en tu jardín atrae a visitantes. Te dejan un detalle al irse.') : undefined,
             coins: visit.coins,
-            lines: visit.visitors.map((v) => ({ text: visit.fresh.includes(v.id) ? `${v.name} · nuevo en tu álbum` : v.name, visitor: v.type })),
+            lines: visit.visitors.map((v) => ({ text: visit.fresh.includes(v.id) ? t('{name} · nuevo en tu álbum', { name: v.name }) : v.name, visitor: v.type })),
             first,
             action: visit.fresh.length ? 'album' : undefined,
           })
@@ -585,7 +586,7 @@ export const useGrove = create<GroveState>()(
           // Editar la página de hoy no vuelve a dar recompensas
           if (s.entries.some((e) => e.date === today)) {
             set({ entries: s.entries.map((e) => (e.date === today ? entry : e)) })
-            toast('Página de hoy actualizada')
+            toast(t('Página de hoy actualizada'))
             return
           }
           const day = withDay(s)
@@ -609,10 +610,10 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'medium',
             icon: 'roots',
-            eyebrow: first ? 'Tu primera página' : 'Página guardada',
-            title: 'Ha florecido algo',
+            eyebrow: first ? t('Tu primera página') : t('Página guardada'),
+            title: t('Ha florecido algo'),
             lines: [
-              { text: flower ? 'Una flor nueva en tu jardín' : 'Una flor nueva, guardada en tus objetos', kind: 'flower', color },
+              { text: flower ? t('Una flor nueva en tu jardín') : t('Una flor nueva, guardada en tus objetos'), kind: 'flower', color },
               ...grownLines(watered.grown),
               ...dayLine(s, day),
             ],
@@ -626,7 +627,7 @@ export const useGrove = create<GroveState>()(
           const s = get()
           const entry = CATALOG.find((c) => c.id === catalogId)
           if (!entry) return
-          if (s.coins < entry.price) return toast(`Te faltan ${entry.price - s.coins} monedas. Cultivar te da más.`)
+          if (s.coins < entry.price) return toast(t('Te faltan {n} monedas. Cultivar te da más.', { n: entry.price - s.coins }))
           const growth = entry.seed ? { ...entry.seed, progress: 0 } : undefined
           const inv: InventoryItem = { id: newId(entry.kind), kind: entry.kind, color: entry.color, growth }
           set({
@@ -638,7 +639,7 @@ export const useGrove = create<GroveState>()(
             selectedId: null,
             placing: { from: 'inventory', invId: inv.id, kind: inv.kind, color: inv.color, growth },
           })
-          toast(entry.seed ? `Semilla de ${entry.name.toLowerCase()}: toca dónde plantarla` : `${entry.name}: toca dónde colocarlo`)
+          toast(entry.seed ? t('Semilla de {name}: toca dónde plantarla', { name: entry.name.toLowerCase() }) : t('{name}: toca dónde colocarlo', { name: entry.name }))
         },
 
         setEditMode: (on) => set({ inspectId: null, editMode: on, selectedId: null, placing: null, hoverCell: null, editTool: 'select', tab: 'garden' }),
@@ -657,7 +658,7 @@ export const useGrove = create<GroveState>()(
             inventory: [...inventory, { id: it.id, kind: it.kind, color: it.color, growth: it.growth }],
             selectedId: null,
           })
-          toast('Guardado en tus objetos')
+          toast(t('Guardado en tus objetos'))
         },
         startMove: () => {
           const it = get().items.find((i) => i.id === get().selectedId)
@@ -673,7 +674,7 @@ export const useGrove = create<GroveState>()(
           const p = s.placing
           if (!p) return
           const ignore = p.from === 'garden' ? p.itemId : undefined
-          if (!canPlace(s.items, s.plots, p.kind, x, z, ignore)) return toast('Ahí no cabe')
+          if (!canPlace(s.items, s.plots, p.kind, x, z, ignore)) return toast(t('Ahí no cabe'))
           if (p.from === 'garden') {
             set({
               items: s.items.map((it) => (it.id === p.itemId ? { ...it, x, z } : it)),
@@ -696,7 +697,7 @@ export const useGrove = create<GroveState>()(
             stats: isSeed ? { ...s.stats, seedsPlanted: s.stats.seedsPlanted + 1 } : p.growth ? s.stats : { ...s.stats, decorPlaced: s.stats.decorPlaced + 1 },
             daily: isSeed ? { ...s.daily, planted: s.daily.planted + 1 } : { ...s.daily, placed: s.daily.placed + 1 },
           })
-          if (isSeed) notify(p.growth!.by === 'focus' ? `Plantada. Crecerá con ${p.growth!.need} min de Cultivar` : `Plantada. Crecerá con ${p.growth!.need} días en Raíces`, 'plant')
+          if (isSeed) notify(p.growth!.by === 'focus' ? t('Plantada. Crecerá con {n} min de Cultivar', { n: p.growth!.need }) : tn('Plantada. Crecerá con {n} día en Raíces', 'Plantada. Crecerá con {n} días en Raíces', p.growth!.need), 'plant')
         },
         cancelPlacing: () => set({ placing: null, hoverCell: null }),
         recolorSelected: (variantId) => {
@@ -726,7 +727,7 @@ export const useGrove = create<GroveState>()(
         },
         addPlot: (tx, tz) => {
           const s = get()
-          if (s.plots.length >= parcelsAllowed(s)) return toast('No te quedan parcelas. Se ganan con días y logros.')
+          if (s.plots.length >= parcelsAllowed(s)) return toast(t('No te quedan parcelas. Se ganan con días y logros.'))
           const isSlot = plotSlots(s.plots).some(([x, z]) => x === tx && z === tz)
           if (!isSlot || plotSet(s.plots).has(plotKey(tx, tz))) return
           const plots: Plot[] = [...s.plots, [tx, tz]]
@@ -750,9 +751,9 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'big',
             icon: 'trophy',
-            eyebrow: 'Logro conseguido',
+            eyebrow: t('Logro conseguido'),
             title: a.title,
-            detail: parcels ? `${a.detail} · +${parcels} parcela${parcels > 1 ? 's' : ''} para tu jardín` : a.detail,
+            detail: parcels ? `${a.detail} · ${tn('+{n} parcela para tu jardín', '+{n} parcelas para tu jardín', parcels)}` : a.detail,
             coins: a.reward.coins,
             action: parcels ? 'expand' : undefined,
           })
@@ -772,6 +773,7 @@ export const useGrove = create<GroveState>()(
           const items = entry ? autoPlace(base, s.plots, entry.kind, entry.color, { growth: entry.seed ? { ...entry.seed, progress: 0 } : undefined }) : null
           const planted = items?.find((it) => !base.includes(it))
           const name = gardenName.trim() || 'Tu jardín'
+          const shownName = name === 'Tu jardín' ? t('Tu jardín') : name
           set({
             onboarded: true,
             giftGiven: true,
@@ -787,9 +789,9 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'big',
             icon: 'plant',
-            eyebrow: s.giftGiven ? 'Bienvenido de nuevo' : 'Ha nacido tu jardín',
-            title: name,
-            detail: entry ? `Tu semilla de ${entry.name.toLowerCase()} ya está plantada. Crecerá con cada rato que te dediques.` : 'Cuídate. Mira cómo florece.',
+            eyebrow: s.giftGiven ? t('De nuevo en casa') : t('Ha nacido tu jardín'),
+            title: shownName,
+            detail: entry ? t('Tu semilla de {name} ya está plantada. Crecerá con cada rato que te dediques.', { name: entry.name.toLowerCase() }) : t('Cuídate. Mira cómo florece.'),
             focus: planted ? { kind: planted.kind, color: planted.color, x: planted.x, z: planted.z } : undefined,
           })
         },
@@ -804,8 +806,8 @@ export const useGrove = create<GroveState>()(
           celebrate({
             level: 'medium',
             icon: 'read',
-            eyebrow: first ? 'Tu primera lectura' : 'Lectura terminada',
-            title: 'Gracias por dedicarte este rato',
+            eyebrow: first ? t('Tu primera lectura') : t('Lectura terminada'),
+            title: t('Gracias por dedicarte este rato'),
             lines: dayLine(s, day),
             first,
           })

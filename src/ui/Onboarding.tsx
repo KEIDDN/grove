@@ -9,6 +9,7 @@ import { breath, sceneFx } from '../scene/breath'
 import { craneIn, focusOn, framing, view } from '../scene/camera'
 import { iriStyle, KindGlyph } from './glyphs'
 import { CalmIcon, JournalIcon, SproutIcon, TimerIcon } from './icons'
+import { localize, t } from '../i18n'
 import { NumericText } from './NumericText'
 import { Wordmark } from './Wordmark'
 
@@ -64,6 +65,7 @@ const SCENES: Array<{ id: SceneId; eyebrow?: string; title: string; body: string
     body: 'Si un día no puedes venir, no pasa nada. Aquí no hay rachas que perder: tu jardín te espera tal y como lo dejaste.',
   },
 ]
+localize(SCENES, ['title', 'body'])
 const STORY = SCENES.length
 
 /** Coloca un objeto de muestra en el sitio libre más cercano al centro. */
@@ -205,7 +207,7 @@ function playScene(id: SceneId): () => void {
     }, 1700)
     // Y alguien viene de visita: así se entiende lo de los visitantes
     later(() => {
-      useGrove.setState({ toast: { id: Date.now(), text: 'Una ardilla ha pasado a verte', icon: 'visitor' } })
+      useGrove.setState({ toast: { id: Date.now(), text: t('Una ardilla ha pasado a verte'), icon: 'visitor' } })
     }, 2700)
   } else if (id === 'promise') {
     framing.lift = 0.14
@@ -293,7 +295,7 @@ export function Onboarding() {
     if (done.current) return
     done.current = true
     clearDemos()
-    complete({ userName, gardenName: gardenName || (userName ? `El jardín de ${userName.trim()}` : 'Tu jardín'), focusAreas: areas, weekGoal, firstSeed: seed })
+    complete({ userName, gardenName: gardenName || (userName ? t('El jardín de {name}', { name: userName.trim() }) : t('Tu jardín')), focusAreas: areas, weekGoal, firstSeed: seed })
   }
 
   const done = useRef(false)
@@ -349,7 +351,7 @@ export function Onboarding() {
         </div>
         {story && (
           <button className="ob-skip press" onClick={skip}>
-            Saltar
+            {t('Saltar')}
           </button>
         )}
       </div>
@@ -365,7 +367,7 @@ export function Onboarding() {
               scene.chip && (
                 <motion.div className="ob-chip" variants={fade(0.1)}>
                   {scene.chip.icon}
-                  {scene.chip.label}
+                  {t(scene.chip.label)}
                 </motion.div>
               )
             )}
@@ -391,8 +393,8 @@ export function Onboarding() {
           >
             {id === 'name' && (
               <Personal eyebrow="Para empezar" title="¿Cómo te llamas?" hint="Para saludarte cuando vuelvas.">
-                <Field label="Tu nombre (opcional)" value={userName} onChange={setUserName} placeholder="Tu nombre" />
-                <Field label="El nombre de tu jardín" value={gardenName} onChange={setGardenName} placeholder={userName ? `El jardín de ${userName}` : 'Tu jardín'} />
+                <Field label={t("Tu nombre (opcional)")} value={userName} onChange={setUserName} placeholder={t("Tu nombre")} />
+                <Field label={t('El nombre de tu jardín')} value={gardenName} onChange={setGardenName} placeholder={userName ? t('El jardín de {name}', { name: userName }) : t('Tu jardín')} />
               </Personal>
             )}
             {id === 'care' && (
@@ -409,7 +411,7 @@ export function Onboarding() {
                       }}
                       style={{ height: 40 }}
                     >
-                      {a}
+                      {t(a)}
                     </button>
                   ))}
                 </div>
@@ -418,13 +420,13 @@ export function Onboarding() {
             {id === 'rhythm' && (
               <Personal eyebrow="Tu ritmo" title="¿Cuántos días a la semana quieres venir?" hint="Elige algo que puedas cumplir. Si una semana no llegas, empiezas otra sin perder nada.">
                 <div className="ob-rhythm">
-                  <button className="pill pill-ghost press" onClick={() => (audio.sfx('tick', weekGoal - 1), setWeekGoal((g) => Math.max(1, g - 1)))} aria-label="Menos días">
+                  <button className="pill pill-ghost press" onClick={() => (audio.sfx('tick', weekGoal - 1), setWeekGoal((g) => Math.max(1, g - 1)))} aria-label={t("Menos días")}>
                     −
                   </button>
                   <span className="display" style={{ fontSize: 92, minWidth: 80, textAlign: 'center' }}>
                     <NumericText value={weekGoal} />
                   </span>
-                  <button className="pill pill-ghost press" onClick={() => (audio.sfx('tick', weekGoal + 1), setWeekGoal((g) => Math.min(7, g + 1)))} aria-label="Más días">
+                  <button className="pill pill-ghost press" onClick={() => (audio.sfx('tick', weekGoal + 1), setWeekGoal((g) => Math.min(7, g + 1)))} aria-label={t("Más días")}>
                     +
                   </button>
                 </div>
@@ -465,15 +467,15 @@ export function Onboarding() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.7, ease: EASE }}
             role="dialog"
-            aria-label="Te damos la bienvenida a tendu"
+            aria-label={t("Te damos la bienvenida a tendu")}
           >
             <div className="ob-welcome-glow" />
             <motion.span className="ob-welcome-eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.25, ease: EASE }}>
-              Te damos la bienvenida a
+              {t('Te damos la bienvenida a')}
             </motion.span>
             <Wordmark size={104} animate delay={0.5} />
             <motion.p className="ob-welcome-line" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1.3, ease: EASE }}>
-              {userName.trim() ? `${userName.trim()}, ya tienes un sitio para ti.` : 'Ya tienes un sitio para ti.'}
+              {userName.trim() ? t('{name}, ya tienes un sitio para ti.', { name: userName.trim() }) : t('Ya tienes un sitio para ti.')}
             </motion.p>
           </motion.div>
         )}
@@ -481,12 +483,12 @@ export function Onboarding() {
 
       <div className="ob-actions">
         {index > 0 && (
-          <button className="pill pill-ghost press ob-back" onClick={back} aria-label="Atrás">
-            Atrás
+          <button className="pill pill-ghost press ob-back" onClick={back} aria-label={t("Atrás")}>
+            {t('Atrás')}
           </button>
         )}
         <button className="pill pill-dark press ob-next" onClick={next}>
-          {index === 0 ? 'Empezar' : last ? (giftGiven ? 'Entrar' : 'Plantar y entrar') : 'Continuar'}
+          {index === 0 ? t('Empezar') : last ? (giftGiven ? t('Entrar') : t('Plantar y entrar')) : t('Continuar')}
         </button>
       </div>
     </div>
@@ -510,14 +512,14 @@ function Personal({ eyebrow, title, hint, children }: { eyebrow: string; title: 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <div className="eyebrow">{eyebrow}</div>
+        <div className="eyebrow">{t(eyebrow)}</div>
         <h2 className="title" style={{ marginTop: 4, fontSize: 30 }}>
-          {title}
+          {t(title)}
         </h2>
       </div>
       {hint && (
         <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
-          {hint}
+          {t(hint)}
         </p>
       )}
       {children}

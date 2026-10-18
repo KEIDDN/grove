@@ -17,6 +17,7 @@ import { parcelsAllowed, useGrove, useSeason } from '../game/store'
 import { dayKey, weekdayIndex } from '../game/time'
 import { VisitorGlyph } from './glyphs'
 import { CheckIcon, ChevronIcon, CoinIcon, EditIcon } from './icons'
+import { t, tn } from '../i18n'
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 export function TopBar() {
@@ -37,9 +38,9 @@ export function TopBar() {
     return (
       <div className="topbar">
         <div>
-          <span className="eyebrow">{painting ? 'Pintando suelo' : placing ? 'Colocando' : selected ? 'Objeto seleccionado' : 'Toca un objeto para editarlo'}</span>
+          <span className="eyebrow">{painting ? t('Pintando suelo') : placing ? t('Colocando') : selected ? t('Objeto seleccionado') : t('Toca un objeto para editarlo')}</span>
           <h1 className="title" style={{ marginTop: 4 }}>
-            Editar jardín
+            {t('Editar jardín')}
           </h1>
         </div>
         <Coins coins={coins} />
@@ -51,12 +52,12 @@ export function TopBar() {
     <div className="topbar">
       <div className="topbar-left">
         <h1 className="title garden-title" style={{ fontSize: gardenName.length > 14 ? 24 : 30 }}>
-          {gardenName}
+          {gardenName === 'Tu jardín' ? t('Tu jardín') : gardenName}
         </h1>
-        <button className="week-chip glass press" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Tu semana: ${done} de ${weekGoal} días`}>
+        <button className="week-chip glass press" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={t('Tu semana: {done} de {goal} días', { done, goal: weekGoal })}>
           <WeekRing done={done} goal={weekGoal} />
           <span>
-            {season.name} · Día {totalDays}
+            {season.name} · {t('Día {n}', { n: totalDays })}
           </span>
           <ChevronIcon size={12} strokeWidth={2.6} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .3s var(--ease)', opacity: 0.6 }} />
         </button>
@@ -74,7 +75,7 @@ export function TopBar() {
         <button
           className="glass press"
           onClick={() => setEditMode(true)}
-          aria-label="Editar jardín"
+          aria-label={t("Editar jardín")}
           style={{ width: 42, height: 42, borderRadius: '50%', display: 'grid', placeItems: 'center' }}
         >
           <EditIcon size={18} strokeWidth={2} />
@@ -170,7 +171,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
   return (
     <motion.section
       className="glass week-card"
-      aria-label="Tu semana"
+      aria-label={t("Tu semana")}
       initial={{ opacity: 0, y: -10, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.97, transition: { duration: 0.15 } }}
@@ -182,20 +183,20 @@ function WeekCard({ onClose }: { onClose: () => void }) {
           <span style={{ fontSize: 22, color: 'var(--ink-faint)' }}>/{weekGoal}</span>
         </span>
         <span className="muted" style={{ fontSize: 13 }}>
-          {done >= weekGoal ? 'semana cumplida' : 'días esta semana'}
+          {done >= weekGoal ? t('semana cumplida') : t('días esta semana')}
         </span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         {DAY_LABELS.map((l, i) => (
           <div key={l} className={weekDays[i] ? 'wk-dot done' : i === today ? 'wk-dot today' : 'wk-dot'}>
             <i />
-            <span>{l}</span>
+            <span>{t(l)}</span>
           </div>
         ))}
       </div>
 
       <div className="week-block">
-        <div className="week-label">Hoy</div>
+        <div className="week-label">{t('Hoy')}</div>
         {missions.map((m) => {
           const value = Math.min(m.target, Math.floor(m.value(daily)))
           const ready = value >= m.target
@@ -209,7 +210,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
               <span className="week-check">{(got || ready) && <CheckIcon size={11} strokeWidth={3} />}</span>
               <span className="week-mission-title">{m.title}</span>
               <span className="week-mission-meta">
-                {got ? 'Hecho' : ready ? 'Recoger' : `${value}/${m.target}`}
+                {got ? t('Hecho') : ready ? t('Recoger') : `${value}/${m.target}`}
                 {!got && (
                   <>
                     <CoinIcon size={12} />
@@ -223,7 +224,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="week-block">
-        <div className="week-label">Próximo hito</div>
+        <div className="week-label">{t('Próximo hito')}</div>
         {next ? (
           <>
             <div className="week-bar">
@@ -231,13 +232,13 @@ function WeekCard({ onClose }: { onClose: () => void }) {
             </div>
             <div className="week-row-text">
               <span>
-                Día {totalDays} de {next.days}
+                {t('Día {n} de {total}', { n: totalDays, total: next.days })}
               </span>
-              <span className="muted">+{next.parcels} parcelas</span>
+              <span className="muted">{t('+{n} parcelas', { n: next.parcels })}</span>
             </div>
           </>
         ) : (
-          <div className="week-row-text muted">Tu isla ya tiene todas sus parcelas.</div>
+          <div className="week-row-text muted">{t('Tu isla ya tiene todas sus parcelas.')}</div>
         )}
         {freeParcels > 0 && (
           <button
@@ -249,27 +250,27 @@ function WeekCard({ onClose }: { onClose: () => void }) {
               setEditTool('expand')
             }}
           >
-            {freeParcels === 1 ? 'Tienes 1 parcela para ampliar' : `Tienes ${freeParcels} parcelas para ampliar`}
+            {tn('Tienes {n} parcela para ampliar', 'Tienes {n} parcelas para ampliar', freeParcels)}
           </button>
         )}
       </div>
 
       <div className="week-block">
-        <div className="week-label">Ahora en tu isla</div>
+        <div className="week-label">{t('Ahora en tu isla')}</div>
         <div className="week-row-text">
           <span>{season.name}</span>
-          <span className="muted">{realSeason ? `quedan ${daysLeftInSeason(seasonId)} días` : 'tu favorita'}</span>
+          <span className="muted">{realSeason ? tn('queda {n} día', 'quedan {n} días', daysLeftInSeason(seasonId)) : t('tu favorita')}</span>
         </div>
         {weather !== 'clear' && (
           <div className="week-row-text">
             <span>{WEATHER_NAMES[weather]}</span>
-            <span className="muted">{weatherOverride ? 'ahora' : `hasta las ${weatherForDay(new Date(), seasonId).to}:00`}</span>
+            <span className="muted">{weatherOverride ? t('ahora') : t('hasta las {h}:00', { h: weatherForDay(new Date(), seasonId).to })}</span>
           </div>
         )}
         {event && (
           <div className="week-row-text">
             <span>{event.name}</span>
-            <span className="muted">{event.days === 0 ? 'es hoy' : event.days === 1 ? 'mañana' : `en ${event.days} días`}</span>
+            <span className="muted">{event.days === 0 ? t('es hoy') : event.days === 1 ? t('mañana') : t('en {n} días', { n: event.days })}</span>
           </div>
         )}
         <TodayMood onOpen={() => (onClose(), setTab('roots'))} />
@@ -283,7 +284,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
             ))
           ) : (
             <span className="muted" style={{ fontSize: 12 }}>
-              Nadie de visita ahora mismo. Vuelven mientras no estás.
+              {t('Nadie de visita ahora mismo. Vuelven mientras no estás.')}
             </span>
           )}
         </div>
@@ -298,7 +299,7 @@ function TodayMood({ onOpen }: { onOpen: () => void }) {
   return (
     <button className="week-mood press" onClick={onOpen}>
       <span className="week-mood-dot" style={{ background: mood ? moodColor(mood.level) : undefined }} />
-      <span style={{ flex: 1, textAlign: 'left' }}>{mood ? `Hoy te sientes: ${moodLabel(mood.level).toLowerCase()}` : '¿Cómo te sientes hoy?'}</span>
+      <span style={{ flex: 1, textAlign: 'left' }}>{mood ? t('Hoy te sientes: {mood}', { mood: moodLabel(mood.level).toLowerCase() }) : t('¿Cómo te sientes hoy?')}</span>
       <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: 'rotate(-90deg)', opacity: 0.5 }} />
     </button>
   )

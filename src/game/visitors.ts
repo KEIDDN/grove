@@ -2,6 +2,7 @@ import type { ItemKind } from './garden'
 import type { Season } from './seasons'
 import { AWAY } from './config'
 import { hashString } from './hash'
+import { localize } from '../i18n'
 
 export type VisitorType = 'bird' | 'mammal' | 'insect' | 'amphibian'
 
@@ -60,3 +61,5 @@ export function visitWhileAway(kinds: Set<ItemKind>, season: Season, hoursAway: 
     coins: ranked.length * AWAY.coinsPerVisitor,
   }
 }
+
+localize(VISITORS, ['name', 'hint', 'event'])

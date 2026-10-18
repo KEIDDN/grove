@@ -1,5 +1,7 @@
 // Suelos que se pintan celda a celda. El césped es el suelo por defecto.
 
+import { localize } from '../i18n'
+
 export type FloorKind = 'grass' | 'lawn' | 'path' | 'gravel' | 'sand' | 'deck' | 'moss'
 
 export interface FloorStyle {
@@ -21,3 +23,5 @@ export const FLOORS: FloorStyle[] = [
 ]
 
 export const cellKey = (x: number, z: number) => `${x},${z}`
+
+localize(FLOORS, ['name'])

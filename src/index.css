@@ -3179,3 +3179,41 @@ input[type='range'].mood-slider {
 .ob-brand .wordmark {
   font-size: 34px;
 }
+
+/* "Tu semana" se lee igual a cualquier hora: en móvil, casi opaca como los paneles */
+@media (max-width: 999px) {
+  .week-card.glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(253, 250, 245, 0.95) 60%, rgba(255, 255, 255, 0.97));
+  }
+
+  .app.night .week-card.glass {
+    background: linear-gradient(160deg, rgba(48, 52, 88, 0.97), rgba(28, 31, 58, 0.95) 60%, rgba(36, 40, 74, 0.96));
+  }
+}
+
+/* Al atardecer el chip de la semana y las monedas van sobre un cielo más oscuro: cristal más denso */
+.app.dusk .topbar .glass {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.7) 60%, rgba(255, 255, 255, 0.8));
+}
+
+.lang-switch {
+  display: flex;
+  gap: 6px;
+}
+
+.lang-switch .pill {
+  height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+/* En inglés los titulares de la bienvenida son más largos: un punto más pequeños */
+html[lang='en'] .ob-title {
+  font-size: 48px;
+}
+
+html[lang='en'] .ob-title-hero {
+  font-size: 46px;
+}

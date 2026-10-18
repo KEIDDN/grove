@@ -2,6 +2,7 @@
 // dan la mitad de monedas (con el mismo tope diario), para que no sea la forma rápida de ganarlas.
 
 import { ECONOMY } from './config'
+import { localize, localizeRecord } from '../i18n'
 
 export type CalmKind = 'breath' | 'meditate'
 export type BreathPhase = 'in' | 'hold' | 'out' | 'rest'
@@ -47,7 +48,7 @@ export const BREATH_PATTERNS: BreathPattern[] = [
   },
 ]
 
-export const PHASE_LABELS: Record<BreathPhase, string> = { in: 'Inspira', hold: 'Mantén', out: 'Suelta', rest: 'Espera' }
+export const PHASE_LABELS: Record<BreathPhase, string> = localizeRecord({ in: 'Inspira', hold: 'Mantén', out: 'Suelta', rest: 'Espera' })
 
 export interface CalmSession {
   kind: CalmKind
@@ -98,3 +99,5 @@ export function calmRewardFor(minutes: number, coinsEarnedToday: number): CalmRe
   const coins = Math.max(0, Math.min(wanted, ECONOMY.dailyCoinCap - coinsEarnedToday))
   return { minutes, coins, capped: coins < wanted }
 }
+
+localize(BREATH_PATTERNS, ['name', 'hint'])

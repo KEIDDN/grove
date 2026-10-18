@@ -1,4 +1,5 @@
 import type { ItemKind } from './garden'
+import { localize } from '../i18n'
 
 /** Una variante de color: `colors` son los tonos que usa el modelo (de claro a oscuro). */
 export interface Variant {
@@ -109,3 +110,5 @@ export function variantName(kind: ItemKind, color?: string): string | undefined 
 
 // El pino alto usa los tonos del pino, pero por defecto el de bosque, más oscuro
 VARIANTS.tallpine = [...VARIANTS.pine!].sort((a, b) => (a.id === 'dark' ? -1 : b.id === 'dark' ? 1 : 0))
+
+for (const list of Object.values(VARIANTS)) if (list) localize(list, ['name'])

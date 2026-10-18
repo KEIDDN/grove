@@ -6,6 +6,7 @@ import { parcelsAllowed, useGrove } from '../game/store'
 import { VARIANTS } from '../game/variants'
 import { BagIcon, BoxIcon, BrushIcon, CheckIcon, CloseIcon, ExpandIcon, MoveIcon, PaletteIcon, RotateIcon } from './icons'
 import { bouncy, spring, tap } from './motion'
+import { t, tn } from '../i18n'
 
 function Action({ label, onClick, children, strong, active }: { label: string; onClick: () => void; children: ReactNode; strong?: boolean; active?: boolean }) {
   return (
@@ -151,75 +152,75 @@ export function EditBar() {
   let bar: ReactNode
   if (mode === 'paint') {
     bar = (
-      <Bar key="paint" label="Pintar suelo">
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, fontWeight: 650, maxWidth: 190 }}>Toca o arrastra para pintar</div>
-        <Action label="Listo" onClick={() => setEditTool('select')} strong>
+      <Bar key="paint" label={t("Pintar suelo")}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, fontWeight: 650, maxWidth: 190 }}>{t("Toca o arrastra para pintar")}</div>
+        <Action label={t("Listo")} onClick={() => setEditTool('select')} strong>
           <CheckIcon size={20} />
         </Action>
       </Bar>
     )
   } else if (mode === 'expand') {
     bar = (
-      <Bar key="expand" label="Isla">
+      <Bar key="expand" label={t("Isla")}>
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 14px', maxWidth: 200 }}>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>{freeParcels > 0 ? 'Toca un hueco para ampliar' : 'Elige la roca'}</span>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{freeParcels > 0 ? t('Toca un hueco para ampliar') : t('Elige la roca')}</span>
           <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>
-            {freeParcels > 0 ? `Te quedan ${freeParcels} parcela${freeParcels > 1 ? 's' : ''}` : 'No te quedan parcelas'}
+            {freeParcels > 0 ? tn('Te queda {n} parcela', 'Te quedan {n} parcelas', freeParcels) : t('No te quedan parcelas')}
           </span>
         </div>
-        <Action label="Listo" onClick={() => setEditTool('select')} strong>
+        <Action label={t("Listo")} onClick={() => setEditTool('select')} strong>
           <CheckIcon size={20} />
         </Action>
       </Bar>
     )
   } else if (mode === 'placing') {
     bar = (
-      <Bar key="placing" label="Colocar">
-        <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, fontWeight: 650 }}>Toca dónde colocarlo</div>
-        <Action label="Cancelar" onClick={cancelPlacing}>
+      <Bar key="placing" label={t("Colocar")}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 13, fontWeight: 650 }}>{t("Toca dónde colocarlo")}</div>
+        <Action label={t("Cancelar")} onClick={cancelPlacing}>
           <CloseIcon size={20} />
         </Action>
       </Bar>
     )
   } else if (mode === 'selected' && selected) {
     bar = (
-      <Bar key="selected" label="Objeto seleccionado">
-        <Action label="Mover" onClick={startMove}>
+      <Bar key="selected" label={t("Objeto seleccionado")}>
+        <Action label={t("Mover")} onClick={startMove}>
           <MoveIcon size={20} />
         </Action>
-        <Action label="Girar" onClick={rotate}>
+        <Action label={t("Girar")} onClick={rotate}>
           <RotateIcon size={20} />
         </Action>
         {variants && (
-          <Action label="Color" onClick={() => setColorOpenFor(colorOpen ? null : selected.id)} active={colorOpen}>
+          <Action label={t("Color")} onClick={() => setColorOpenFor(colorOpen ? null : selected.id)} active={colorOpen}>
             <PaletteIcon size={20} />
           </Action>
         )}
-        <Action label="Guardar" onClick={store}>
+        <Action label={t("Guardar")} onClick={store}>
           <BoxIcon size={20} />
         </Action>
-        <Action label="Listo" onClick={() => select(null)} strong>
+        <Action label={t("Listo")} onClick={() => select(null)} strong>
           <CheckIcon size={20} />
         </Action>
       </Bar>
     )
   } else {
     bar = (
-      <Bar key="main" label="Edición">
-        <Action label={`Objetos${inventory.length ? ` · ${inventory.length}` : ''}`} onClick={() => setTab(tab === 'inventory' ? 'garden' : 'inventory')} active={tab === 'inventory'}>
+      <Bar key="main" label={t("Edición")}>
+        <Action label={`${t('Objetos')}${inventory.length ? ` · ${inventory.length}` : ''}`} onClick={() => setTab(tab === 'inventory' ? 'garden' : 'inventory')} active={tab === 'inventory'}>
           <BoxIcon size={20} />
         </Action>
-        <Action label="Vivero" onClick={() => setTab(tab === 'nursery' ? 'garden' : 'nursery')} active={tab === 'nursery'}>
+        <Action label={t("Vivero")} onClick={() => setTab(tab === 'nursery' ? 'garden' : 'nursery')} active={tab === 'nursery'}>
           <BagIcon size={20} />
         </Action>
-        <Action label="Suelos" onClick={() => setEditTool('paint')}>
+        <Action label={t("Suelos")} onClick={() => setEditTool('paint')}>
           <BrushIcon size={20} />
         </Action>
-        <Action label="Isla" onClick={() => setEditTool('expand')}>
+        <Action label={t("Isla")} onClick={() => setEditTool('expand')}>
           <ExpandIcon size={20} />
           {freeParcels > 0 && <span className="badge">{freeParcels}</span>}
         </Action>
-        <Action label="Listo" onClick={() => setEditMode(false)} strong>
+        <Action label={t("Listo")} onClick={() => setEditMode(false)} strong>
           <CheckIcon size={20} />
         </Action>
       </Bar>

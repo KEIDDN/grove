@@ -1,3 +1,4 @@
+import { localizeRecord } from '../i18n'
 import { hashString } from './hash'
 
 // Banco de preguntas de Raíces. Cada día salen tres: una de cada grupo.
@@ -5,11 +6,11 @@ import { hashString } from './hash'
 
 export type QuestionGroup = 'feel' | 'notice' | 'grow'
 
-export const GROUP_NAMES: Record<QuestionGroup, string> = {
+export const GROUP_NAMES: Record<QuestionGroup, string> = localizeRecord({
   feel: 'Cómo estás',
   notice: 'Lo bueno de hoy',
   grow: 'Para reflexionar',
-}
+})
 
 export const QUESTIONS: Record<QuestionGroup, string[]> = {
   feel: [

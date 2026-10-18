@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import { pendingRewards, useGrove, type Tab } from '../game/store'
 import { BagIcon, BookIcon, CalmIcon, JournalIcon, SproutIcon, TimerIcon, UserIcon } from './icons'
 import { spring, tap } from './motion'
+import { t, tn } from '../i18n'
 
 const TABS: Array<{ id: Tab; label: string; Icon: ComponentType<{ size?: number; active?: boolean }> }> = [
   { id: 'garden', label: 'Jardín', Icon: SproutIcon },
@@ -24,7 +25,7 @@ export function Dock() {
   return (
     <motion.nav
       className="dock glass"
-      aria-label="Secciones"
+      aria-label={t("Secciones")}
       initial={{ opacity: 0, y: 30, x: '-50%' }}
       animate={{ opacity: 1, y: 0, x: '-50%' }}
       exit={{ opacity: 0, y: 30, x: '-50%', transition: { duration: 0.18 } }}
@@ -36,10 +37,10 @@ export function Dock() {
       {TABS.map(({ id, label, Icon }) => (
         <button key={id} className="dock-item press" onClick={() => { tap(); setTab(id) }} aria-current={id === tab ? 'page' : undefined}>
           <Icon size={22} active={id === tab} />
-          {label}
-          {id === 'you' && pending > 0 && <span className="badge" aria-label={`${pending} recompensas por recoger`}>{pending}</span>}
+          {t(label)}
+          {id === 'you' && pending > 0 && <span className="badge" aria-label={tn('{n} recompensa por recoger', '{n} recompensas por recoger', pending)}>{pending}</span>}
           {id === 'tend' && session && (
-            <span aria-label="Sesión en curso" style={{ position: 'absolute', top: 9, right: 17, width: 7, height: 7, borderRadius: '50%', background: '#3FA066' }} />
+            <span aria-label={t("Sesión en curso")} style={{ position: 'absolute', top: 9, right: 17, width: 7, height: 7, borderRadius: '50%', background: '#3FA066' }} />
           )}
         </button>
       ))}

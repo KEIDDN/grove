@@ -3,6 +3,7 @@ import { animate, motion, useMotionValue, usePresence, useTransform, type Animat
 import { useGrove } from '../game/store'
 import { CloseIcon } from './icons'
 import { spring, useIsWide } from './motion'
+import { t } from '../i18n'
 
 /* ——— Panel expandido: mientras hay uno a pantalla completa, el jardín 3D no se dibuja ——— */
 let expandedCount = 0
@@ -255,7 +256,7 @@ function MobileSheet({ contentKey, children }: { contentKey: string; children: R
       // Al escribir se amplía, para que el teclado no tape la pregunta
       onFocus={(e) => (e.target as HTMLElement).matches('textarea, input') && !expanded && goTo('large')}
     >
-      <button className="sheet-grab" onClick={() => goTo(expanded ? 'medium' : 'large')} aria-label={expanded ? 'Reducir panel' : 'Ampliar panel'} />
+      <button className="sheet-grab" onClick={() => goTo(expanded ? 'medium' : 'large')} aria-label={expanded ? t('Reducir panel') : t('Ampliar panel')} />
       <div ref={body} className="sheet-body" style={{ paddingBottom: expanded ? undefined : geo.current.clipBottom + 24 }}>
         {children}
       </div>
@@ -308,7 +309,7 @@ export function Sheet({
           <button
             className="press hit"
             onClick={close}
-            aria-label="Cerrar"
+            aria-label={t("Cerrar")}
             style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(27,31,28,0.06)', display: 'grid', placeItems: 'center' }}
           >
             <CloseIcon size={16} strokeWidth={2.2} />

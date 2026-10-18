@@ -1,4 +1,5 @@
 import type { Growth, ItemKind } from './garden'
+import { localize, localizeRecord, t, tn } from '../i18n'
 
 export interface CatalogEntry {
   id: string
@@ -64,8 +65,11 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'fountain', kind: 'fountain', name: 'Fuente', price: 380 },
 ]
 
-export const KIND_NAMES: Record<string, string> = { sapling: 'Brote', ...Object.fromEntries(CATALOG.map((c) => [c.kind, c.name])) }
+export const KIND_NAMES: Record<string, string> = localizeRecord({ sapling: 'Brote', ...Object.fromEntries(CATALOG.map((c) => [c.kind, c.name])) })
 
 export function growthLabel(g: Pick<Growth, 'by' | 'need'>): string {
-  return g.by === 'focus' ? `${g.need} min de Cultivar` : `${g.need} días en Raíces`
+  return g.by === 'focus' ? t('{n} min de Cultivar', { n: g.need }) : tn('{n} día en Raíces', '{n} días en Raíces', g.need)
 }
+
+// Los nombres se leen en el idioma de la app
+localize(CATALOG, ['name', 'limited'])

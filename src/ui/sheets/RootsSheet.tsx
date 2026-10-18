@@ -7,17 +7,20 @@ import { useGrove, type RootAnswer, type RootEntry } from '../../game/store'
 import { dayKey } from '../../game/time'
 import { CheckIcon, ChevronIcon, EditIcon, LockIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
+import { locale, t, tn } from '../../i18n'
 
-const longDate = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
-const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
-const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'short' })
+// Fechas en el idioma de la app
+const fmt = (opts: Intl.DateTimeFormatOptions) => ({ format: (d: Date) => new Intl.DateTimeFormat(locale(), opts).format(d) })
+const longDate = fmt({ weekday: 'long', day: 'numeric', month: 'long' })
+const monthLabel = fmt({ month: 'long', year: 'numeric' })
+const weekday = fmt({ weekday: 'short' })
 
 const parseDay = (key: string) => {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y, m - 1, d)
 }
 
-const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
 export function RootsSheet() {
   const [view, setView] = useState<'today' | 'journal'>('today')
@@ -32,12 +35,12 @@ export function RootsSheet() {
     setView('journal')
   }
   return (
-    <Sheet eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip onPick={pickDay} />}>
+    <Sheet eyebrow={capitalize(longDate.format(new Date()))} title={t('Raíces')} accent="roots" hero={<WeekStrip onPick={pickDay} />}>
       <Segments
         id="roots"
         items={[
-          { id: 'today', label: 'Hoy' },
-          { id: 'journal', label: 'Diario' },
+          { id: 'today', label: t('Hoy') },
+          { id: 'journal', label: t('Diario') },
         ]}
         value={view}
         onChange={(v) => {
@@ -68,10 +71,10 @@ function Today() {
         <Page entry={today} />
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button className="pill pill-ghost press" onClick={() => setEditing(true)} style={{ height: 40 }}>
-            <EditIcon size={15} strokeWidth={2} /> Editar
+            <EditIcon size={15} strokeWidth={2} /> {t('Editar')}
           </button>
           <span className="muted" style={{ fontSize: 12, fontWeight: 600 }}>
-            Mañana tendrás tres preguntas nuevas.
+            {t('Mañana tendrás preguntas nuevas.')}
           </span>
         </div>
         <Privacy />
@@ -97,22 +100,22 @@ function Today() {
             </span>
           </div>
           <div className="eyebrow">{GROUP_NAMES[q.group]}</div>
-          <label htmlFor={`q-${i}`}>{q.text}</label>
-          <AutoArea id={`q-${i}`} value={answers[i]} onChange={(v) => setAnswers((prev) => prev.map((a, j) => (j === i ? v : a)))} placeholder="Escribe con calma…" />
+          <label htmlFor={`q-${i}`}>{t(q.text)}</label>
+          <AutoArea id={`q-${i}`} value={answers[i]} onChange={(v) => setAnswers((prev) => prev.map((a, j) => (j === i ? v : a)))} placeholder={t("Escribe con calma…")} />
         </div>
       ))}
 
       <div className="q-card">
-        <div className="eyebrow">Reflexión libre · opcional</div>
+        <div className="eyebrow">{t('Reflexión libre · opcional')}</div>
         <label htmlFor="reflection" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-soft)' }}>
-          Cualquier cosa que quieras dejar escrita hoy.
+          {t('Cualquier cosa que quieras dejar escrita hoy.')}
         </label>
-        <AutoArea id="reflection" value={reflection} onChange={setReflection} placeholder="Hoy…" />
+        <AutoArea id="reflection" value={reflection} onChange={setReflection} placeholder={t("Hoy…")} />
       </div>
 
       <div className="save-row">
         <button className="pill pill-dark press" disabled={!answered && !reflection.trim() && !mood} onClick={submit} style={{ height: 54, fontSize: 15 }}>
-          {today ? 'Guardar cambios' : `Guardar en Raíces${answered ? ` · ${answered}/${questions.length}` : ''}`}
+          {today ? t('Guardar cambios') : `${t('Guardar en Raíces')}${answered ? ` · ${answered}/${questions.length}` : ''}`}
         </button>
       </div>
       <Privacy />
@@ -148,9 +151,9 @@ function MoodStep({ mood, onChange }: { mood: Mood | null; onChange: React.Dispa
 
   return (
     <div className="q-card mood-card" style={{ '--mood': moodColor(level) } as React.CSSProperties}>
-      <div className="eyebrow">Cómo estás</div>
+      <div className="eyebrow">{t('Cómo estás')}</div>
       <label htmlFor="mood" style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-0.01em' }}>
-        ¿Cómo te sientes hoy?
+        {t('¿Cómo te sientes hoy?')}
       </label>
       <div className="mood-bud">
         <div className="mood-glow" />
@@ -167,7 +170,7 @@ function MoodStep({ mood, onChange }: { mood: Mood | null; onChange: React.Dispa
             exit={{ opacity: 0, y: -8, filter: 'blur(4px)' }}
             transition={{ type: 'spring', duration: 0.45, bounce: 0 }}
           >
-            {mood ? moodLabel(level) : 'Desliza para elegir'}
+            {mood ? moodLabel(level) : t('Desliza para elegir')}
           </motion.span>
         </AnimatePresence>
       </div>
@@ -188,8 +191,8 @@ function MoodStep({ mood, onChange }: { mood: Mood | null; onChange: React.Dispa
         style={{ background: `linear-gradient(90deg, ${MOOD_COLORS.join(', ')})` }}
       />
       <div className="mood-ends muted">
-        <span>Muy desagradable</span>
-        <span>Muy agradable</span>
+        <span>{t('Muy desagradable')}</span>
+        <span>{t('Muy agradable')}</span>
       </div>
 
       <AnimatePresence initial={false}>
@@ -203,21 +206,21 @@ function MoodStep({ mood, onChange }: { mood: Mood | null; onChange: React.Dispa
             style={{ overflow: 'hidden' }}
           >
             <div className="mood-group">
-              <div className="mood-group-title">¿Qué lo describe mejor?</div>
+              <div className="mood-group-title">{t('¿Qué lo describe mejor?')}</div>
               <div className="mood-chips">
                 {emotions.map((e) => (
                   <button key={e} className="mood-chip press" aria-pressed={mood.emotions.includes(e)} onClick={() => toggleIn('emotions', e)}>
-                    {e}
+                    {t(e)}
                   </button>
                 ))}
               </div>
             </div>
             <div className="mood-group">
-              <div className="mood-group-title">¿Qué ha influido?</div>
+              <div className="mood-group-title">{t('¿Qué ha influido?')}</div>
               <div className="mood-chips">
                 {FACTORS.map((f) => (
                   <button key={f} className="mood-chip press" aria-pressed={mood.factors.includes(f)} onClick={() => toggleIn('factors', f)}>
-                    {f}
+                    {t(f)}
                   </button>
                 ))}
               </div>
@@ -255,7 +258,7 @@ function WeekStrip({ onPick }: { onPick: (date: string) => void }) {
   })
   const letters = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
   return (
-    <div className="week-strip" role="list" aria-label="Días escritos esta semana">
+    <div className="week-strip" role="list" aria-label={t("Días escritos esta semana")}>
       {days.map((d, i) => {
         const key = dayKey(d)
         const done = written.has(key)
@@ -267,10 +270,10 @@ function WeekStrip({ onPick }: { onPick: (date: string) => void }) {
             className={`week-day press${done ? ' done' : ''}${isToday ? ' today' : ''}`}
             disabled={!done && !isToday}
             onClick={() => onPick(key)}
-            aria-label={`${letters[i]} ${d.getDate()}: ${done ? 'ver lo que escribiste' : 'sin escribir'}`}
+            aria-label={`${t(letters[i])} ${d.getDate()}: ${done ? t('ver lo que escribiste') : t('sin escribir')}`}
           >
             <i>{d.getDate()}</i>
-            {letters[i]}
+            {t(letters[i])}
           </button>
         )
       })}
@@ -282,7 +285,7 @@ function Privacy() {
   return (
     <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 600 }}>
       <LockIcon size={14} strokeWidth={2} />
-      Tu diario vive solo en este dispositivo. Nunca se comparte.
+      {t('Tu diario vive solo en este dispositivo. Nunca se comparte.')}
     </div>
   )
 }
@@ -298,9 +301,9 @@ function Page({ entry }: { entry: RootEntry }) {
             <div style={{ fontSize: 15, fontWeight: 700 }}>{moodLabel(entry.mood.level)}</div>
             {(entry.mood.emotions.length > 0 || entry.mood.factors.length > 0) && (
               <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>
-                {entry.mood.emotions.join(', ')}
+                {entry.mood.emotions.map((e) => t(e)).join(', ')}
                 {entry.mood.emotions.length > 0 && entry.mood.factors.length > 0 && ' · '}
-                {entry.mood.factors.join(', ')}
+                {entry.mood.factors.map((f) => t(f)).join(', ')}
               </div>
             )}
           </div>
@@ -308,13 +311,13 @@ function Page({ entry }: { entry: RootEntry }) {
       )}
       {entry.answers.map((a) => (
         <div key={a.question} style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>{a.question}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-soft)' }}>{t(a.question)}</div>
           <div style={{ fontSize: 16, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{a.text}</div>
         </div>
       ))}
       {entry.reflection && (
         <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: 4, paddingTop: 12, borderTop: '1px solid rgba(27,31,28,0.08)' }}>
-          <div className="eyebrow">Reflexión</div>
+          <div className="eyebrow">{t('Reflexión')}</div>
           <div style={{ fontSize: 16, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{entry.reflection}</div>
         </div>
       )}
@@ -330,7 +333,7 @@ function Journal({ open, setOpen }: { open: string | null; setOpen: (date: strin
     return (
       <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         <button className="press muted" onClick={() => setOpen(null)} style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700 }}>
-          <ChevronIcon size={15} strokeWidth={2.4} style={{ transform: 'rotate(90deg)' }} /> Todas las páginas
+          <ChevronIcon size={15} strokeWidth={2.4} style={{ transform: 'rotate(90deg)' }} /> {t('Todas las páginas')}
         </button>
         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{capitalize(longDate.format(parseDay(selected.date)))}</div>
         <Page entry={selected} />
@@ -341,7 +344,7 @@ function Journal({ open, setOpen }: { open: string | null; setOpen: (date: strin
   if (!entries.length) {
     return (
       <p className="muted fade-in" style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
-        Aquí irán quedando tus páginas, día a día. Escribe la primera en Hoy.
+        {t('Aquí irán quedando tus páginas, día a día. Escribe la primera en Hoy.')}
       </p>
     )
   }
@@ -361,12 +364,12 @@ function Journal({ open, setOpen }: { open: string | null; setOpen: (date: strin
           {entries.length}
         </span>
         <span className="muted" style={{ fontSize: 13 }}>
-          {entries.length === 1 ? 'página escrita' : 'páginas escritas'}
+          {entries.length === 1 ? t('página escrita') : t('páginas escritas')}
         </span>
       </div>
       {[...months.entries()].map(([month, list]) => (
         <section key={month} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div className="eyebrow">{monthLabel.format(parseDay(`${month}-01`))}</div>
+          <div className="eyebrow">{capitalize(monthLabel.format(parseDay(`${month}-01`)))}</div>
           {list.map((e) => {
             const d = parseDay(e.date)
             const preview = e.answers.find((a) => a.text)?.text ?? e.reflection ?? ''
@@ -382,8 +385,8 @@ function Journal({ open, setOpen }: { open: string | null; setOpen: (date: strin
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{preview}</div>
                   <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                    {e.answers.length} respuesta{e.answers.length === 1 ? '' : 's'}
-                    {e.reflection ? ' · reflexión' : ''}
+                    {tn('{n} respuesta', '{n} respuestas', e.answers.length)}
+                    {e.reflection ? ` · ${t('reflexión')}` : ''}
                   </div>
                 </div>
                 <ChevronIcon size={16} strokeWidth={2.2} style={{ transform: 'rotate(-90deg)', flex: 'none', opacity: 0.5 }} />
@@ -414,9 +417,9 @@ function MoodCalendar({ entries, onOpen }: { entries: RootEntry[]; onOpen: (date
   const canBack = dayKey(first) > oldest.slice(0, 8) + '01'
   const withMood = entries.filter((e) => e.date.startsWith(dayKey(first).slice(0, 7)) && e.mood)
   return (
-    <section className="mood-cal" aria-label="Calendario de ánimo">
+    <section className="mood-cal" aria-label={t("Calendario de ánimo")}>
       <div className="mood-cal-head">
-        <button className="mood-cal-nav press" disabled={!canBack} onClick={() => setOffset((o) => o - 1)} aria-label="Mes anterior">
+        <button className="mood-cal-nav press" disabled={!canBack} onClick={() => setOffset((o) => o - 1)} aria-label={t("Mes anterior")}>
           <ChevronIcon size={16} strokeWidth={2.4} style={{ transform: 'rotate(90deg)' }} />
         </button>
         <AnimatePresence mode="popLayout" initial={false}>
@@ -431,14 +434,14 @@ function MoodCalendar({ entries, onOpen }: { entries: RootEntry[]; onOpen: (date
             {capitalize(monthLabel.format(first))}
           </motion.div>
         </AnimatePresence>
-        <button className="mood-cal-nav press" disabled={offset >= 0} onClick={() => setOffset((o) => o + 1)} aria-label="Mes siguiente">
+        <button className="mood-cal-nav press" disabled={offset >= 0} onClick={() => setOffset((o) => o + 1)} aria-label={t("Mes siguiente")}>
           <ChevronIcon size={16} strokeWidth={2.4} style={{ transform: 'rotate(-90deg)' }} />
         </button>
       </div>
       <div className="mood-cal-grid">
         {WEEK_LETTERS.map((l) => (
           <span key={l} className="mood-cal-letter">
-            {l}
+            {t(l)}
           </span>
         ))}
         {Array.from({ length: lead }, (_, i) => (
@@ -458,7 +461,7 @@ function MoodCalendar({ entries, onOpen }: { entries: RootEntry[]; onOpen: (date
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', duration: 0.4, bounce: 0.2, delay: i * 0.008 }}
               style={color ? { background: color } : undefined}
-              aria-label={entry ? `${i + 1}: ${entry.mood ? moodLabel(entry.mood.level) : 'escrito'}` : `${i + 1}`}
+              aria-label={entry ? `${i + 1}: ${entry.mood ? moodLabel(entry.mood.level) : t('escrito')}` : `${i + 1}`}
             >
               {i + 1}
               {entry && !entry.mood && <i />}
@@ -467,7 +470,7 @@ function MoodCalendar({ entries, onOpen }: { entries: RootEntry[]; onOpen: (date
         })}
       </div>
       <div className="mood-cal-legend">
-        <span className="muted">{withMood.length ? `${withMood.length} día${withMood.length === 1 ? '' : 's'} con ánimo` : 'Aún sin ánimo este mes'}</span>
+        <span className="muted">{withMood.length ? tn('{n} día con ánimo', '{n} días con ánimo', withMood.length) : t('Aún sin ánimo este mes')}</span>
         <span className="mood-cal-scale" style={{ background: `linear-gradient(90deg, ${MOOD_COLORS.join(', ')})` }} />
       </div>
     </section>

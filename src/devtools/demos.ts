@@ -9,6 +9,7 @@ import { QUESTIONS, type QuestionGroup } from '../game/questions'
 import { initialSaved, type RootEntry, type Saved } from '../game/store'
 import { dayKey, weekdayIndex, weekKey } from '../game/time'
 import { VISITORS } from '../game/visitors'
+import { t } from '../i18n'
 
 export type DemoId = 'day1' | 'week2' | 'month3' | 'year1'
 
@@ -181,8 +182,9 @@ function sampleEntries(n: number): RootEntry[] {
     date.setDate(date.getDate() - 1 - Math.floor(i * 1.5))
     return {
       date: dayKey(date),
-      answers: groups.map((g, k) => ({ group: g, question: QUESTIONS[g][(i + k * 3) % QUESTIONS[g].length], text: ANSWERS[g][(i * 7 + k) % ANSWERS[g].length] })),
-      reflection: i % 4 === 0 ? 'Hoy ha sido un buen día para parar un poco.' : undefined,
+      // Las respuestas se escriben en el idioma de la app (las preguntas se traducen al mostrarlas)
+      answers: groups.map((g, k) => ({ group: g, question: QUESTIONS[g][(i + k * 3) % QUESTIONS[g].length], text: t(ANSWERS[g][(i * 7 + k) % ANSWERS[g].length]) })),
+      reflection: i % 4 === 0 ? t('Hoy ha sido un buen día para parar un poco.') : undefined,
       mood: demoMood(i),
     }
   })
@@ -225,8 +227,8 @@ export function buildDemo(id: DemoId): Saved {
     visitorsSeen: VISITORS.filter((v) => !v.event).slice(0, p.visitors).map((v) => v.id),
     stats: { ...emptyStats(), ...p.stats },
     daily: emptyDaily(dayKey()),
-    gardenName: 'Jardín de Lucía',
-    userName: 'Lucía',
+    gardenName: t('El jardín de {name}', { name: t('Lucía') }),
+    userName: t('Lucía'),
     focusAreas: ['stress', 'rest'],
     onboarded: true,
     giftGiven: true,

@@ -1,5 +1,7 @@
 // Estilos de la base de roca de la isla: se eligen en el modo edición, como los suelos.
 
+import { localize } from '../i18n'
+
 export type IslandStyleId = 'rock' | 'sandstone' | 'slate' | 'moss'
 
 export interface IslandStyle {
@@ -19,3 +21,5 @@ export const ISLAND_STYLES: IslandStyle[] = [
 ]
 
 export const islandStyle = (id: IslandStyleId) => ISLAND_STYLES.find((s) => s.id === id) ?? ISLAND_STYLES[0]
+
+localize(ISLAND_STYLES, ['name'])

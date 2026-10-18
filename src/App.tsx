@@ -23,6 +23,7 @@ import { YouSheet } from './ui/sheets/YouSheet'
 import { SheetHost } from './ui/Sheet'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
+import { useLang } from './i18n'
 
 export function App() {
   const tab = useGrove((s) => s.tab)
@@ -30,6 +31,8 @@ export function App() {
   const editMode = useGrove((s) => s.editMode)
   const splash = useGrove((s) => s.splash)
   const onboarded = useGrove((s) => s.onboarded)
+  // Al cambiar de idioma la interfaz se vuelve a montar con los textos nuevos (el 3D no se toca)
+  const lang = useLang((s) => s.lang)
   const theme = SEASONS[useSeason()]
   const nightLevel = useDaylight().night
   const night = nightLevel > 0.55
@@ -46,15 +49,15 @@ export function App() {
       <AnimatePresence mode="wait">
         {/* La primera vez no hay portada: la bienvenida ya empieza con la isla bajando entre nubes */}
         {!onboarded ? (
-          <motion.div key="onboarding" className="layer" exit={{ opacity: 0, transition: { duration: 0.25 } }}>
+          <motion.div key={`onboarding-${lang}`} className="layer" exit={{ opacity: 0, transition: { duration: 0.25 } }}>
             <Onboarding />
           </motion.div>
         ) : splash ? (
-          <Splash key="splash" />
+          <Splash key={`splash-${lang}`} />
         ) : rest ? (
-          <RestMode key="rest" />
+          <RestMode key={`rest-${lang}`} />
         ) : (
-          <motion.div key="main" className="layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
+          <motion.div key={`main-${lang}`} className="layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
             <TopBar />
             {/* Un solo panel para todas las secciones: al cambiar de una a otra no se cierra, solo cambia el contenido */}
             <AnimatePresence>

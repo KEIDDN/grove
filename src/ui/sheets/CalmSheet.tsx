@@ -10,6 +10,7 @@ import { HeadphonesIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
 import { NumericText } from '../NumericText'
 import { useNow } from '../useNow'
+import { t } from '../../i18n'
 
 type Section = 'breath' | 'meditate'
 
@@ -33,9 +34,9 @@ export function CalmSheet() {
   )
 
   return (
-    <Sheet eyebrow="Respira y medita" title="Calma" accent="calm">
+    <Sheet eyebrow={t("Respira y medita")} title={t("Calma")} accent="calm">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <Segments id="calm" items={SECTIONS} value={section} onChange={setSection} />
+        <Segments id="calm" items={SECTIONS.map((s) => ({ ...s, label: t(s.label) }))} value={section} onChange={setSection} />
         <SwapIn id={section}>
           {section === 'breath' && <BreathSetup />}
           {section === 'meditate' && <MeditateSetup />}
@@ -58,7 +59,7 @@ function BreathSetup() {
   const start = useGrove((s) => s.startCalm)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div className="calm-patterns" role="radiogroup" aria-label="Respiración">
+      <div className="calm-patterns" role="radiogroup" aria-label={t("Respiración")}>
         {BREATH_PATTERNS.map((p) => (
           <button key={p.id} role="radio" aria-checked={prefs.pattern === p.id} className="calm-pattern press" onClick={() => set({ pattern: p.id as BreathPatternId })}>
             <PatternShape id={p.id} />
@@ -72,11 +73,11 @@ function BreathSetup() {
       <SoundPicker />
       <button className="calm-toggle press" aria-pressed={prefs.guide} onClick={() => set({ guide: !prefs.guide })}>
         <span className="calm-toggle-dot" />
-        Guía sonora en cada fase
+        {t('Guía sonora en cada fase')}
       </button>
       <Reward />
       <button className="pill pill-dark press" style={{ height: 54, fontSize: 16 }} onClick={() => start('breath', prefs.breathMinutes, prefs.pattern)}>
-        Empezar a respirar
+        {t('Empezar a respirar')}
       </button>
     </div>
   )
@@ -89,13 +90,13 @@ function MeditateSetup() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
       <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
-        Siéntate cómodo y deja que el sonido te acompañe. Un cuenco marca el principio, la mitad y el final.
+        {t('Siéntate cómodo y deja que el sonido te acompañe. Un cuenco marca el principio, la mitad y el final.')}
       </p>
       <Minutes options={MEDITATE_MINUTES} value={prefs.meditateMinutes} onChange={(meditateMinutes) => set({ meditateMinutes })} />
       <SoundPicker />
       <Reward />
       <button className="pill pill-dark press" style={{ height: 54, fontSize: 16 }} onClick={() => start('meditate', prefs.meditateMinutes)}>
-        Empezar a meditar
+        {t('Empezar a meditar')}
       </button>
     </div>
   )
@@ -104,8 +105,8 @@ function MeditateSetup() {
 function Reward() {
   return (
     <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
-      Tu calma riega tus semillas igual que Cultivar, cuenta como día cumplido y da 1 moneda cada 2 minutos.
-      {TIME_SCALE > 1 && ' (Modo rápido: 1 s = 1 min)'}
+      {t('Tu calma riega tus semillas igual que Cultivar, cuenta como día cumplido y da 1 moneda cada 2 minutos.')}
+      {TIME_SCALE > 1 && ` ${t('(Modo rápido: 1 s = 1 min)')}`}
     </p>
   )
 }
@@ -113,7 +114,7 @@ function Reward() {
 function Minutes({ options, value, onChange }: { options: number[]; value: number; onChange: (v: number) => void }) {
   return (
     <div className="calm-block">
-      <div className="calm-label">Duración</div>
+      <div className="calm-label">{t('Duración')}</div>
       <div className="calm-chips">
         {options.map((m) => (
           <button key={m} className="pill pill-ghost press calm-chip" aria-pressed={value === m} onClick={() => onChange(m)}>
@@ -141,14 +142,14 @@ function SoundPicker() {
   const groups = ['Naturaleza', 'Ruido', 'Binaural'] as const
   return (
     <div className="calm-block">
-      <div className="calm-label">Sonido</div>
+      <div className="calm-label">{t('Sonido')}</div>
       {groups.map((g) => (
         <div key={g} className="calm-sound-group">
-          <span className="calm-sound-group-name">{g}</span>
+          <span className="calm-sound-group-name">{t(g)}</span>
           <div className="calm-chips">
             {g === 'Naturaleza' && (
               <button className="pill pill-ghost press calm-chip" aria-pressed={sound === 'silence'} onClick={() => pick('silence')}>
-                Silencio
+                {t('Silencio')}
               </button>
             )}
             {SOUNDSCAPES.filter((s) => s.group === g).map((s) => (
@@ -163,7 +164,7 @@ function SoundPicker() {
       {current && (
         <div className="calm-sound-hint muted">
           {current.group === 'Binaural' && <HeadphonesIcon size={14} />}
-          {current.group === 'Binaural' ? `${current.hint}. Usa auriculares: cada oído oye un tono distinto.` : current.hint}
+          {current.group === 'Binaural' ? `${current.hint}. ${t('Usa auriculares: cada oído oye un tono distinto.')}` : current.hint}
         </div>
       )}
       {sound !== 'silence' && (
@@ -174,7 +175,7 @@ function SoundPicker() {
           max={1}
           step={0.05}
           value={prefs.volume}
-          aria-label="Volumen del sonido"
+          aria-label={t("Volumen del sonido")}
           onChange={(e) => {
             const volume = Number(e.target.value)
             set({ volume })
@@ -222,7 +223,7 @@ export function CalmSpace() {
           key={calm.startedAt}
           className="calm-space"
           role="dialog"
-          aria-label={calm.kind === 'breath' ? 'Respirando' : 'Meditando'}
+          aria-label={calm.kind === 'breath' ? t('Respirando') : t('Meditando')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 0.9, ease: [0.4, 0, 0.2, 1] } }}
@@ -324,7 +325,7 @@ function MeditateSpace() {
   const [m, sec] = formatClock(remaining).split(':')
   return (
     <>
-      <SpaceTop label="Meditación" clock={clock} />
+      <SpaceTop label={t("Meditación")} clock={clock} />
       <div className="calm-space-center">
         <div className="calm-stage">
           <div className="calm-halo calm-halo-slow" />
@@ -338,7 +339,7 @@ function MeditateSpace() {
             <SoftNumber value={sec} size={60} direction={-1} />
           </div>
         </div>
-        <div className="calm-space-phase">Respira a tu ritmo</div>
+        <div className="calm-space-phase">{t("Respira a tu ritmo")}</div>
       </div>
     </>
   )
@@ -350,10 +351,10 @@ function SpaceActions() {
   return (
     <div className="calm-space-actions">
       <button className="calm-space-btn press" onClick={cancel}>
-        Parar
+        {t('Parar')}
       </button>
       <button className="calm-space-btn calm-space-btn-strong press" onClick={() => complete(true)}>
-        Terminar
+        {t('Terminar')}
       </button>
     </div>
   )

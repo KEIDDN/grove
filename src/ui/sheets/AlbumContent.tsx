@@ -2,6 +2,7 @@ import { SEASONS } from '../../game/seasons'
 import { useGrove } from '../../game/store'
 import { VISITORS } from '../../game/visitors'
 import { iriStyle, VisitorGlyph } from '../glyphs'
+import { t } from '../../i18n'
 
 export function AlbumContent() {
   const seen = useGrove((s) => s.visitorsSeen)
@@ -15,16 +16,16 @@ export function AlbumContent() {
             <span style={{ fontSize: 28, color: 'var(--ink-faint)' }}>/{VISITORS.length}</span>
           </span>
           <span className="muted" style={{ fontSize: 13 }}>
-            visitantes descubiertos
+            {t('visitantes descubiertos')}
           </span>
         </div>
         <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-          Mientras no estás, llegan visitantes atraídos por lo que hay en tu jardín. Cambian con cada estación.
+          {t('Mientras no estás, llegan visitantes atraídos por lo que hay en tu jardín. Cambian con cada estación.')}
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10 }}>
           {VISITORS.map((v, i) => {
             const known = seen.includes(v.id)
-            const when = v.event ?? (v.seasons === 'all' ? 'Todo el año' : v.seasons.map((s) => SEASONS[s].name).join(' · '))
+            const when = v.event ?? (v.seasons === 'all' ? t('Todo el año') : v.seasons.map((s) => SEASONS[s].name).join(' · '))
             return (
               <div
                 key={v.id}

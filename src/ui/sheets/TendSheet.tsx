@@ -13,6 +13,7 @@ import { NumericText } from '../NumericText'
 import { Odometer, RollingNumber } from '../RollingNumber'
 import { Sheet } from '../Sheet'
 import { useNow } from '../useNow'
+import { t } from '../../i18n'
 
 const DURATIONS: Array<number | null> = [10, 25, 45, 60, null]
 
@@ -29,7 +30,7 @@ export function useSessionClock() {
 export function TendSheet() {
   const session = useGrove((s) => s.session)
   return (
-    <Sheet eyebrow={session ? 'Sesión en curso' : 'Concentración'} title="Cultivar">
+    <Sheet eyebrow={session ? t('Sesión en curso') : t('Concentración')} title={t('Cultivar')}>
       {session ? <Running /> : <Setup />}
     </Sheet>
   )
@@ -106,10 +107,10 @@ function Setup() {
       >
         <span className="display" style={{ fontSize: 96 }}>
           {minutes === null ? <RollingNumber value={null} /> : dragging ? <Odometer value={shown} /> : <NumericText value={minutes} />}
-          <span className="sr-only">{minutes ?? 'sin límite'}</span>
+          <span className="sr-only">{minutes ?? t('sin límite')}</span>
         </span>
         <motion.span key={minutes ? 'min' : 'free'} className="muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring} style={{ fontSize: 16, fontWeight: 600 }}>
-          {minutes ? 'minutos' : 'modo libre'}
+          {minutes ? t('minutos') : t('modo libre')}
         </motion.span>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -121,7 +122,7 @@ function Setup() {
             onClick={() => choose(d)}
             style={{ height: 40 }}
           >
-            {d ? `${d} min` : 'Libre'}
+            {d ? `${d} min` : t('Libre')}
           </button>
         ))}
         <button
@@ -130,7 +131,7 @@ function Setup() {
           onClick={() => choose(minutes ?? 30, true)}
           style={{ height: 40 }}
         >
-          Otra
+          {t('Otra')}
         </button>
       </div>
       <AnimatePresence initial={false}>
@@ -144,7 +145,7 @@ function Setup() {
             style={{ overflow: 'hidden' }}
           >
             <div className="stepper" data-no-sheet-drag="">
-              <button className="stepper-btn press" aria-label="Menos" onClick={() => { setMinutes(clampMinutes(minutes - 1)); audio.sfx('tick', minutes - 1) }}>
+              <button className="stepper-btn press" aria-label={t("Menos")} onClick={() => { setMinutes(clampMinutes(minutes - 1)); audio.sfx('tick', minutes - 1) }}>
                 −
               </button>
               <input
@@ -157,10 +158,10 @@ function Setup() {
                   setMinutes(Number(e.target.value))
                   audio.sfx('tick', Number(e.target.value))
                 }}
-                aria-label="Minutos"
+                aria-label={t("Minutos")}
                 style={{ '--fill': `${((minutes - MIN_CUSTOM) / (MAX_CUSTOM - MIN_CUSTOM)) * 100}%` } as React.CSSProperties}
               />
-              <button className="stepper-btn press" aria-label="Más" onClick={() => { setMinutes(clampMinutes(minutes + 1)); audio.sfx('tick', minutes + 1) }}>
+              <button className="stepper-btn press" aria-label={t("Más")} onClick={() => { setMinutes(clampMinutes(minutes + 1)); audio.sfx('tick', minutes + 1) }}>
                 +
               </button>
             </div>
@@ -168,11 +169,10 @@ function Setup() {
         )}
       </AnimatePresence>
       <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-        Las monedas llegan al completar la sesión, a partir de {ECONOMY.minMinutesForCoins} min. Hoy llevas {coinsToday}/{ECONOMY.dailyCoinCap}. Puedes bloquear el
-        móvil: tu sesión sigue.
+        {t('Las monedas llegan al completar la sesión, a partir de {min} min. Hoy llevas {today}/{cap}. Puedes bloquear el móvil: tu sesión sigue.', { min: ECONOMY.minMinutesForCoins, today: coinsToday, cap: ECONOMY.dailyCoinCap })}
       </p>
       <button className="pill pill-dark press" onClick={() => start(minutes)} style={{ height: 54, fontSize: 16 }}>
-        Empezar a cultivar
+        {t('Empezar a cultivar')}
       </button>
       <Growing />
     </div>
@@ -190,31 +190,31 @@ function Growing() {
   if (!growing.length && !waiting.length)
     return (
       <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
-        Planta semillas del Vivero: crecerán con los minutos que dediques aquí.
+        {t('Planta semillas del Vivero: crecerán con los minutos que dediques aquí.')}
       </p>
     )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       {waiting.length > 0 && (
         <>
-          <div className="eyebrow">Sin plantar</div>
+          <div className="eyebrow">{t('Sin plantar')}</div>
           {waiting.map((it) => (
             <div key={it.id} className="row-card" style={{ padding: 12, gap: 12 }}>
               <KindGlyph kind={it.kind} color={paletteFor(it.kind, it.color)?.[0]} size={36} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{KIND_NAMES[it.kind]}</div>
                 <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                  Crece con {it.growth!.need} min de Cultivar
+                  {t('Crece con {n} min de Cultivar', { n: it.growth!.need })}
                 </div>
               </div>
               <button className="pill pill-dark press" onClick={() => startPlacing(it.id)} style={{ height: 34, padding: '0 14px', fontSize: 13 }}>
-                Plantar
+                {t('Plantar')}
               </button>
             </div>
           ))}
         </>
       )}
-      {growing.length > 0 && <div className="eyebrow" style={{ marginTop: waiting.length ? 8 : 0 }}>Creciendo con tu tiempo</div>}
+      {growing.length > 0 && <div className="eyebrow" style={{ marginTop: waiting.length ? 8 : 0 }}>{t('Creciendo con tu tiempo')}</div>}
       {growing.map((it) => {
         const g = it.growth!
         return (
@@ -256,22 +256,22 @@ function Running() {
         <div style={{ height: '100%', width: `${clock.progress * 100}%`, background: 'var(--ink)', transition: 'width .25s linear' }} />
       </div>
       <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
-        {free ? 'Modo libre: termina cuando quieras.' : `De ${session.targetMinutes} minutos.`} Bloquea el móvil o deja el modo reposo: el tiempo sigue contando.
-        {TIME_SCALE > 1 && ' (Modo rápido: 1 s = 1 min)'}
+        {free ? t('Modo libre: termina cuando quieras.') : t('De {n} minutos.', { n: session.targetMinutes ?? 0 })} {t('Bloquea el móvil o deja el modo reposo: el tiempo sigue contando.')}
+        {TIME_SCALE > 1 && ` ${t('(Modo rápido: 1 s = 1 min)')}`}
       </p>
       <div style={{ display: 'flex', gap: 10 }}>
         <button className="pill pill-dark press" onClick={() => setRest(true)} style={{ flex: 1, height: 50 }}>
           <MoonIcon size={17} />
-          Modo reposo
+          {t('Modo reposo')}
         </button>
         {free && (
           <button className="pill pill-ghost press" onClick={complete} style={{ flex: 1, height: 50 }}>
-            Terminar
+            {t('Terminar')}
           </button>
         )}
       </div>
       <button className="press muted" onClick={cancel} style={{ alignSelf: 'center', fontSize: 14, fontWeight: 600, height: 40 }}>
-        Abandonar sesión
+        {t('Abandonar sesión')}
       </button>
     </div>
   )

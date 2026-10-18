@@ -1,3 +1,5 @@
+import { t } from '../i18n'
+
 // Estado de ánimo, al estilo de Salud del iPhone: un nivel de muy desagradable a muy agradable,
 // las emociones que lo describen y lo que ha influido. Vive solo en el diario: el jardín nunca se
 // pone triste.
@@ -15,7 +17,7 @@ export const MOOD_LEVELS = ['Muy desagradable', 'Desagradable', 'Algo desagradab
 export const MOOD_COLORS = ['#8F88CF', '#A39CDA', '#BBB2E3', '#D6CCE2', '#F1CDBE', '#F4B998', '#F29E72']
 
 export const moodColor = (level: number) => MOOD_COLORS[Math.min(7, Math.max(1, Math.round(level))) - 1]
-export const moodLabel = (level: number) => MOOD_LEVELS[Math.min(7, Math.max(1, Math.round(level))) - 1]
+export const moodLabel = (level: number) => t(MOOD_LEVELS[Math.min(7, Math.max(1, Math.round(level))) - 1])
 
 const UNPLEASANT = ['Cansado', 'Estresado', 'Preocupado', 'Triste', 'Abrumado', 'Frustrado', 'Irritable', 'Solo', 'Inquieto', 'Decepcionado']
 const NEUTRAL = ['Tranquilo', 'Pensativo', 'Indiferente', 'Cansado', 'Distraído', 'Satisfecho']

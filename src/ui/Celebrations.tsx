@@ -10,6 +10,7 @@ import { iriStyle, KindGlyph, VisitorGlyph } from './glyphs'
 import { BookIcon, CalmIcon, CheckIcon, CoinIcon, ExpandIcon, HeartIcon, JournalIcon, SproutIcon, TimerIcon, TrophyIcon } from './icons'
 import { bouncy, softSpring, spring } from './motion'
 import { NumericText } from './NumericText'
+import { localizeRecord, t } from '../i18n'
 
 export const CELEBRATION_ICONS: Record<CelebrationIcon, ComponentType<{ size?: number }>> = {
   coin: CoinIcon,
@@ -24,7 +25,7 @@ export const CELEBRATION_ICONS: Record<CelebrationIcon, ComponentType<{ size?: n
   calm: CalmIcon,
 }
 
-const ACTION_LABELS = { tend: 'Otra sesión', expand: 'Ampliar ahora', album: 'Ver el álbum', calm: 'Otra vez' } as const
+const ACTION_LABELS = localizeRecord({ tend: 'Otra sesión', expand: 'Ampliar ahora', album: 'Ver el álbum', calm: 'Otra vez' })
 
 /** Enseña de una en una las celebraciones medianas y grandes que hay en cola. */
 export function Celebrations() {
@@ -153,7 +154,7 @@ function MediumCard({ c }: { c: Celebration }) {
 
         <div className="celebrate-actions">
           <button className="pill pill-dark press" onClick={() => close(c)} style={{ flex: 1, height: 50 }}>
-            Seguir
+            {t('Seguir')}
           </button>
           {c.action && (
             <button className="pill pill-ghost press" onClick={() => close(c, c.action)} style={{ flex: 1, height: 50 }}>
@@ -232,11 +233,11 @@ function BigMoment({ c }: { c: Celebration }) {
         <motion.div className="celebrate-actions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ ...softSpring, delay: 0.8 }} style={{ width: '100%', maxWidth: 360 }}>
           {c.action && (
             <button className="pill pill-ghost press" onClick={() => close(c)} style={{ flex: 1, height: 52 }}>
-              Más tarde
+              {t('Más tarde')}
             </button>
           )}
           <button className="pill pill-dark press" onClick={() => close(c, c.action)} style={{ flex: 1, height: 52 }}>
-            {c.action ? ACTION_LABELS[c.action] : 'Seguir'}
+            {c.action ? ACTION_LABELS[c.action] : t('Seguir')}
           </button>
         </motion.div>
       </div>
