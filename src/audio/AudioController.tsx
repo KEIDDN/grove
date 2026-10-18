@@ -17,6 +17,7 @@ export function AudioController() {
       const s = useGrove.getState().audio
       audio.setMusic(s.music, s.musicVolume)
       audio.setAmbient(s.ambient, s.ambientVolume)
+      audio.setSfx(s.sfx, s.sfxVolume)
     }
     window.addEventListener('pointerdown', unlock)
     window.addEventListener('keydown', unlock)
@@ -28,6 +29,7 @@ export function AudioController() {
 
   useEffect(() => audio.setMusic(settings.music, settings.musicVolume), [settings.music, settings.musicVolume])
   useEffect(() => audio.setAmbient(settings.ambient, settings.ambientVolume), [settings.ambient, settings.ambientVolume])
+  useEffect(() => audio.setSfx(settings.sfx, settings.sfxVolume), [settings.sfx, settings.sfxVolume])
   useEffect(() => audio.setMood({ season, night: Math.round(night * 10) / 10, hasWater }), [season, night, hasWater])
 
   return null

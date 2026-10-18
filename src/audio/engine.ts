@@ -1,6 +1,7 @@
 // Motor de sonido con Web Audio. Dos canales independientes:
 // - Música: pistas reales si las hay (`MUSIC_TRACKS`); si no, una melodía suave generada.
 // - Ambiente: viento, pájaros, grillos y agua sintetizados según la estación y la hora.
+// - Efectos: la firma sonora de las celebraciones y el "tin" de cada moneda.
 
 import type { Season } from '../game/seasons'
 
@@ -21,6 +22,9 @@ class Engine {
   private ctx: AudioContext | null = null
   private musicGain!: GainNode
   private ambientGain!: GainNode
+  private sfxGain!: GainNode
+  private sfxOn = true
+  private sfxVolume = 0.7
   private windGain!: GainNode
   private waterGain!: GainNode
   private cricketGain!: GainNode
@@ -56,6 +60,17 @@ class Engine {
     this.ambientGain.gain.value = 0
     this.ambientGain.connect(ctx.destination)
 
+    // Los efectos pasan por un paso bajo suave: nada chillón, aunque las notas sean agudas
+    const sfxTone = ctx.createBiquadFilter()
+    sfxTone.type = 'lowpass'
+    sfxTone.frequency.value = 5200
+    sfxTone.Q.value = 0.4
+    this.sfxGain = ctx.createGain()
+    this.sfxGain.gain.value = this.sfxOn ? this.sfxVolume : 0
+    this.sfxGain.connect(sfxTone)
+    sfxTone.connect(ctx.destination)
+    sfxTone.connect(this.reverb)
+
     this.windGain = this.loopNoise(ctx, 'lowpass', 380, 0.2)
     this.waterGain = this.loopNoise(ctx, 'bandpass', 1800, 0.0)
     this.cricketGain = ctx.createGain()
@@ -80,6 +95,82 @@ class Engine {
     this.ambientOn = on
     if (!this.ctx) return
     this.ambientGain.gain.setTargetAtTime(on ? volume * 0.5 : 0, this.ctx.currentTime, 0.8)
+  }
+
+  setSfx(on: boolean, volume: number) {
+    this.sfxOn = on
+    this.sfxVolume = volume
+    if (!this.ctx) return
+    this.sfxGain.gain.setTargetAtTime(on ? volume : 0, this.ctx.currentTime, 0.05)
+  }
+
+  /**
+   * Firma sonora de Grove: campanitas cálidas en Re mayor pentatónico, la misma escala que la
+   * música, para que una celebración nunca desentone con lo que suena.
+   * `coin` sube una nota por cada moneda que llega (i), como una escala que se completa.
+   */
+  sfx(name: 'coin' | 'small' | 'medium' | 'big', i = 0) {
+    const ctx = this.ctx
+    if (!ctx || !this.sfxOn || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.01
+    const D5 = 587.33
+    const PENTA = [1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2, 9 / 4, 5 / 2, 3]
+    if (name === 'coin') {
+      this.bell(D5 * 2 * PENTA[Math.min(i, PENTA.length - 1)], t, 0.07, 0.32)
+    } else if (name === 'small') {
+      this.bell(D5, t, 0.09, 0.7)
+      this.bell(D5 * 1.5, t + 0.09, 0.08, 0.9)
+    } else if (name === 'medium') {
+      ;[1, 5 / 4, 3 / 2, 2].forEach((r, k) => this.bell(D5 * r, t + k * 0.085, 0.085, 1.3))
+      this.swell([293.66, 440, 739.99], t, 0.025, 1.8)
+    } else {
+      this.swell([146.83, 220, 293.66, 369.99], t, 0.03, 3.4)
+      ;[1, 9 / 8, 5 / 4, 3 / 2, 5 / 3, 2, 5 / 2, 3].forEach((r, k) => this.bell(D5 * r, t + 0.25 + k * 0.075, 0.07, 1.6))
+      // Destellos sueltos al final, muy bajitos
+      for (let k = 0; k < 5; k++) this.bell(D5 * 4 * PENTA[(k * 3) % PENTA.length], t + 0.9 + k * 0.16 + Math.random() * 0.05, 0.025, 0.8)
+    }
+  }
+
+  /** Una campana suave: fundamental, octava y un parcial de cristal que se apaga antes. */
+  private bell(freq: number, t: number, gain: number, decay: number) {
+    const ctx = this.ctx!
+    const partials: Array<[number, number, number]> = [
+      [1, 1, decay],
+      [2, 0.22, decay * 0.6],
+      [3.01, 0.06, decay * 0.3],
+    ]
+    for (const [mult, amp, d] of partials) {
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq * mult
+      g.gain.setValueAtTime(0, t)
+      g.gain.linearRampToValueAtTime(gain * amp, t + 0.006)
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d)
+      osc.connect(g).connect(this.sfxGain)
+      osc.start(t)
+      osc.stop(t + d + 0.05)
+    }
+  }
+
+  /** Acorde que entra y sale despacio, de colchón bajo las campanas. */
+  private swell(freqs: number[], t: number, gain: number, length: number) {
+    const ctx = this.ctx!
+    for (const f of freqs) {
+      for (const detune of [-4, 4]) {
+        const osc = ctx.createOscillator()
+        const g = ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.value = f
+        osc.detune.value = detune
+        g.gain.setValueAtTime(0, t)
+        g.gain.linearRampToValueAtTime(gain, t + length * 0.3)
+        g.gain.linearRampToValueAtTime(0, t + length)
+        osc.connect(g).connect(this.sfxGain)
+        osc.start(t)
+        osc.stop(t + length + 0.05)
+      }
+    }
   }
 
   setMood(mood: AmbientMood) {

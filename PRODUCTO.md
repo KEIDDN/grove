@@ -359,3 +359,71 @@ hojas de iOS. Sale a media altura sobre el dock y, deslizándolo hacia arriba
 hacia abajo vuelve a media altura o se cierra. Al cambiar de sección el panel
 no se cierra: solo cambia el contenido. A pantalla completa el 3D se pausa.
 Las pantallas completas separadas se descartan porque cortaban la fluidez.
+
+## Calidad profesional (18/10/2026)
+
+Objetivo: que sirva de **pieza de portfolio** (LinkedIn y web propia) sin dejar
+de ser cómoda para el día a día. La primera vez que pasa algo es espectacular y
+después se suaviza. La interfaz se enseña siempre: es parte del diseño. La idea
+de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
+"virtual".
+
+- **Nombre nuevo: Tendu** (*tend + you*: cuídate). Se renombra al final. Las
+  secciones quedan: Cultivar · Raíces · **Calma** · Vivero · Tú.
+- **Tono:** calma en lo importante (onboarding, bienestar, diario) y un punto de
+  gracia en lo idle (visitantes, regalos, logros). Sin emojis en la interfaz.
+- **Celebraciones en tres niveles:**
+  1. *Pequeño* (misión, regalo de visitante): aviso mejorado con icono.
+  2. *Mediano* (sesión de Cultivar o Calma, Raíz guardada, lectura): tarjeta con
+     la cifra grande rodando, resumen de lo que ha pasado en el jardín y sonido.
+  3. *Grande* (hito de días, parcelas, logro, planta adulta): pantalla completa,
+     la cámara se acerca, partículas y "Has desbloqueado…".
+  Las monedas **vuelan** (unas pocas, máximo ~10, ganes lo que ganes) hasta el
+  contador de arriba, que hace un pequeño pop con cada una. Fluido y minimalista.
+- **"Mientras no estabas…":** tarjeta al volver con los visitantes que vinieron
+  y lo que ha crecido.
+- **Modo desarrollador oculto** (7 toques): estación, hora, clima, monedas,
+  saltar días y lanzar cada celebración. **Jardines demo** que se cargan y
+  quitan al momento sin tocar la partida real: Día 1 · Semana 2 · Mes 3 · Año 1,
+  y "Volver a mi jardín". La estación favorita pasa a Ajustes como opción real;
+  la hora ya no se puede cambiar fuera del modo dev.
+- **"Tu semana"** (popover del chip): círculos de la semana → 3 misiones de hoy
+  → próximo hito con barra → el mundo ahora (estación y días que quedan, próximo
+  evento, visitantes presentes; al tocar uno la cámara va hacia él) → ánimo de
+  hoy.
+- **Calma** (sustituye a Leer, que pasa dentro):
+  - *Respirar:* caja 4-4-4-4, 4-7-8 y coherencia 5-5. Un círculo central se
+    expande al inspirar, se queda quieto al retener y se contrae al soltar el
+    aire, con la fase y la cuenta dentro; la luz de la isla respira a la vez.
+  - *Meditar:* temporizador libre (3/5/10/20) con campanas.
+  - *Leer:* los artículos de antes.
+  - *Paisajes sonoros:* naturaleza, ruido blanco/rosa/marrón y ondas binaurales
+    (alfa, theta, delta; aviso de auriculares), generados con Web Audio y con
+    calidad cuidada: nada de chiado, fundidos suaves y página de escucha.
+  - Riega las semillas igual que Cultivar, cuenta como día cumplido, da **la
+    mitad de monedas** (1 cada 2 min, con el tope común de 120) y atrae
+    visitantes propios de la calma. Misión diaria tipo "Respira 2 minutos".
+  - Meditaciones guiadas con voz: no de momento (quizá en Pro).
+- **Ánimo en Raíces:** primer paso de la página del día, al estilo de Salud del
+  iPhone: deslizador de 7 niveles → emociones → qué influye → nota. El
+  deslizador es un **capullo low poly muy detallado** que se abre, del lavanda
+  frío al melocotón cálido (sin rojos). Calendario de ánimo en el diario. Se
+  puede registrar un momento suelto desde Tú › Hoy. **El ánimo nunca se refleja
+  en el jardín.**
+- **Onboarding cinematográfico:** la isla aparece entre nubes con el lema
+  *"Cuídate. Mira cómo florece."* (subtítulo: *"Un jardín que crece cuando te
+  cuidas."*) → tres escenas de mecánica en vivo (Concéntrate, Escúchate, Hazlo
+  tuyo) → nombre, qué cuidar y ritmo en tarjetas sobre la isla → semilla de
+  regalo que se planta delante → celebración grande. Copy publicitario.
+- **Inmersión:** clima sutil según la estación (lluvia fina, nieve, niebla solo
+  en el mar de nubes) que no tape la isla; firma sonora propia para cada nivel
+  de celebración; visitantes animados (se sientan, beben del estanque).
+- **Economía:** curva objetivo para un jugador típico (4 días/semana, 30 min):
+  ≈4×4 el primer mes, ≈25 parcelas a los 3 meses y 49 al año. Los logros dan
+  1–2 parcelas. Lo grande del Vivero cuesta 1–2 semanas. Se simula antes de
+  cambiar nada.
+- **Aparcado:** varios jardines (Pro), creador de jardines para compartir.
+
+**Orden:** 1 Celebraciones + "Mientras no estabas" → 2 Modo dev, demos y Tu
+semana → 3 Calma → 4 Ánimo → 5 Onboarding → 6 Clima, visitantes animados y
+economía → 7 Renombrar a Tendu.

@@ -1,10 +1,12 @@
-import type { CSSProperties } from 'react'
+import { useEffect, type CSSProperties } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { SEASONS } from './game/seasons'
 import { useGrove, useSeason } from './game/store'
 import { AudioController } from './audio/AudioController'
 import { GardenCanvas } from './scene/GardenCanvas'
 import { useDaylight } from './scene/useDaylight'
+import { Celebrations } from './ui/Celebrations'
+import { CoinFlights } from './ui/CoinFlights'
 import { Dock } from './ui/Dock'
 import { InspectCard } from './ui/InspectCard'
 import { Onboarding } from './ui/Onboarding'
@@ -32,6 +34,7 @@ export function App() {
   const night = nightLevel > 0.55
   // Atardecer y amanecer: el cielo ya oscurece arriba, pero la interfaz aún no es la de noche
   const dusk = !night && nightLevel > 0.18
+  useWelcomeBack(splash)
 
   return (
     <div className={night ? 'app night' : dusk ? 'app dusk' : 'app'} style={{ '--bg': theme.bg, '--bg-deep': theme.bgDeep } as CSSProperties}>
@@ -65,10 +68,32 @@ export function App() {
             </AnimatePresence>
             {tab === 'garden' && !editMode && <InspectCard />}
             <AnimatePresence mode="wait">{editMode ? <EditBar key="edit" /> : <Dock key="dock" />}</AnimatePresence>
+            <Celebrations />
           </motion.div>
         )}
       </AnimatePresence>
       <Toast />
+      <CoinFlights />
     </div>
   )
+}
+
+/**
+ * Al entrar (pasada la portada) y cada vez que vuelves a la app, mira cuánto has estado fuera:
+ * si ha sido un buen rato, alguien habrá pasado por el jardín. Mientras está abierta, se apunta
+ * la hora cada minuto y al salir.
+ */
+function useWelcomeBack(splash: boolean) {
+  useEffect(() => {
+    if (splash) return
+    const { welcomeBack, markSeen } = useGrove.getState()
+    welcomeBack()
+    const onVisibility = () => (document.visibilityState === 'visible' ? useGrove.getState().welcomeBack() : useGrove.getState().markSeen())
+    document.addEventListener('visibilitychange', onVisibility)
+    const id = setInterval(markSeen, 60_000)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      clearInterval(id)
+    }
+  }, [splash])
 }

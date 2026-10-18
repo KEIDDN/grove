@@ -253,6 +253,12 @@ function Settings() {
       {audio.ambient && (
         <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.ambientVolume} onChange={(e) => setAudio({ ambientVolume: Number(e.target.value) })} aria-label="Volumen del ambiente" style={{ margin: '10px 0' }} />
       )}
+      <Row label="Efectos" hint="Celebraciones y monedas">
+        <Switch on={audio.sfx} onChange={(sfx) => setAudio({ sfx })} label="Efectos" />
+      </Row>
+      {audio.sfx && (
+        <input className="slider" type="range" min={0} max={1} step={0.05} value={audio.sfxVolume} onChange={(e) => setAudio({ sfxVolume: Number(e.target.value) })} aria-label="Volumen de los efectos" style={{ margin: '10px 0' }} />
+      )}
 
       <div className="eyebrow" style={{ margin: '22px 0 2px' }}>
         Tu jardín

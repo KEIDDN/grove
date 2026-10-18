@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import { AnimatedNumber } from './AnimatedNumber'
 import { spring } from './motion'
 import { nextDayReward } from '../game/config'
@@ -109,13 +109,29 @@ function WeekRing({ done, goal }: { done: number; goal: number }) {
   )
 }
 
+/**
+ * Contador de monedas. Las que aún vuelan hacia aquí no se cuentan todavía: el número sube a
+ * medida que llegan y el contador da un pequeño salto con cada una.
+ */
 function Coins({ coins }: { coins: number }) {
+  const held = useGrove((s) => s.coinsHeld)
+  const controls = useAnimationControls()
+  useEffect(() => {
+    const pop = () => void controls.start({ scale: [1, 1.12, 1], transition: { duration: 0.28, ease: 'easeOut' } })
+    window.addEventListener('coin-land', pop)
+    return () => window.removeEventListener('coin-land', pop)
+  }, [controls])
   return (
-    <div className="glass" style={{ display: 'flex', alignItems: 'center', gap: 7, height: 42, padding: '0 15px 0 11px', borderRadius: 999, fontWeight: 700, fontSize: 15 }}>
+    <motion.div
+      data-coin-target
+      animate={controls}
+      className="glass"
+      style={{ display: 'flex', alignItems: 'center', gap: 7, height: 42, padding: '0 15px 0 11px', borderRadius: 999, fontWeight: 700, fontSize: 15 }}
+    >
       <CoinIcon />
-      <AnimatedNumber value={coins} />
+      <AnimatedNumber value={Math.max(0, coins - held)} />
       <span className="sr-only">monedas</span>
-    </div>
+    </motion.div>
   )
 }
 

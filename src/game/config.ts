@@ -7,6 +7,15 @@ export const ECONOMY = {
   startingCoins: 140,
 } as const
 
+/** Visitantes que llegan mientras no estás. */
+export const AWAY = {
+  /** Horas fuera para que venga un visitante (hasta `maxVisitors`). */
+  hoursPerVisitor: 4,
+  maxVisitors: 3,
+  /** Monedas que deja cada uno. No cuentan para el tope diario. */
+  coinsPerVisitor: 4,
+} as const
+
 /** Parcelas que se ganan por días acumulados cuidándote (además de las 9 iniciales). */
 export const DAY_PARCELS = [
   { days: 7, parcels: 7 },

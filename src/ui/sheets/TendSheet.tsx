@@ -6,7 +6,7 @@ import { paletteFor } from '../../game/variants'
 import { KindGlyph } from '../glyphs'
 import { useGrove } from '../../game/store'
 import { formatClock, TIME_SCALE } from '../../game/time'
-import { CoinIcon, MoonIcon } from '../icons'
+import { MoonIcon } from '../icons'
 import { spring } from '../motion'
 import { RollingNumber } from '../RollingNumber'
 import { Sheet } from '../Sheet'
@@ -26,10 +26,9 @@ export function useSessionClock() {
 
 export function TendSheet() {
   const session = useGrove((s) => s.session)
-  const reward = useGrove((s) => s.lastReward)
   return (
     <Sheet eyebrow={session ? 'Sesión en curso' : 'Concentración'} title="Cultivar">
-      {session ? <Running /> : reward ? <Done /> : <Setup />}
+      {session ? <Running /> : <Setup />}
     </Sheet>
   )
 }
@@ -249,41 +248,6 @@ function Running() {
   )
 }
 
-function Done() {
-  const reward = useGrove((s) => s.lastReward)
-  const clear = useGrove((s) => s.clearReward)
-  const setTab = useGrove((s) => s.setTab)
-  if (!reward) return null
-  const message = !reward.grew
-    ? `Las sesiones de menos de ${ECONOMY.minMinutesForCoins} minutos cuentan para ti, pero no dan monedas.`
-    : reward.capped
-      ? 'Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.'
-      : 'Tu tiempo ha regado las semillas que tienes plantadas.'
-  return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <CoinIcon size={44} />
-        <span className="display" style={{ fontSize: 88 }}>
-          +{reward.coins}
-        </span>
-      </div>
-      <div style={{ fontSize: 17, fontWeight: 700 }}>{reward.minutes} minutos dedicados a ti</div>
-      <p className="muted" style={{ margin: 0, fontSize: 14, lineHeight: 1.5 }}>
-        {message}
-      </p>
-      <div style={{ display: 'flex', gap: 10 }}>
-        <button className="pill pill-dark press" onClick={() => { clear(); setTab('garden') }} style={{ flex: 1, height: 50 }}>
-          Ver mi jardín
-        </button>
-        <button className="pill pill-ghost press" onClick={clear} style={{ flex: 1, height: 50 }}>
-          Otra sesión
-        </button>
-      </div>
-    </div>
-  )
-}
-
-/** Vigila la sesión desde fuera del panel: se completa aunque el panel esté cerrado. */
 export function SessionWatcher() {
   const clock = useSessionClock()
   const complete = useGrove((s) => s.completeSession)

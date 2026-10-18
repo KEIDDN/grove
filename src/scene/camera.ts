@@ -33,11 +33,14 @@ export const view = {
   lastMove: 0,
   /** Mitad del lado del jardín, para limitar el desplazamiento. */
   halfSpan: 2,
+  /** Rapidez con la que la cámara llega a su objetivo; las celebraciones la mueven más despacio. */
+  speed: 9,
 }
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v))
 
 export function grab() {
+  view.speed = 9
   view.held = true
   view.velocity = 0
   view.targetAzimuth = view.azimuth
@@ -70,6 +73,7 @@ export function release() {
 }
 
 export function zoomBy(factor: number) {
+  view.speed = 9
   view.targetZoom = clamp(view.targetZoom * factor, MIN_ZOOM, MAX_ZOOM)
   view.zoom = view.targetZoom
   clampPan()
@@ -77,6 +81,7 @@ export function zoomBy(factor: number) {
 
 /** Desplaza el punto mirado (dx, dz en unidades del jardín). */
 export function panBy(dx: number, dz: number) {
+  view.speed = 9
   view.targetPanX += dx
   view.targetPanZ += dz
   clampPan()
@@ -91,8 +96,18 @@ function clampPan() {
   view.targetPanZ = clamp(view.targetPanZ, -room, room)
 }
 
+/** Acerca la cámara despacio a un punto del jardín (relativo a su centro), como un plano de cine. */
+export function focusOn(x: number, z: number, zoom = 1.8) {
+  view.speed = 2.4
+  view.targetZoom = clamp(zoom, MIN_ZOOM, MAX_ZOOM)
+  view.targetPanX = x
+  view.targetPanZ = z
+  clampPan()
+}
+
 /** Doble toque: vuelve a la vista inicial, desde la vista isométrica más cercana. */
-export function resetView() {
+export function resetView(speed = 9) {
+  view.speed = speed
   view.targetAzimuth = HOME_AZIMUTH + Math.round((view.azimuth - HOME_AZIMUTH) / STEP) * STEP
   view.targetPolar = HOME_POLAR
   view.targetZoom = 1
@@ -103,7 +118,7 @@ export function resetView() {
 /** Avanza los valores hacia su objetivo (muelle exponencial, independiente de los fps). */
 export function stepView(delta: number) {
   if (view.held) return
-  const k = 1 - Math.exp(-delta * 9)
+  const k = 1 - Math.exp(-delta * view.speed)
   view.azimuth += (view.targetAzimuth - view.azimuth) * k
   view.polar += (view.targetPolar - view.polar) * k
   view.zoom += (view.targetZoom - view.zoom) * k
