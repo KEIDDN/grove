@@ -63,7 +63,7 @@ export type Placing =
   | { from: 'inventory'; invId: string; kind: ItemKind; color?: string; growth?: Growth }
   | { from: 'garden'; itemId: string; kind: ItemKind }
 
-interface Saved {
+export interface Saved {
   /** Estilo de la roca bajo la isla. */
   islandStyle: IslandStyleId
   coins: number
@@ -102,6 +102,8 @@ interface Saved {
   lastSeenAt: number
   /** Momentos que ya se han celebrado a lo grande la primera vez. */
   firsts: FirstKey[]
+  /** Quién vino la última vez que estuviste fuera: siguen por el jardín hasta el día siguiente. */
+  recentVisitors: { ids: string[]; day: string }
 }
 
 export interface ToastData {
@@ -236,7 +238,7 @@ function water(items: GardenItem[], by: Growth['by'], amount: number): { items: 
   return { items: next, grown }
 }
 
-const initialSaved = (): Saved => ({
+export const initialSaved = (): Saved => ({
   islandStyle: 'rock',
   coins: ECONOMY.startingCoins,
   coinsToday: 0,
@@ -268,6 +270,7 @@ const initialSaved = (): Saved => ({
   articlesRead: [],
   lastSeenAt: Date.now(),
   firsts: [],
+  recentVisitors: { ids: [], day: '' },
 })
 
 let toastId = 0
@@ -482,7 +485,7 @@ export const useGrove = create<GroveState>()(
           const visit = visitWhileAway(new Set(s.items.map((it) => it.kind)), s.seasonOverride ?? seasonForDate(), hours, s.visitorsSeen, s.lastSeenAt)
           if (!visit) return
           const first = firstTime('away')
-          set({ coins: s.coins + visit.coins, visitorsSeen: [...s.visitorsSeen, ...visit.fresh] })
+          set({ coins: s.coins + visit.coins, visitorsSeen: [...s.visitorsSeen, ...visit.fresh], recentVisitors: { ids: visit.visitors.map((v) => v.id), day: dayKey() } })
           const n = visit.visitors.length
           celebrate({
             level: 'medium',

@@ -1652,3 +1652,268 @@ input[type='range'].slider {
   margin-right: 0.04em;
   opacity: 0.55;
 }
+
+/* ——— Modo desarrollador ——— */
+
+.version-line {
+  align-self: center;
+  margin-top: 22px;
+  padding: 10px 16px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.dev-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 22px;
+  border: 1px dashed var(--line);
+  background: rgba(27, 31, 28, 0.03);
+}
+
+.app.night .dev-panel {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dev-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dev-off {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  color: #c2453f;
+  padding: 6px 0 6px 10px;
+}
+
+.dev-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dev-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dev-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dev-chip {
+  height: 34px;
+  padding: 0 13px;
+  font-size: 12px;
+}
+
+.dev-hint {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* ——— Tu semana ——— */
+
+.week-card {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 2;
+  transform-origin: top left;
+  width: min(320px, calc(100vw - 32px));
+  max-height: calc(100dvh - var(--safe-top) - 190px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: none;
+}
+
+.wk-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.wk-dot i {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(27, 31, 28, 0.07);
+  transition: background 0.3s var(--ease);
+}
+
+.wk-dot.done i {
+  background: var(--ink);
+}
+
+.wk-dot.today {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.wk-dot.today i {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+  border: 0;
+}
+
+.app.night .wk-dot i {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app.night .wk-dot.done i {
+  background: var(--ink);
+}
+
+.week-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.week-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.week-mission {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-align: left;
+}
+
+.week-check {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: inset 0 0 0 1.5px var(--line);
+  color: #fff;
+}
+
+.week-mission.ready .week-check {
+  background: #3fa066;
+  box-shadow: none;
+}
+
+.week-mission.got .week-check {
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: none;
+}
+
+.week-mission-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-mission.got .week-mission-title {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+
+.week-mission-meta {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.week-mission.ready .week-mission-meta {
+  color: #3fa066;
+  font-weight: 750;
+}
+
+.week-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(27, 31, 28, 0.08);
+  overflow: hidden;
+}
+
+.app.night .week-bar {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.week-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9cd47a, #3fa066);
+}
+
+.week-row-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.week-visitors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.week-visitor {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px 0 6px;
+  border-radius: 999px;
+  background: rgba(27, 31, 28, 0.05);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.app.night .week-visitor {
+  background: rgba(255, 255, 255, 0.08);
+}

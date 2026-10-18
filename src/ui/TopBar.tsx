@@ -2,21 +2,17 @@ import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useAnimationControls } from 'motion/react'
 import { AnimatedNumber } from './AnimatedNumber'
 import { spring } from './motion'
-import { nextDayReward } from '../game/config'
+import { daysLeftInSeason, upcomingEvent } from '../game/calendar'
+import { DAY_PARCELS, nextDayReward } from '../game/config'
+import { missionsFor } from '../game/goals'
+import { VISITORS } from '../game/visitors'
 import { SEASONS } from '../game/seasons'
 import { parcelsAllowed, useGrove, useSeason } from '../game/store'
-import { weekdayIndex } from '../game/time'
-import { ChevronIcon, CoinIcon, CycleIcon, EditIcon } from './icons'
+import { dayKey, weekdayIndex } from '../game/time'
+import { VisitorGlyph } from './glyphs'
+import { CheckIcon, ChevronIcon, CoinIcon, EditIcon } from './icons'
 
 const DAY_LABELS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
-const HOURS: Array<[string, number | null]> = [
-  ['Real', null],
-  ['Amanecer', 6.8],
-  ['Día', 12],
-  ['Atardecer', 19.4],
-  ['Noche', 23],
-]
-
 export function TopBar() {
   const coins = useGrove((s) => s.coins)
   const totalDays = useGrove((s) => s.totalDays)
@@ -63,7 +59,7 @@ export function TopBar() {
             <>
               {/* Tocar fuera cierra el panel */}
               <motion.div key="scrim" className="week-scrim" onClick={() => setOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
-              <WeekCard key="week" />
+              <WeekCard key="week" onClose={() => setOpen(false)} />
             </>
           )}
         </AnimatePresence>
@@ -135,71 +131,146 @@ function Coins({ coins }: { coins: number }) {
   )
 }
 
-function WeekCard() {
+/**
+ * "Tu semana": de un vistazo, qué llevas, qué puedes hacer hoy y qué está pasando en el mundo.
+ * Los días, las misiones de hoy, el próximo hito y la estación, los eventos y quién está de visita.
+ */
+function WeekCard({ onClose }: { onClose: () => void }) {
   const weekDays = useGrove((s) => s.weekDays)
   const weekGoal = useGrove((s) => s.weekGoal)
   const totalDays = useGrove((s) => s.totalDays)
-  const cycleSeason = useGrove((s) => s.cycleSeason)
-  const hourOverride = useGrove((s) => s.hourOverride)
-  const setHour = useGrove((s) => s.setHourOverride)
-  const season = SEASONS[useSeason()]
+  const daily = useGrove((s) => s.daily)
+  const claimed = useGrove((s) => s.missionsClaimed)
+  const claim = useGrove((s) => s.claimMission)
+  const openYou = useGrove((s) => s.openYou)
+  const recent = useGrove((s) => s.recentVisitors)
+  const seasonId = useSeason()
+  const realSeason = useGrove((s) => s.seasonOverride === null)
+  const season = SEASONS[seasonId]
   const freeParcels = useGrove((s) => parcelsAllowed(s) - s.plots.length)
+  const setEditMode = useGrove((s) => s.setEditMode)
+  const setEditTool = useGrove((s) => s.setEditTool)
   const today = weekdayIndex()
   const done = weekDays.filter(Boolean).length
   const next = nextDayReward(totalDays)
-  const left = next ? next.days - totalDays : 0
+  const prev = [...DAY_PARCELS].reverse().find((m) => m.days <= totalDays)?.days ?? 0
+  const missions = missionsFor(daily.day)
+  const event = upcomingEvent()
+  const visitors = recent.day === dayKey() ? VISITORS.filter((v) => recent.ids.includes(v.id)) : []
 
   return (
     <motion.section
-      className="glass"
+      className="glass week-card"
       aria-label="Tu semana"
       initial={{ opacity: 0, y: -10, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.97, transition: { duration: 0.15 } }}
       transition={spring}
-      style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 2, transformOrigin: 'top left', width: 'min(300px, calc(100vw - 44px))', borderRadius: 26, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+    >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span className="display" style={{ fontSize: 44 }}>
           {done}
           <span style={{ fontSize: 22, color: 'var(--ink-faint)' }}>/{weekGoal}</span>
         </span>
         <span className="muted" style={{ fontSize: 13 }}>
-          días esta semana
+          {done >= weekGoal ? 'semana cumplida' : 'días esta semana'}
         </span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         {DAY_LABELS.map((l, i) => (
-          <div key={l} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                background: weekDays[i] ? 'var(--ink)' : i === today ? 'transparent' : 'rgba(27,31,28,0.07)',
-                border: !weekDays[i] && i === today ? '1.5px dashed var(--ink)' : 'none',
-              }}
-            />
-            <span style={{ fontSize: 10, fontWeight: i === today ? 800 : 600, color: i === today ? 'var(--ink)' : 'var(--ink-faint)' }}>{l}</span>
+          <div key={l} className={weekDays[i] ? 'wk-dot done' : i === today ? 'wk-dot today' : 'wk-dot'}>
+            <i />
+            <span>{l}</span>
           </div>
         ))}
       </div>
-      <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.45 }}>
-        {next
-          ? `${freeParcels > 0 ? `Tienes ${freeParcels} parcela${freeParcels > 1 ? 's' : ''} para ampliar. ` : ''}${left === 1 ? 'Falta 1 día' : `Faltan ${left} días`} para ganar ${next.parcels} parcelas más.`
-          : freeParcels > 0
-            ? `Tienes ${freeParcels} parcelas para ampliar tu jardín.`
-            : 'Sigue con misiones y logros para ganar parcelas.'}
-      </p>
-      <button className="pill pill-ghost press" onClick={cycleSeason} style={{ alignSelf: 'flex-start', height: 36, fontSize: 13 }}>
-        <CycleIcon size={14} strokeWidth={2.2} />
-        {season.name} · cambiar (demo)
-      </button>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-label="Hora del día (demo)">
-        {HOURS.map(([label, h]) => (
-          <button key={label} className="pill pill-ghost press" aria-pressed={hourOverride === h} onClick={() => setHour(h)} style={{ height: 36, padding: '0 14px', fontSize: 12 }}>
-            {label}
+
+      <div className="week-block">
+        <div className="week-label">Hoy</div>
+        {missions.map((m) => {
+          const value = Math.min(m.target, Math.floor(m.value(daily)))
+          const ready = value >= m.target
+          const got = claimed.includes(m.id)
+          return (
+            <button
+              key={m.id}
+              className={got ? 'week-mission got press' : ready ? 'week-mission ready press' : 'week-mission press'}
+              onClick={() => (ready && !got ? claim(m.id) : (onClose(), openYou('today')))}
+            >
+              <span className="week-check">{(got || ready) && <CheckIcon size={11} strokeWidth={3} />}</span>
+              <span className="week-mission-title">{m.title}</span>
+              <span className="week-mission-meta">
+                {got ? 'Hecho' : ready ? 'Recoger' : `${value}/${m.target}`}
+                {!got && (
+                  <>
+                    <CoinIcon size={12} />
+                    {m.reward.coins}
+                  </>
+                )}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="week-block">
+        <div className="week-label">Próximo hito</div>
+        {next ? (
+          <>
+            <div className="week-bar">
+              <motion.span initial={{ width: 0 }} animate={{ width: `${((totalDays - prev) / (next.days - prev)) * 100}%` }} transition={{ ...spring, delay: 0.15 }} />
+            </div>
+            <div className="week-row-text">
+              <span>
+                Día {totalDays} de {next.days}
+              </span>
+              <span className="muted">+{next.parcels} parcelas</span>
+            </div>
+          </>
+        ) : (
+          <div className="week-row-text muted">Tu isla ya tiene todas sus parcelas.</div>
+        )}
+        {freeParcels > 0 && (
+          <button
+            className="pill pill-ghost press"
+            style={{ height: 34, fontSize: 12, alignSelf: 'flex-start' }}
+            onClick={() => {
+              onClose()
+              setEditMode(true)
+              setEditTool('expand')
+            }}
+          >
+            {freeParcels === 1 ? 'Tienes 1 parcela para ampliar' : `Tienes ${freeParcels} parcelas para ampliar`}
           </button>
-        ))}
+        )}
+      </div>
+
+      <div className="week-block">
+        <div className="week-label">Ahora en tu isla</div>
+        <div className="week-row-text">
+          <span>{season.name}</span>
+          <span className="muted">{realSeason ? `quedan ${daysLeftInSeason(seasonId)} días` : 'tu favorita'}</span>
+        </div>
+        {event && (
+          <div className="week-row-text">
+            <span>{event.name}</span>
+            <span className="muted">{event.days === 0 ? 'es hoy' : event.days === 1 ? 'mañana' : `en ${event.days} días`}</span>
+          </div>
+        )}
+        <div className="week-visitors">
+          {visitors.length ? (
+            visitors.map((v) => (
+              <span key={v.id} className="week-visitor">
+                <VisitorGlyph type={v.type} size={20} />
+                {v.name}
+              </span>
+            ))
+          ) : (
+            <span className="muted" style={{ fontSize: 12 }}>
+              Nadie de visita ahora mismo. Vuelven mientras no estás.
+            </span>
+          )}
+        </div>
       </div>
     </motion.section>
   )

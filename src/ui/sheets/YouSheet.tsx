@@ -1,4 +1,6 @@
-import { useState, type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
+import { DevPanel } from '../../dev/DevPanel'
+import { setDevMode, useDev } from '../../dev/devMode'
 import { nextDayReward } from '../../game/config'
 import { ACHIEVEMENTS, missionsFor, rewardLabel } from '../../game/goals'
 import { SEASON_ORDER, SEASONS } from '../../game/seasons'
@@ -235,9 +237,11 @@ function Settings() {
   const userName = useGrove((s) => s.userName)
   const replay = useGrove((s) => s.replayOnboarding)
   const [confirmReset, setConfirmReset] = useState(false)
+  const dev = useDev((s) => s.on)
 
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
+      {dev && <DevPanel />}
       <div className="eyebrow" style={{ marginBottom: 2 }}>
         Sonido
       </div>
@@ -291,14 +295,14 @@ function Settings() {
           </button>
         </div>
       </Row>
-      <Row label="Estación" hint="Automática según la fecha, o fija si prefieres">
+      <Row label="Estación" hint="La del calendario, o tu favorita siempre">
         <select
           value={seasonOverride ?? 'auto'}
           onChange={(e) => useGrove.setState({ seasonOverride: e.target.value === 'auto' ? null : (e.target.value as typeof seasonOverride) })}
           aria-label="Estación"
           style={{ height: 36, borderRadius: 12, border: '1px solid var(--line)', background: 'rgba(255,255,255,0.5)', padding: '0 8px', font: 'inherit', fontSize: 14, color: 'var(--ink)' }}
         >
-          <option value="auto">Automática</option>
+          <option value="auto">Del calendario</option>
           {SEASON_ORDER.map((s) => (
             <option key={s} value={s}>
               {SEASONS[s].name}
@@ -334,6 +338,27 @@ function Settings() {
           </button>
         )}
       </div>
+      <VersionLine />
     </div>
+  )
+}
+
+/** La versión, al final de Ajustes. Siete toques seguidos activan el modo desarrollador. */
+function VersionLine() {
+  const taps = useRef<number[]>([])
+  const onTap = () => {
+    if (useDev.getState().on) return
+    const now = Date.now()
+    taps.current = [...taps.current.filter((t) => now - t < 2500), now]
+    if (taps.current.length >= 7) {
+      taps.current = []
+      setDevMode(true)
+      useGrove.getState().showToast('Modo desarrollador activado')
+    }
+  }
+  return (
+    <button className="version-line" onClick={onTap} aria-label="Versión de la app">
+      Grove · versión 0.9
+    </button>
   )
 }
