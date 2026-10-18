@@ -3077,3 +3077,102 @@ input[type='range'].mood-slider {
     width: 440px;
   }
 }
+
+/* ——— Logotipo ——— */
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: 'Fraunces', 'Plus Jakarta Sans', serif;
+  font-weight: 700;
+  font-variation-settings:
+    'SOFT' 100,
+    'WONK' 1,
+    'opsz' 96;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.wordmark-letter {
+  position: relative;
+  display: inline-block;
+}
+
+/* La hojita que brota de la "t" */
+.wordmark-leaf {
+  position: absolute;
+  left: 0.2em;
+  top: 0.16em;
+  width: 0.28em;
+  height: 0.3em;
+  color: #4f9a62;
+  transform-origin: 0% 100%;
+}
+
+/* "Te damos la bienvenida a tendu" */
+.ob-welcome {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  text-align: center;
+  background: radial-gradient(90% 60% at 50% 48%, #fffdf8 0%, #f8f1e6 55%, #efe4d4 100%);
+}
+
+.app.night .ob-welcome {
+  background: radial-gradient(90% 60% at 50% 48%, #2a2a4a 0%, #181a32 55%, #0d0e1e 100%);
+}
+
+.ob-welcome-glow {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 360px;
+  height: 360px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(170, 220, 160, 0.45), rgba(250, 210, 170, 0.2) 45%, transparent 70%);
+  filter: blur(20px);
+  animation: welcome-glow 3.4s ease-out both;
+}
+
+@keyframes welcome-glow {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.ob-welcome-eyebrow {
+  position: relative;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.ob-welcome .wordmark {
+  position: relative;
+}
+
+.ob-welcome-line {
+  position: relative;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ob-brand .wordmark {
+  font-size: 34px;
+}

@@ -1,7 +1,7 @@
 {
-  "name": "Grove",
-  "short_name": "Grove",
-  "description": "Un pequeño jardín que crece con el tiempo que te dedicas.",
+  "name": "Tendu",
+  "short_name": "Tendu",
+  "description": "Cuídate. Mira cómo florece. Un pequeño jardín que crece cada vez que te dedicas un rato.",
   "lang": "es",
   "start_url": "/",
   "display": "standalone",

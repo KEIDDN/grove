@@ -10,6 +10,7 @@ import { craneIn, focusOn, framing, view } from '../scene/camera'
 import { iriStyle, KindGlyph } from './glyphs'
 import { CalmIcon, JournalIcon, SproutIcon, TimerIcon } from './icons'
 import { NumericText } from './NumericText'
+import { Wordmark } from './Wordmark'
 
 /**
  * Bienvenida cinematográfica. Primero cuatro escenas que enseñan el juego en directo sobre la isla
@@ -29,38 +30,38 @@ type SceneId = 'intro' | 'focus' | 'roots' | 'calm' | 'yours' | 'promise' | 'nam
 const SCENES: Array<{ id: SceneId; eyebrow?: string; title: string; body: string; chip?: { label: string; icon: ReactNode } }> = [
   {
     id: 'intro',
-    eyebrow: 'Grove',
+    eyebrow: 'tendu',
     title: 'Cuídate.\nMira cómo florece.',
     body: 'Sabemos que a veces cuesta parar. Por eso esta isla es tuya: crece cada vez que te regalas un rato, por pequeño que sea.',
   },
   {
     id: 'focus',
     title: 'Siembra tu tiempo.',
-    body: 'Cuando tengas algo entre manos, pon un temporizador y quédate ahí un rato. Cada minuto riega tus semillas: hoy un brote, mañana un árbol.',
+    body: '¿Tienes algo entre manos? Pon un temporizador y quédate ahí un rato, sin prisas. Cada minuto riega tus semillas: hoy un brote, mañana un árbol.',
     chip: { label: 'Cultivar', icon: <TimerIcon size={14} /> },
   },
   {
     id: 'roots',
     title: 'Echa raíces.',
-    body: '¿Qué tal estás, de verdad? Aquí puedes contarlo sin filtros. Cada día te haremos un par de preguntas para escucharte, y cada página hace florecer algo. Solo lo lees tú.',
+    body: '¿Qué tal estás, de verdad? Aquí puedes contarlo tal cual. Cada día encontrarás un par de preguntas para escucharte, y cada página hace florecer algo. Solo lo lees tú.',
     chip: { label: 'Raíces', icon: <JournalIcon size={14} /> },
   },
   {
     id: 'calm',
     title: 'Respira.',
-    body: 'Hay días que van demasiado rápido. Para un minuto y respira con tu isla. Eso también cuenta, y también la hace crecer.',
+    body: 'Hay días que van demasiado rápido. Cuando lo notes, para un minuto y respira con tu isla. Eso también cuenta, y también la hace crecer.',
     chip: { label: 'Calma', icon: <CalmIcon size={14} /> },
   },
   {
     id: 'yours',
     title: 'Hazlo tuyo.',
-    body: 'Con lo que ganas, decórala a tu manera. Y mientras estás fuera, alguien pasará a verte y te dejará un detalle.',
+    body: 'Con lo que vas ganando, decórala a tu manera. Y mientras estás fuera, alguien pasará a verte y te dejará un detalle.',
     chip: { label: 'Tu jardín', icon: <SproutIcon size={14} /> },
   },
   {
     id: 'promise',
     title: 'Aquí nada\nse marchita.',
-    body: 'Si un día no puedes venir, no pasa nada. Tu jardín te espera tal y como lo dejaste. Vuelve cuando lo necesites.',
+    body: 'Si un día no puedes venir, no pasa nada. Aquí no hay rachas que perder: tu jardín te espera tal y como lo dejaste.',
   },
 ]
 const STORY = SCENES.length
@@ -273,9 +274,11 @@ export function Onboarding() {
     }
   }, [id])
 
+  // Al terminar: un momento de marca ("Te damos la bienvenida a tendu") y después nace el jardín
+  const [welcoming, setWelcoming] = useState(false)
   const next = () => {
     audio.unlock()
-    if (last) return finish()
+    if (last) return setWelcoming(true)
     // Al pasar a lo personal, lo enseñado se retira del jardín
     if (index === STORY - 1) clearDemos()
     setIndex((n) => n + 1)
@@ -287,9 +290,19 @@ export function Onboarding() {
     setIndex(STORY)
   }
   const finish = () => {
+    if (done.current) return
+    done.current = true
     clearDemos()
     complete({ userName, gardenName: gardenName || (userName ? `El jardín de ${userName.trim()}` : 'Tu jardín'), focusAreas: areas, weekGoal, firstSeed: seed })
   }
+
+  const done = useRef(false)
+  useEffect(() => {
+    if (!welcoming) return
+    audio.sfx('medium')
+    const t = window.setTimeout(finish, 3400)
+    return () => clearTimeout(t)
+  }, [welcoming])
 
   // Con el teclado abierto (iPhone), todo sube para que la tarjeta no quede tapada
   const root = useRef<HTMLDivElement>(null)
@@ -346,10 +359,7 @@ export function Onboarding() {
           <motion.section key={scene.id} className="ob-scene" initial="hidden" animate="shown" exit="gone" aria-live="polite">
             {scene.eyebrow ? (
               <motion.div className="ob-brand" variants={fade(0.2)}>
-                <span className="ob-brand-mark">
-                  <SproutIcon size={16} strokeWidth={2} />
-                </span>
-                {scene.eyebrow}
+                <Wordmark size={34} animate delay={0.3} />
               </motion.div>
             ) : (
               scene.chip && (
@@ -442,6 +452,30 @@ export function Onboarding() {
               </Personal>
             )}
           </motion.section>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {welcoming && (
+          <motion.div
+            key="welcome"
+            className="ob-welcome"
+            onClick={finish}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, ease: EASE }}
+            role="dialog"
+            aria-label="Te damos la bienvenida a tendu"
+          >
+            <div className="ob-welcome-glow" />
+            <motion.span className="ob-welcome-eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.25, ease: EASE }}>
+              Te damos la bienvenida a
+            </motion.span>
+            <Wordmark size={104} animate delay={0.5} />
+            <motion.p className="ob-welcome-line" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 1.3, ease: EASE }}>
+              {userName.trim() ? `${userName.trim()}, ya tienes un sitio para ti.` : 'Ya tienes un sitio para ti.'}
+            </motion.p>
+          </motion.div>
         )}
       </AnimatePresence>
 

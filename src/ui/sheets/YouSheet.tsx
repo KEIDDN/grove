@@ -358,7 +358,7 @@ function VersionLine() {
   }
   return (
     <button className="version-line" onClick={onTap} aria-label="Versión de la app">
-      Grove · versión 0.9
+      Tendu · versión 0.9
     </button>
   )
 }

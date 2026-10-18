@@ -1,4 +1,4 @@
-# 🌱 Grove (nombre en clave) — Definición de producto
+# 🌱 Tendu — Definición de producto
 
 > Resultado de la entrevista de ideación del 17/10/2026. Es la referencia del
 > proyecto: si algo cambia, se actualiza aquí. Concepto original:
@@ -368,7 +368,10 @@ después se suaviza. La interfaz se enseña siempre: es parte del diseño. La id
 de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
 "virtual".
 
-- **Nombre nuevo: Tendu** (*tend + you*: cuídate). Se renombra al final. Las
+- **Nombre: Tendu** (*tend + you*: cuídate). Hecho el 18/10/2026. El logotipo es
+  "tendu" en minúsculas con Fraunces suave en negrita y una hojita que brota de la
+  "t"; el resto de la interfaz sigue en Plus Jakarta Sans. Al terminar la
+  bienvenida sale "Te damos la bienvenida a tendu" antes de que nazca el jardín. Las
   secciones quedan: Jardín · Cultivar · **Calma** · Raíces · Leer · Vivero · Tú.
 - **Tono:** calma en lo importante (onboarding, bienestar, diario) y un punto de
   gracia en lo idle (visitantes, regalos, logros). Sin emojis en la interfaz.

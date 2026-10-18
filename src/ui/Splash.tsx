@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { useGrove } from '../game/store'
-import { SproutIcon } from './icons'
+import { Wordmark } from './Wordmark'
 
 /** Pantalla de inicio: el jardín de fondo, el nombre y un toque para entrar. */
 export function Splash() {
@@ -21,12 +21,11 @@ export function Splash() {
       exit={{ opacity: 0, scale: 1.04, filter: 'blur(6px)', transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } }}
     >
       <div className="splash-top">
-        <span className="splash-mark" aria-hidden="true">
-          <SproutIcon size={22} strokeWidth={2} />
+        <span className="splash-word">
+          <Wordmark size={88} animate />
         </span>
-        <span className="splash-word">Grove</span>
         <span className="muted splash-tag">
-          {onboarded ? `${greeting}${userName ? `, ${userName}` : ''}.` : 'Un pequeño jardín que crece con el tiempo que te dedicas.'}
+          {onboarded ? `${greeting}${userName ? `, ${userName}` : ''}. Tu jardín te esperaba.` : 'Un pequeño jardín que crece cuando te cuidas.'}
         </span>
       </div>
       <span className="pill glass splash-cta">{onboarded ? 'Entrar a tu jardín' : 'Empezar'}</span>
