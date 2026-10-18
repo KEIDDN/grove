@@ -425,6 +425,8 @@ textarea:focus-visible {
 
 .sheet-body {
   overflow-y: auto;
+  /* Solo se desplaza en vertical: nada puede arrastrar la pantalla de lado, como en una web */
+  overflow-x: hidden;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 22px 22px 24px;
@@ -954,8 +956,8 @@ input[type='range'].slider {
 .page-aura {
   position: absolute;
   top: -120px;
-  left: -40px;
-  right: -40px;
+  left: 0;
+  right: 0;
   height: 420px;
   pointer-events: none;
   z-index: 0;
