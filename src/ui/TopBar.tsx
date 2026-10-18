@@ -143,7 +143,7 @@ function WeekCard() {
       </button>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }} role="group" aria-label="Hora del día (demo)">
         {HOURS.map(([label, h]) => (
-          <button key={label} className="pill pill-ghost press" aria-pressed={hourOverride === h} onClick={() => setHour(h)} style={{ height: 30, padding: '0 12px', fontSize: 12 }}>
+          <button key={label} className="pill pill-ghost press" aria-pressed={hourOverride === h} onClick={() => setHour(h)} style={{ height: 36, padding: '0 14px', fontSize: 12 }}>
             {label}
           </button>
         ))}

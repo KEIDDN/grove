@@ -33,7 +33,7 @@ export function Dock() {
         <motion.span className="dock-bubble" aria-hidden="true" initial={false} animate={{ x: index * 56, scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
       )}
       {TABS.map(({ id, label, Icon }) => (
-        <button key={id} className="dock-item" onClick={() => { tap(); setTab(id) }} aria-current={id === tab ? 'page' : undefined}>
+        <button key={id} className="dock-item press" onClick={() => { tap(); setTab(id) }} aria-current={id === tab ? 'page' : undefined}>
           <Icon size={21} />
           {label}
           {id === 'you' && pending > 0 && <span className="badge" aria-label={`${pending} recompensas por recoger`}>{pending}</span>}

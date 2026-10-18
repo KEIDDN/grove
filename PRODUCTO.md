@@ -307,3 +307,48 @@ automáticamente. Las explicaciones posteriores son contextuales y no invasivas.
   aparecen en cascada. Vibración breve en Android al tocar y colocar.
 - Calidad adaptativa: si el dispositivo baja de fps, se reduce la resolución y se
   quita la oclusión ambiental para que todo siga fluido.
+
+## Fase de pulido (18/10/2026)
+
+Objetivo: que se sienta como una app que podría sacar Apple o el equipo de
+offsuit (mucho aire, muy pulida). Se aparcan, sin olvidarlas, las funciones
+nuevas (notificaciones, ES/EN, Pro, amigos). La personalización y los objetos
+nuevos sí siguen. Despliegue en **Vercel** (`main` es la versión de verdad y
+cada rama tiene su URL de prueba). El backend será **Supabase** más adelante.
+
+1. **Fluidez y tacto**
+   - Rendimiento en el iPhone 13: efectos y sombras más ligeros en móvil,
+     calidad adaptativa rápida y nada de recalcular ni guardar todo en cada
+     celda al pintar o mover.
+   - Cristal real solo en el dock; paneles semiopacos en móvil.
+   - **Cámara híbrida:** giro libre con inercia que, al soltar, encaja suave en
+     el ángulo bonito más cercano. Pellizco para el zoom (con límites), dos
+     dedos para desplazar si hay zoom, doble toque para volver a la vista
+     inicial. El jardín deja de mecerse mientras se edita.
+   - **Colocar:** arrastrar el objeto directamente (la cámara se bloquea y el
+     objeto flota por encima del dedo, con vista previa exacta) o tocar objeto
+     y destino. Un dedo sobre el césped vacío gira la cámara; al pintar, gira
+     con dos dedos.
+   - Paneles como en iOS: se cierran arrastrando también desde el contenido
+     cuando está arriba del todo y siguen el dedo 1:1.
+   - Que no parezca una web: sin selección de texto ni menús al mantener
+     pulsado, estado de pulsado en todos los botones y zonas táctiles de 44 pt.
+   - Sin vibración.
+2. **Sistema de diseño:** se mantiene Plus Jakarta Sans. Iconos Phosphor para
+   la interfaz y glifos propios para lo de Grove. La pantalla principal se
+   queda como está, pero pulida. Paneles para lo rápido (Vivero, Inventario,
+   Cultivar) y pantallas completas con transición fluida para Raíces, Lecturas
+   y Álbum. **Fondo inmersivo:** mar de nubes bajo la isla, sol y luna con
+   halo, partículas según la estación y un cielo casi blanco cálido de día.
+3. **Isla y objetos:** la isla gana capas de tierra y roca, raíces y piedras
+   colgando y musgo en los bordes. Modelos CC0 (Quaternius, Kenney) repintados
+   con nuestra paleta y con variantes de color, que **sustituyen** a los
+   actuales. La hierba, las flores pequeñas y los suelos siguen generándose
+   con código. Prioridad: mobiliario y estructuras, caminos y vallas que se
+   conectan solos, luces y después naturaleza rica y agua. Los objetos
+   reaccionan al tocarlos y "aterrizan" al colocarlos.
+4. **Sonidos:** CC0 de Freesound, muy curados (nivel Apple). Página de escucha
+   con candidatos para que el usuario elija, y un canal de efectos con su
+   propio control en Ajustes.
+
+Cada bloque se publica y se prueba en el iPhone antes de seguir.

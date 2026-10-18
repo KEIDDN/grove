@@ -34,6 +34,31 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   font-feature-settings: 'ss01';
+  /* Que no parezca una web: mantener pulsado no selecciona texto ni abre menús */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input,
+textarea,
+[contenteditable],
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+button,
+a,
+[role='button'] {
+  /* Sin zoom por doble toque ni retraso en los botones */
+  touch-action: manipulation;
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
 }
 
 button {
@@ -176,7 +201,22 @@ textarea:focus-visible {
 }
 
 .press:active:not(:disabled) {
-  transform: scale(0.95);
+  transform: scale(0.94);
+  /* Al pulsar responde al instante; al soltar vuelve con muelle */
+  transition-duration: 0.08s;
+  transition-timing-function: var(--ease);
+}
+
+/* Zona táctil de al menos 44 pt aunque el botón se vea más pequeño */
+.hit {
+  position: relative;
+}
+
+.hit::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
 }
 
 /* ——— Tarjetas iridiscentes ——— */
@@ -201,8 +241,10 @@ textarea:focus-visible {
   z-index: 1;
 }
 
-.iri:hover::after {
-  transform: translateX(60%);
+@media (hover: hover) {
+  .iri:hover::after {
+    transform: translateX(60%);
+  }
 }
 
 /* ——— Pastillas ——— */
@@ -331,6 +373,22 @@ textarea:focus-visible {
   will-change: transform;
 }
 
+/*
+ * En móvil y tablet el desenfoque en vivo de un panel grande sobre el 3D cuesta muchos fotogramas:
+ * los paneles pasan a ser casi opacos (mismo brillo y borde) y el cristal real se queda en el dock.
+ */
+@media (max-width: 999px) {
+  .sheet.glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(253, 250, 245, 0.94) 60%, rgba(255, 255, 255, 0.96));
+  }
+
+  .app.night .sheet.glass {
+    background: linear-gradient(160deg, rgba(48, 52, 88, 0.97), rgba(28, 31, 58, 0.95) 60%, rgba(36, 40, 74, 0.96));
+  }
+}
+
 /* Asa para arrastrar el panel hacia abajo en móvil */
 .sheet-grab {
   position: absolute;
@@ -361,6 +419,8 @@ textarea:focus-visible {
 
 .sheet-body {
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 22px 22px 24px;
   flex: 1;
   scrollbar-width: none;

@@ -4,7 +4,6 @@ import { BufferGeometry, ConeGeometry, CylinderGeometry, DodecahedronGeometry, D
 import { Html } from '@react-three/drei'
 import { cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
-import { tap } from '../ui/motion'
 import { paletteFor } from '../game/variants'
 import type { SeasonTheme } from '../game/seasons'
 import { GROUND_Y } from './Island'
@@ -635,11 +634,10 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
   const born = useRef<number | null>(null)
   const landed = useRef<number | null>(null)
   const seed = hashString(item.id)
-  const editMode = useGrove((s) => s.editMode)
   const selected = useGrove((s) => s.selectedId === item.id)
   const moving = useGrove((s) => s.placing?.from === 'garden' && s.placing.itemId === item.id)
-  const hoverCell = useGrove((s) => s.hoverCell)
-  const select = useGrove((s) => s.select)
+  // Solo el objeto que se mueve escucha la celda bajo el dedo; el resto no se vuelve a dibujar
+  const hoverCell = useGrove((s) => (s.placing?.from === 'garden' && s.placing.itemId === item.id ? s.hoverCell : null))
   const showGrowth = useGrove((s) => s.tab === 'tend')
 
   const [cx, cz] = moving && hoverCell ? hoverCell : [item.x, item.z]
@@ -687,16 +685,7 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
       ref={ref}
       position={initial}
       rotation={[0, yaw, 0]}
-      onClick={
-        editMode
-          ? (e) => {
-              if (e.delta > 6) return
-              e.stopPropagation()
-              tap()
-              select(selected ? null : item.id)
-            }
-          : undefined
-      }
+      userData={{ itemId: item.id }}
     >
       <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} growth={item.growth} />
       {item.growth && (selected || showGrowth) && (

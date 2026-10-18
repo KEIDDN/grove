@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware'
 import { CATALOG, KIND_NAMES } from './catalog'
 import { ECONOMY, legacySide, parcelsFromDays, STARTING_PARCELS } from './config'
 import { cellKey, type FloorKind } from './floors'
@@ -236,6 +236,46 @@ const initialSaved = (): Saved => ({
 })
 
 let toastId = 0
+
+/**
+ * Guardado diferido: zustand persiste en cada cambio, y al pintar o arrastrar eso son decenas de
+ * escrituras síncronas por segundo de toda la partida. Aquí se agrupan y se escriben como mucho
+ * cada medio segundo, y siempre al salir de la app.
+ */
+function deferredStorage<T>(): PersistStorage<T> {
+  const pending = new Map<string, StorageValue<T>>()
+  let timer: ReturnType<typeof setTimeout> | null = null
+  const flush = () => {
+    if (timer) clearTimeout(timer)
+    timer = null
+    for (const [name, value] of pending) {
+      try {
+        localStorage.setItem(name, JSON.stringify(value))
+      } catch {
+        // Sin espacio o en modo privado: la partida sigue en memoria
+      }
+    }
+    pending.clear()
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush())
+  }
+  return {
+    getItem: (name) => {
+      const raw = localStorage.getItem(name)
+      return raw ? (JSON.parse(raw) as StorageValue<T>) : null
+    },
+    setItem: (name, value) => {
+      pending.set(name, value)
+      if (!timer) timer = setTimeout(flush, 500)
+    },
+    removeItem: (name) => {
+      pending.delete(name)
+      localStorage.removeItem(name)
+    },
+  }
+}
 
 export const useGrove = create<GroveState>()(
   persist(
@@ -508,6 +548,7 @@ export const useGrove = create<GroveState>()(
     },
     {
       name: 'grove-save-v4',
+      storage: deferredStorage<Saved>(),
       partialize: (s): Saved => {
         const keys = Object.keys(initialSaved()) as Array<keyof Saved>
         return Object.fromEntries(keys.map((k) => [k, s[k]])) as unknown as Saved
