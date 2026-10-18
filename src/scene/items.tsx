@@ -12,9 +12,9 @@ import { Model, MODEL_KINDS, paintFor } from './models'
 import { useDaylight } from './useDaylight'
 
 /** Lo vivo: se sacude al tocarlo y suelta hojas. */
-const ORGANIC: ItemKind[] = ['tree', 'pine', 'birch', 'willow', 'roundtree', 'tallpine', 'palm', 'bush', 'berrybush', 'fern', 'flower', 'tulips', 'reeds', 'wheat', 'tallgrass', 'corn', 'cactus']
+const ORGANIC: ItemKind[] = ['tree', 'pine', 'birch', 'willow', 'roundtree', 'cherry', 'tallpine', 'palm', 'bush', 'berrybush', 'fern', 'flower', 'tulips', 'reeds', 'wheat', 'tallgrass', 'corn', 'cactus']
 /** Altura (en el mundo) de la copa, de donde caen las hojas al tocar. */
-const CANOPY: Partial<Record<ItemKind, number>> = { tree: 1.35, birch: 1.45, willow: 1.15, roundtree: 1.3, palm: 1.5, pine: 1.1, tallpine: 1.5, bush: 0.5, berrybush: 0.5 }
+const CANOPY: Partial<Record<ItemKind, number>> = { tree: 1.35, birch: 1.45, willow: 1.15, roundtree: 1.3, cherry: 1.35, palm: 1.5, pine: 1.1, tallpine: 1.5, bush: 0.5, berrybush: 0.5 }
 
 /** Escala global de los objetos respecto a la casilla. */
 const ITEM_SCALE = 1.3
@@ -323,13 +323,16 @@ export function ItemModel({ kind, color, seed, theme, growth }: { kind: ItemKind
   }
   // Mientras crece, la planta va ganando tamaño hasta el adulto
   const stage = growth ? 0.4 + ratio * 0.5 : 1
+  // Cada planta es un poco distinta: más alta o más baja, más ancha o más estrecha
+  const vary = ORGANIC.includes(kind) ? 0.88 + (seed % 25) / 100 : 1
+  const squat = ORGANIC.includes(kind) ? 0.94 + ((seed >> 5) % 13) / 100 : 1
   const model = MODEL_KINDS[kind]
   const palette = paletteFor(kind, color)
   return (
-    <group scale={kindScale(kind) * stage}>
+    <group scale={[kindScale(kind) * stage * vary * squat, kindScale(kind) * stage * vary, kindScale(kind) * stage * vary * squat]}>
       {model ? (
         <Suspense fallback={null}>
-          <Model def={model.def} paint={paintFor(theme, palette, model.use)} />
+          <Model def={model.def} paint={paintFor(theme, palette, model.use, model.tint, model.tintAmount)} />
         </Suspense>
       ) : (
         Part && <Part theme={theme} seed={seed} palette={palette} />

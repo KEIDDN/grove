@@ -47,7 +47,7 @@ export function thumbnail(kind: string, color: string | undefined, theme: Season
     queue = queue.then(async () => {
       try {
         const gltf = await loader.loadAsync(entry.def.url)
-        const object = prepareModel(gltf.scene, entry.def, paintFor(theme, color ? [color] : undefined, entry.use))
+        const object = prepareModel(gltf.scene, entry.def, paintFor(theme, color ? [color] : undefined, entry.use, entry.tint, entry.tintAmount))
         const scene = new Scene()
         scene.add(object)
         scene.add(new HemisphereLight('#EAF2FF', '#B49470', 1.6))

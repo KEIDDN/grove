@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
-import { Box3, BufferAttribute, type BufferGeometry, Color, Group, type Material, Mesh, MeshStandardMaterial, type Object3D, Vector3 } from 'three'
+import { Box3, BufferAttribute, type BufferGeometry, Color, Group, IcosahedronGeometry, InstancedMesh, type Material, Mesh, MeshStandardMaterial, Object3D, Vector3 } from 'three'
+import { mix } from '../game/daylight'
 import type { SeasonTheme } from '../game/seasons'
 
 /**
@@ -74,11 +75,16 @@ export interface ModelDef {
   slots?: Record<string, Slot | `#${string}`>
   /** Giro base, si el modelo viene orientado de otra forma. */
   yaw?: number
+  /** Detalles repartidos por la copa: manzanas, bayas, flores… (tamaño en unidades del jardín). */
+  dots?: { colors: string[]; count: number; size: number }
 }
 
 /** Colores por defecto; la variante o la estación los sobrescriben. */
-export function paintFor(theme: SeasonTheme, palette: string[] | undefined, use: 'foliage' | 'wood' | 'stone' | 'accent' | 'none'): Paint {
-  const leaves = use === 'foliage' && palette?.length ? palette : theme.leaf
+export function paintFor(theme: SeasonTheme, palette: string[] | undefined, use: 'foliage' | 'wood' | 'stone' | 'accent' | 'none', tint?: string, tintAmount = 0.42): Paint {
+  // Cada especie tiñe los colores de la estación con su propio tono: siguen cambiando con el año,
+  // pero un abedul y un sauce ya no son del mismo verde
+  const seasonal = tint ? theme.leaf.map((c) => mix(c, tint, tintAmount)) : theme.leaf
+  const leaves = use === 'foliage' && palette?.length ? palette : seasonal
   const base: Paint = {
     leaves,
     leaf: leaves[0],
@@ -181,10 +187,54 @@ export function prepareModel(scene: Object3D, def: ModelDef, paint: Paint): Obje
   const scale = def.width ? def.width / Math.max(size.x, size.z) : (def.height ?? 1) / size.y
   object.scale.setScalar(scale)
   object.position.set(-center.x * scale, -box.min.y * scale, -center.z * scale)
+  if (def.dots) addDots(object, def, scale)
   const wrap = new Group()
   wrap.rotation.y = def.yaw ?? 0
   wrap.add(object)
   return wrap
+}
+
+const dotGeometry = new IcosahedronGeometry(1, 0)
+const dotMaterials = new Map<string, MeshStandardMaterial>()
+
+/**
+ * Reparte bolitas (manzanas, bayas, flores) por la superficie de la copa: se eligen vértices de la
+ * malla de hojas que miran hacia fuera y se coloca una un poco por encima. Siempre las mismas para el
+ * mismo modelo, así no "bailan" al volver a dibujarse.
+ */
+function addDots(object: Object3D, def: ModelDef, scale: number) {
+  const dots = def.dots!
+  const leaves: Mesh[] = []
+  object.traverse((o) => {
+    if (o instanceof Mesh && (o.material === foliageMaterial || (o.material as Material).name === 'Green' || (o.material as Material).name === 'DarkGreen')) leaves.push(o)
+  })
+  const mesh = leaves.sort((a, b) => b.geometry.attributes.position.count - a.geometry.attributes.position.count)[0]
+  if (!mesh) return
+  const pos = mesh.geometry.attributes.position
+  const nor = mesh.geometry.attributes.normal
+  const candidates: number[] = []
+  for (let i = 0; i < pos.count; i += 3) if (!nor || nor.getY(i) > -0.25) candidates.push(i)
+  const radius = dots.size / scale
+  const o = new Object3D()
+  dots.colors.forEach((color, ci) => {
+    let mat = dotMaterials.get(color)
+    if (!mat) {
+      mat = new MeshStandardMaterial({ color: new Color(color), flatShading: true, roughness: 0.7 })
+      dotMaterials.set(color, mat)
+    }
+    const n = Math.ceil(dots.count / dots.colors.length)
+    const inst = new InstancedMesh(dotGeometry, mat, n)
+    for (let k = 0; k < n; k++) {
+      const i = candidates[Math.floor((((k * dots.colors.length + ci) * 2654435761) >>> 0) % candidates.length)]
+      o.position.set(pos.getX(i), pos.getY(i), pos.getZ(i))
+      if (nor) o.position.addScaledVector(new Vector3(nor.getX(i), nor.getY(i), nor.getZ(i)), radius * 0.6)
+      o.scale.setScalar(radius * (0.8 + ((k * 37) % 10) / 25))
+      o.updateMatrix()
+      inst.setMatrixAt(k, o.matrix)
+    }
+    inst.castShadow = true
+    mesh.add(inst)
+  })
 }
 
 /** Un modelo de un pack, a su tamaño, apoyado en el suelo, centrado y con los colores de Grove. */
@@ -203,14 +253,14 @@ export type Use = Parameters<typeof paintFor>[2]
  * Objetos que usan un modelo de un pack. Las medidas están en las mismas unidades que las piezas
  * hechas con código (luego ItemModel aplica la escala común), así todo convive a la misma escala.
  */
-export const MODEL_KINDS: Partial<Record<string, { def: ModelDef; use: Use }>> = {
+export const MODEL_KINDS: Partial<Record<string, { def: ModelDef; use: Use; tint?: string; tintAmount?: number }>> = {
   tree: { def: { url: '/models/tree.glb', height: 1.35 }, use: 'foliage' },
   pine: { def: { url: '/models/pine.glb', height: 1.45 }, use: 'foliage' },
-  birch: { def: { url: '/models/birch.glb', height: 1.5 }, use: 'foliage' },
-  willow: { def: { url: '/models/willow.glb', height: 1.2, slots: { DarkGreen: 'leaf' } }, use: 'foliage' },
-  bush: { def: { url: '/models/bush.glb', width: 0.55 }, use: 'foliage' },
-  berrybush: { def: { url: '/models/berrybush.glb', width: 0.55 }, use: 'foliage' },
-  fern: { def: { url: '/models/fern.glb', height: 0.42, slots: { DarkGreen: 'leaf' } }, use: 'foliage' },
+  birch: { def: { url: '/models/birch.glb', height: 1.5 }, use: 'foliage', tint: '#E4E27C' },
+  willow: { def: { url: '/models/willow.glb', height: 1.2, slots: { DarkGreen: 'leaf' } }, use: 'foliage', tint: '#8EC4AE' },
+  bush: { def: { url: '/models/bush.glb', width: 0.55 }, use: 'foliage', tint: '#86B85E' },
+  berrybush: { def: { url: '/models/berrybush.glb', width: 0.55, dots: { colors: ['#4C5FB8', '#6A57A8'], count: 12, size: 0.022 } }, use: 'foliage', tint: '#4E8A4C' },
+  fern: { def: { url: '/models/fern.glb', height: 0.42, slots: { DarkGreen: 'leaf' } }, use: 'foliage', tint: '#3F8F5B' },
   reeds: { def: { url: '/models/reeds.glb', height: 0.55 }, use: 'foliage' },
   wheat: { def: { url: '/models/wheat.glb', height: 0.55 }, use: 'none' },
   flower: { def: { url: '/models/flower.glb', height: 0.42 }, use: 'accent' },
@@ -226,11 +276,12 @@ export const MODEL_KINDS: Partial<Record<string, { def: ModelDef; use: Use }>> =
   planter: { def: { url: '/models/planter.glb', width: 0.36 }, use: 'none' },
   sign: { def: { url: '/models/sign.glb', height: 0.45 }, use: 'wood' },
   stones: { def: { url: '/models/stones.glb', width: 0.48 }, use: 'stone' },
-  roundtree: { def: { url: '/models/roundtree.glb', height: 1.3 }, use: 'foliage' },
+  roundtree: { def: { url: '/models/roundtree.glb', height: 1.3, dots: { colors: ['#D9483B', '#E8603F'], count: 16, size: 0.045 } }, use: 'foliage', tint: '#4F9446' },
+  cherry: { def: { url: '/models/cherry.glb', height: 1.35, dots: { colors: ['#FFFFFF', '#FBD3E0'], count: 26, size: 0.032 } }, use: 'foliage', tint: '#F6B3C7', tintAmount: 0.82 },
   tallpine: { def: { url: '/models/tallpine.glb', height: 1.55 }, use: 'foliage' },
-  palm: { def: { url: '/models/palm.glb', height: 1.6 }, use: 'foliage' },
+  palm: { def: { url: '/models/palm.glb', height: 1.6 }, use: 'foliage', tint: '#57B565' },
   cactus: { def: { url: '/models/cactus.glb', height: 0.6, slots: { leafsGreen: '#7FAF6A' } }, use: 'none' },
-  tallgrass: { def: { url: '/models/tallgrass.glb', height: 0.5 }, use: 'foliage' },
+  tallgrass: { def: { url: '/models/tallgrass.glb', height: 0.5 }, use: 'foliage', tint: '#9CC46A' },
   corn: { def: { url: '/models/corn.glb', height: 0.75, slots: { Green: 'moss' } }, use: 'none' },
   carrots: { def: { url: '/models/carrots.glb', height: 0.35, slots: { grass: 'moss', leafsFall: 'keep' } }, use: 'none' },
   melon: { def: { url: '/models/melon.glb', width: 0.4, slots: { grass: 'moss', leafsDark: '#7FA85E', dirt: 'soil' } }, use: 'none' },

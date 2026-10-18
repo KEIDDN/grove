@@ -2,7 +2,7 @@ Modelos 3D de terceros, todos con licencia CC0 (dominio público):
 
 - Quaternius, "Ultimate Nature Pack" (https://quaternius.itch.io/150-lowpoly-nature-models):
   tree, pine, bush, flower, reeds, rock, stump, birch, willow, berrybush, fern, wheat, log,
-  roundtree, tallpine, tallgrass, corn, boulder.
+  roundtree, tallpine, tallgrass, corn, boulder, cherry.
   Convertidos de OBJ a GLB.
 - Kenney, "Nature Kit" (https://kenney.nl/assets/nature-kit):
   mushroom, pumpkin, fence, logpile, campfire, tent, planter, sign, stones, canoe, carrots,

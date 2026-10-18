@@ -34,6 +34,7 @@ export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
   bush: FOLIAGE,
   birch: FOLIAGE,
   roundtree: FOLIAGE,
+  cherry: FOLIAGE,
   palm: FOLIAGE,
   willow: FOLIAGE,
   berrybush: FOLIAGE,
@@ -106,5 +107,5 @@ export function variantName(kind: ItemKind, color?: string): string | undefined 
   return VARIANTS[kind]?.find((x) => x.id === color)?.name
 }
 
-// El pino alto usa los mismos tonos que el pino
-VARIANTS.tallpine = VARIANTS.pine
+// El pino alto usa los tonos del pino, pero por defecto el de bosque, más oscuro
+VARIANTS.tallpine = [...VARIANTS.pine!].sort((a, b) => (a.id === 'dark' ? -1 : b.id === 'dark' ? 1 : 0))

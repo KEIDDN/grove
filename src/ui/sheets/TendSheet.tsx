@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { KIND_NAMES } from '../../game/catalog'
 import { ECONOMY } from '../../game/config'
 import { paletteFor } from '../../game/variants'
@@ -6,6 +7,8 @@ import { KindGlyph } from '../glyphs'
 import { useGrove } from '../../game/store'
 import { formatClock, TIME_SCALE } from '../../game/time'
 import { CoinIcon, MoonIcon } from '../icons'
+import { spring } from '../motion'
+import { RollingNumber } from '../RollingNumber'
 import { Sheet } from '../Sheet'
 import { useNow } from '../useNow'
 
@@ -31,27 +34,111 @@ export function TendSheet() {
   )
 }
 
+const MIN_CUSTOM = 5
+const MAX_CUSTOM = 180
+const clampMinutes = (m: number) => Math.min(MAX_CUSTOM, Math.max(MIN_CUSTOM, Math.round(m / 5) * 5))
+
 function Setup() {
   const [minutes, setMinutes] = useState<number | null>(25)
+  const [custom, setCustom] = useState(false)
   const coinsToday = useGrove((s) => s.coinsToday)
   const start = useGrove((s) => s.startSession)
+  const drag = useRef<{ y: number; base: number } | null>(null)
+
+  // Arrastrar el número grande hacia arriba o abajo cambia los minutos de 5 en 5
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (minutes === null) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    drag.current = { y: e.clientY, base: minutes }
+  }
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current) return
+    const steps = Math.round((drag.current.y - e.clientY) / 14)
+    const next = clampMinutes(drag.current.base + steps * 5)
+    if (next !== minutes) {
+      setMinutes(next)
+      setCustom(!DURATIONS.includes(next))
+    }
+  }
+  const onPointerUp = () => {
+    drag.current = null
+  }
+
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+      <div
+        style={{ display: 'flex', alignItems: 'baseline', gap: 8, touchAction: 'none', cursor: minutes === null ? 'default' : 'ns-resize' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        data-no-sheet-drag=""
+      >
         <span className="display" style={{ fontSize: 96 }}>
-          {minutes ?? '∞'}
+          <RollingNumber value={minutes} />
         </span>
-        <span className="muted" style={{ fontSize: 16, fontWeight: 600 }}>
+        <motion.span key={minutes ? 'min' : 'free'} className="muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring} style={{ fontSize: 16, fontWeight: 600 }}>
           {minutes ? 'minutos' : 'modo libre'}
-        </span>
+        </motion.span>
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {DURATIONS.map((d) => (
-          <button key={d ?? 'free'} className="pill pill-ghost press" aria-pressed={minutes === d} onClick={() => setMinutes(d)} style={{ height: 40 }}>
+          <button
+            key={d ?? 'free'}
+            className="pill pill-ghost press"
+            aria-pressed={!custom && minutes === d}
+            onClick={() => {
+              setCustom(false)
+              setMinutes(d)
+            }}
+            style={{ height: 40 }}
+          >
             {d ? `${d} min` : 'Libre'}
           </button>
         ))}
+        <button
+          className="pill pill-ghost press"
+          aria-pressed={custom}
+          onClick={() => {
+            setCustom(true)
+            if (minutes === null) setMinutes(30)
+          }}
+          style={{ height: 40 }}
+        >
+          Otra
+        </button>
       </div>
+      <AnimatePresence initial={false}>
+        {custom && minutes !== null && (
+          <motion.div
+            key="custom"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={spring}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="stepper" data-no-sheet-drag="">
+              <button className="stepper-btn press" aria-label="Menos" onClick={() => setMinutes(clampMinutes(minutes - 5))}>
+                −
+              </button>
+              <input
+                type="range"
+                min={MIN_CUSTOM}
+                max={MAX_CUSTOM}
+                step={5}
+                value={minutes}
+                onChange={(e) => setMinutes(Number(e.target.value))}
+                aria-label="Minutos"
+                style={{ '--fill': `${((minutes - MIN_CUSTOM) / (MAX_CUSTOM - MIN_CUSTOM)) * 100}%` } as React.CSSProperties}
+              />
+              <button className="stepper-btn press" aria-label="Más" onClick={() => setMinutes(clampMinutes(minutes + 5))}>
+                +
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
         Las monedas llegan al completar la sesión, a partir de {ECONOMY.minMinutesForCoins} min. Hoy llevas {coinsToday}/{ECONOMY.dailyCoinCap}. Puedes bloquear el
         móvil: tu sesión sigue.
