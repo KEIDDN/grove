@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react'
-import { DevPanel } from '../../dev/DevPanel'
-import { setDevMode, useDev } from '../../dev/devMode'
+import { DevPanel } from '../../devtools/DevPanel'
+import { setDevMode, useDev } from '../../devtools/devMode'
 import { nextDayReward } from '../../game/config'
 import { ACHIEVEMENTS, missionsFor, rewardLabel } from '../../game/goals'
 import { SEASON_ORDER, SEASONS } from '../../game/seasons'
