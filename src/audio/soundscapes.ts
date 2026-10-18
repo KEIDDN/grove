@@ -26,10 +26,10 @@ const BINAURAL: Record<'alpha' | 'theta' | 'delta', { carrier: number; beat: num
 type NoiseColor = 'white' | 'pink' | 'brown'
 
 /** Buffer de ruido estéreo que se repite sin costura. */
-function noiseBuffer(ctx: AudioContext, color: NoiseColor, seconds = 10): AudioBuffer {
+function noiseBuffer(ctx: AudioContext, color: NoiseColor, seconds = 20): AudioBuffer {
   const rate = ctx.sampleRate
   const len = Math.floor(rate * seconds)
-  const fade = Math.floor(rate * 0.6)
+  const fade = Math.floor(rate * Math.min(1.5, seconds * 0.1))
   const buf = ctx.createBuffer(2, len, rate)
   for (let ch = 0; ch < 2; ch++) {
     const raw = new Float32Array(len + fade)
@@ -115,7 +115,7 @@ export function startSoundscape(ctx: AudioContext, out: AudioNode, id: Soundscap
     noise('brown').connect(filter('highpass', 28)).connect(filter('lowpass', 1100)).connect(level(0.7)).connect(gain)
   } else if (id === 'white') {
     // Blanco "suave": sin el siseo de arriba, que es lo que cansa
-    noise('white').connect(filter('lowpass', 6500)).connect(filter('highshelf', 2800, 0.7, -9)).connect(level(0.32)).connect(gain)
+    noise('white').connect(filter('lowpass', 5200, 0.5)).connect(filter('highshelf', 2400, 0.7, -10)).connect(filter('lowshelf', 200, 0.7, 3)).connect(level(0.3)).connect(gain)
   } else if (id === 'rain') {
     // Lluvia: un siseo amplio, un fondo grave y gotas sueltas repartidas a izquierda y derecha
     const hiss = level(0.4)
@@ -133,8 +133,13 @@ export function startSoundscape(ctx: AudioContext, out: AudioNode, id: Soundscap
       if (stopped) return
       const now = ctx.currentTime
       const src = ctx.createBufferSource()
-      src.buffer = cache.get('white') ?? noiseBuffer(ctx, 'white', 1)
-      if (!cache.has('white')) cache.set('white', src.buffer)
+      // Buffer propio y corto para las gotas: no se mezcla con el del ruido blanco
+      let dropBuf = cache.get('drop')
+      if (!dropBuf) {
+        dropBuf = noiseBuffer(ctx, 'white', 1)
+        cache.set('drop', dropBuf)
+      }
+      src.buffer = dropBuf
       const bp = filter('bandpass', 1800 + Math.random() * 3600, 6)
       const g = ctx.createGain()
       const pan = ctx.createStereoPanner()
@@ -151,7 +156,7 @@ export function startSoundscape(ctx: AudioContext, out: AudioNode, id: Soundscap
     drop()
   } else {
     // Binaural: un tono en cada oído; la diferencia entre ambos es el pulso que se percibe.
-    // Muy bajito y con un colchón de ruido rosa debajo para que no sea un pitido.
+    // Solo los dos tonos, muy suaves, sin ningún ruido debajo.
     const { carrier, beat } = BINAURAL[id]
     const merger = ctx.createChannelMerger(2)
     ;[carrier, carrier + beat].forEach((f, ch) => {
@@ -164,7 +169,6 @@ export function startSoundscape(ctx: AudioContext, out: AudioNode, id: Soundscap
       nodes.push(osc)
     })
     merger.connect(gain)
-    noise('pink').connect(filter('lowpass', 1800)).connect(level(0.12)).connect(gain)
   }
 
   return {

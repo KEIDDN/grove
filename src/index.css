@@ -361,9 +361,14 @@ textarea:focus-visible {
   border-radius: 999px;
 }
 
+.dock {
+  /* Siete secciones: en móviles estrechos cada hueco se encoge para que quepan todas */
+  --dock-item: min(56px, calc((100vw - 32px) / 7));
+}
+
 .dock-item {
   position: relative;
-  width: 56px;
+  width: var(--dock-item);
   height: 54px;
   border-radius: 999px;
   display: flex;
@@ -386,7 +391,7 @@ textarea:focus-visible {
   position: absolute;
   top: 6px;
   left: 6px;
-  width: 56px;
+  width: var(--dock-item);
   height: 54px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.85);
@@ -1805,10 +1810,10 @@ input[type='range'].slider {
 
 .week-mission {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   min-height: 36px;
-  padding: 0;
+  padding: 7px 0;
   border: 0;
   background: none;
   font: inherit;
@@ -1843,9 +1848,8 @@ input[type='range'].slider {
   min-width: 0;
   font-size: 13px;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  padding-top: 1px;
 }
 
 .week-mission.got .week-mission-title {
@@ -1856,6 +1860,7 @@ input[type='range'].slider {
 
 .week-mission-meta {
   flex: none;
+  padding-top: 2px;
   display: inline-flex;
   align-items: center;
   gap: 4px;

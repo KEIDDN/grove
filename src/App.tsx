@@ -16,6 +16,7 @@ import { RestMode } from './ui/RestMode'
 import { InventorySheet } from './ui/sheets/InventorySheet'
 import { NurserySheet } from './ui/sheets/NurserySheet'
 import { CalmController, CalmSheet } from './ui/sheets/CalmSheet'
+import { ReadSheet } from './ui/sheets/ReadSheet'
 import { RootsSheet } from './ui/sheets/RootsSheet'
 import { SessionWatcher, TendSheet } from './ui/sheets/TendSheet'
 import { YouSheet } from './ui/sheets/YouSheet'
@@ -61,6 +62,7 @@ export function App() {
                   {tab === 'tend' && <TendSheet key="tend" />}
                   {tab === 'roots' && <RootsSheet key="roots" />}
                   {tab === 'calm' && <CalmSheet key="calm" />}
+                  {tab === 'read' && <ReadSheet key="read" />}
                   {tab === 'nursery' && <NurserySheet key="nursery" />}
                   {tab === 'you' && <YouSheet key="you" />}
                   {tab === 'inventory' && <InventorySheet key="inventory" />}

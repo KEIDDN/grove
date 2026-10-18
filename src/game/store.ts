@@ -33,7 +33,7 @@ import { rewardFor, type FocusSession } from './session'
 import { visitWhileAway } from './visitors'
 import { dayKey, TIME_SCALE, weekdayIndex, weekKey } from './time'
 
-export type Tab = 'garden' | 'tend' | 'roots' | 'calm' | 'nursery' | 'inventory' | 'you'
+export type Tab = 'garden' | 'tend' | 'roots' | 'calm' | 'read' | 'nursery' | 'inventory' | 'you'
 export type YouSection = 'today' | 'achievements' | 'album' | 'progress' | 'settings'
 
 export interface RootAnswer {

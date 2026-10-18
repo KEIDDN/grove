@@ -9,14 +9,12 @@ import { breath } from '../../scene/breath'
 import { HeadphonesIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
 import { useNow } from '../useNow'
-import { ReadContent } from './ReadSheet'
 
-type Section = 'breath' | 'meditate' | 'read'
+type Section = 'breath' | 'meditate'
 
 const SECTIONS: Array<{ id: Section; label: string }> = [
   { id: 'breath', label: 'Respirar' },
   { id: 'meditate', label: 'Meditar' },
-  { id: 'read', label: 'Leer' },
 ]
 
 const BREATH_MINUTES = [1, 2, 3, 5]
@@ -43,13 +41,12 @@ export function CalmSheet() {
   }
 
   return (
-    <Sheet eyebrow="Respira, medita, lee" title="Calma" accent="calm">
+    <Sheet eyebrow="Respira y medita" title="Calma" accent="calm">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         <Segments id="calm" items={SECTIONS} value={section} onChange={setSection} />
         <SwapIn id={section}>
           {section === 'breath' && <BreathSetup />}
           {section === 'meditate' && <MeditateSetup />}
-          {section === 'read' && <ReadContent />}
         </SwapIn>
       </div>
     </Sheet>

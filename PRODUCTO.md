@@ -369,7 +369,7 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
 "virtual".
 
 - **Nombre nuevo: Tendu** (*tend + you*: cuídate). Se renombra al final. Las
-  secciones quedan: Cultivar · Raíces · **Calma** · Vivero · Tú.
+  secciones quedan: Jardín · Cultivar · **Calma** · Raíces · Leer · Vivero · Tú.
 - **Tono:** calma en lo importante (onboarding, bienestar, diario) y un punto de
   gracia en lo idle (visitantes, regalos, logros). Sin emojis en la interfaz.
 - **Celebraciones en tres niveles:**
@@ -391,12 +391,12 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
   → próximo hito con barra → el mundo ahora (estación y días que quedan, próximo
   evento, visitantes presentes; al tocar uno la cámara va hacia él) → ánimo de
   hoy.
-- **Calma** (sustituye a Leer, que pasa dentro):
+- **Calma** (sección nueva; Leer sigue siendo una sección propia porque tendrá
+  ediciones periódicas y dentro de Calma se perdía):
   - *Respirar:* caja 4-4-4-4, 4-7-8 y coherencia 5-5. Un círculo central se
     expande al inspirar, se queda quieto al retener y se contrae al soltar el
     aire, con la fase y la cuenta dentro; la luz de la isla respira a la vez.
   - *Meditar:* temporizador libre (3/5/10/20) con campanas.
-  - *Leer:* los artículos de antes.
   - *Paisajes sonoros:* naturaleza, ruido blanco/rosa/marrón y ondas binaurales
     (alfa, theta, delta; aviso de auriculares), generados con Web Audio y con
     calidad cuidada: nada de chiado, fundidos suaves y página de escucha.
