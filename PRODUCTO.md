@@ -352,3 +352,10 @@ cada rama tiene su URL de prueba). El backend será **Supabase** más adelante.
    propio control en Ajustes.
 
 Cada bloque se publica y se prueba en el iPhone antes de seguir.
+
+**Navegación (18/10/2026):** todas las secciones usan un único panel, como las
+hojas de iOS. Sale a media altura sobre el dock y, deslizándolo hacia arriba
+(o al escribir), se amplía a pantalla completa tapando el dock. Deslizándolo
+hacia abajo vuelve a media altura o se cierra. Al cambiar de sección el panel
+no se cierra: solo cambia el contenido. A pantalla completa el 3D se pausa.
+Las pantallas completas separadas se descartan porque cortaban la fluidez.

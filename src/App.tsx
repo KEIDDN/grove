@@ -17,6 +17,7 @@ import { ReadSheet } from './ui/sheets/ReadSheet'
 import { RootsSheet } from './ui/sheets/RootsSheet'
 import { SessionWatcher, TendSheet } from './ui/sheets/TendSheet'
 import { YouSheet } from './ui/sheets/YouSheet'
+import { SheetHost } from './ui/Sheet'
 import { Toast } from './ui/Toast'
 import { TopBar } from './ui/TopBar'
 
@@ -46,13 +47,18 @@ export function App() {
         ) : (
           <motion.div key="main" className="layer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35 }}>
             <TopBar />
+            {/* Un solo panel para todas las secciones: al cambiar de una a otra no se cierra, solo cambia el contenido */}
             <AnimatePresence>
-              {tab === 'tend' && <TendSheet key="tend" />}
-              {tab === 'roots' && <RootsSheet key="roots" />}
-              {tab === 'read' && <ReadSheet key="read" />}
-              {tab === 'nursery' && <NurserySheet key="nursery" />}
-              {tab === 'you' && <YouSheet key="you" />}
-              {tab === 'inventory' && <InventorySheet key="inventory" />}
+              {tab !== 'garden' && (
+                <SheetHost key="sheet" contentKey={tab}>
+                  {tab === 'tend' && <TendSheet key="tend" />}
+                  {tab === 'roots' && <RootsSheet key="roots" />}
+                  {tab === 'read' && <ReadSheet key="read" />}
+                  {tab === 'nursery' && <NurserySheet key="nursery" />}
+                  {tab === 'you' && <YouSheet key="you" />}
+                  {tab === 'inventory' && <InventorySheet key="inventory" />}
+                </SheetHost>
+              )}
             </AnimatePresence>
             {tab === 'garden' && !editMode && <InspectCard />}
             <AnimatePresence mode="wait">{editMode ? <EditBar key="edit" /> : <Dock key="dock" />}</AnimatePresence>

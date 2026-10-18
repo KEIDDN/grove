@@ -3,8 +3,7 @@ import { ARTICLES, type Article } from '../../content/articles'
 import { useGrove } from '../../game/store'
 import { iriStyle } from '../glyphs'
 import { CheckIcon, ChevronIcon, HeartIcon, SproutIcon } from '../icons'
-import { Page } from '../Page'
-import { SwapIn } from '../Sheet'
+import { Sheet, SwapIn } from '../Sheet'
 
 const dateLabel = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long' })
 const parseDay = (key: string) => {
@@ -37,13 +36,12 @@ export function CareNote({ compact }: { compact?: boolean }) {
 }
 
 export function ReadSheet() {
-  const setTab = useGrove((s) => s.setTab)
   const [open, setOpen] = useState<string | null>(null)
   const article = ARTICLES.find((a) => a.id === open)
   return (
-    <Page eyebrow={article ? article.category : 'Lecturas breves'} title={article ? 'Leer' : 'Brotes'} accent="read" onClose={() => setTab('garden')}>
+    <Sheet eyebrow={article ? article.category : 'Lecturas breves'} title={article ? 'Leer' : 'Brotes'} accent="read">
       <SwapIn id={open ?? 'list'}>{article ? <Reader article={article} onBack={() => setOpen(null)} /> : <List onOpen={setOpen} />}</SwapIn>
-    </Page>
+    </Sheet>
   )
 }
 

@@ -1,46 +1,7 @@
-import { useState } from 'react'
 import { SEASONS } from '../../game/seasons'
 import { useGrove } from '../../game/store'
 import { VISITORS } from '../../game/visitors'
 import { iriStyle, VisitorGlyph } from '../glyphs'
-import { ChevronIcon } from '../icons'
-import { Page, PageLayer } from '../Page'
-
-/** Tarjeta en Tú que abre el Álbum a pantalla completa. */
-export function AlbumEntry() {
-  const seen = useGrove((s) => s.visitorsSeen)
-  const [open, setOpen] = useState(false)
-  const preview = VISITORS.filter((v) => seen.includes(v.id)).slice(0, 4)
-  return (
-    <>
-      <button className="iri press" onClick={() => setOpen(true)} style={{ ...iriStyle(4), width: '100%', borderRadius: 26, padding: 20, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <div style={{ position: 'relative', zIndex: 2, flex: 1, color: '#1B1F1C' }}>
-          <div className="eyebrow" style={{ color: '#5D645E' }}>
-            Visitantes descubiertos
-          </div>
-          <div className="display" style={{ fontSize: 48, marginTop: 6 }}>
-            {seen.length}
-            <span style={{ fontSize: 22, color: '#8A908B' }}>/{VISITORS.length}</span>
-          </div>
-          <div style={{ display: 'flex', gap: 4, marginTop: 10, minHeight: 34 }}>
-            {preview.map((v) => (
-              <VisitorGlyph key={v.id} type={v.type} size={34} />
-            ))}
-          </div>
-        </div>
-        <span style={{ position: 'relative', zIndex: 2, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: '#1B1F1C' }}>
-          Abrir
-          <ChevronIcon size={14} strokeWidth={2.4} style={{ transform: 'rotate(-90deg)' }} />
-        </span>
-      </button>
-      <PageLayer open={open}>
-        <Page eyebrow="Visitantes" title="Álbum" accent="album" onClose={() => setOpen(false)}>
-          <AlbumContent />
-        </Page>
-      </PageLayer>
-    </>
-  )
-}
 
 export function AlbumContent() {
   const seen = useGrove((s) => s.visitorsSeen)

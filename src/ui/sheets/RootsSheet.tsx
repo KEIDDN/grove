@@ -3,8 +3,7 @@ import { GROUP_NAMES, questionsFor } from '../../game/questions'
 import { useGrove, type RootAnswer, type RootEntry } from '../../game/store'
 import { dayKey } from '../../game/time'
 import { CheckIcon, ChevronIcon, EditIcon, LockIcon } from '../icons'
-import { Page as FullPage } from '../Page'
-import { Segments, SwapIn } from '../Sheet'
+import { Segments, Sheet, SwapIn } from '../Sheet'
 
 const longDate = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
@@ -18,7 +17,6 @@ const parseDay = (key: string) => {
 const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 
 export function RootsSheet() {
-  const setTab = useGrove((s) => s.setTab)
   const [view, setView] = useState<'today' | 'journal'>('today')
   const [openDay, setOpenDay] = useState<string | null>(null)
   // Tocar un día escrito de la semana abre esa página (hoy, en la pestaña Hoy)
@@ -31,7 +29,7 @@ export function RootsSheet() {
     setView('journal')
   }
   return (
-    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip onPick={pickDay} />} onClose={() => setTab('garden')}>
+    <Sheet eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip onPick={pickDay} />}>
       <Segments
         id="roots"
         items={[
@@ -45,7 +43,7 @@ export function RootsSheet() {
         }}
       />
       <SwapIn id={view}>{view === 'today' ? <Today /> : <Journal open={openDay} setOpen={setOpenDay} />}</SwapIn>
-    </FullPage>
+    </Sheet>
   )
 }
 

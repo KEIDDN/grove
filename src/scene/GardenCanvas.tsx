@@ -8,7 +8,7 @@ import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
 import { resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
-import { useFullPageOpen } from '../ui/Page'
+import { useSheetExpanded } from '../ui/Sheet'
 import { Clouds } from './Clouds'
 import { CloudSea } from './CloudSea'
 import { Decor } from './Decor'
@@ -119,8 +119,8 @@ export function GardenCanvas() {
   // como parpadeos en negro.
   const [low, setLow] = useState(false)
   const garden = useRef<Group>(null)
-  // Con una pantalla completa encima no se ve el jardín: no se dibuja y el móvil descansa
-  const paused = useFullPageOpen()
+  // Con un panel a pantalla completa encima no se ve el jardín: no se dibuja y el móvil descansa
+  const paused = useSheetExpanded()
   const degrade = () => setLow(true)
   const sunDistance = 10
   const sun: [number, number, number] = [

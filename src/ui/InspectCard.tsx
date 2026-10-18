@@ -62,7 +62,7 @@ export function InspectCard() {
             )}
           </div>
           <div className="inspect-actions">
-            <button className="page-close press hit" onClick={() => inspect(null)} aria-label="Cerrar">
+            <button className="icon-btn press hit" onClick={() => inspect(null)} aria-label="Cerrar">
               <CloseIcon size={15} strokeWidth={2.4} />
             </button>
             {g && left > 0 ? (
