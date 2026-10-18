@@ -421,10 +421,12 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
 - **Inmersión:** clima sutil según la estación (lluvia fina, nieve, niebla solo
   en el mar de nubes) que no tape la isla; firma sonora propia para cada nivel
   de celebración; visitantes animados (se sientan, beben del estanque).
-- **Economía:** curva objetivo para un jugador típico (4 días/semana, 30 min):
-  ≈4×4 el primer mes, ≈25 parcelas a los 3 meses y 49 al año. Los logros dan
-  1–2 parcelas. Lo grande del Vivero cuesta 1–2 semanas. Se simula antes de
-  cambiar nada.
+- **Economía (ajustada con `src/devtools/economySim.ts`):** para un jugador típico
+  (4 días/semana, 30 min) salen 19 parcelas al mes, 27 a los 3 meses y 49 al año;
+  quien viene a diario completa la isla hacia los 9 meses y quien viene poco
+  llega a ~35. Cada logro da 1 parcela; los días acumulados dan +3 (15), +4 (40,
+  70, 95, 125) y +5 (160, 200). Se ganan ~390 monedas por semana: lo grande del
+  Vivero cuesta 1–2 semanas.
 - **Aparcado:** varios jardines (Pro), creador de jardines para compartir.
 
 **Orden:** 1 Celebraciones + "Mientras no estabas" → 2 Modo dev, demos y Tu

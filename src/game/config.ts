@@ -18,11 +18,19 @@ export const AWAY = {
   coinsPerVisitor: 4,
 } as const
 
-/** Parcelas que se ganan por días acumulados cuidándote (además de las 9 iniciales). */
+/**
+ * Parcelas que se ganan por días acumulados cuidándote (además de las 9 iniciales y la de cada
+ * logro). Ajustado con `devtools/economySim.ts` para una persona típica (4 días a la semana, 30 min):
+ * ~16 parcelas el primer mes, ~25 a los tres meses y la isla completa (49) hacia el año.
+ */
 export const DAY_PARCELS = [
-  { days: 7, parcels: 7 },
-  { days: 30, parcels: 9 },
-  { days: 100, parcels: 24 },
+  { days: 15, parcels: 3 },
+  { days: 40, parcels: 4 },
+  { days: 70, parcels: 4 },
+  { days: 95, parcels: 4 },
+  { days: 125, parcels: 4 },
+  { days: 160, parcels: 5 },
+  { days: 200, parcels: 5 },
 ] as const
 
 export const STARTING_PARCELS = 9

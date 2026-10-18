@@ -60,7 +60,7 @@ export function missionsFor(day: string): Mission[] {
     return list[(h + salt) % list.length]
   }
   const care = MISSIONS.filter((m) => m.group === 'care' || m.id === 'session')
-  return [pick('focus', 0), care[(h >> 3) % care.length], pick('create', 7)].filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i)
+  return [pick('focus', 0), care[(h >>> 3) % care.length], pick('create', 7)].filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i)
 }
 
 export interface Achievement {
@@ -74,17 +74,17 @@ export interface Achievement {
 
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first-session', title: 'Primera sesión', detail: 'Completa tu primera sesión de Cultivar', target: 1, value: (s) => s.sessions, reward: { parcels: 1 } },
-  { id: 'sessions-10', title: 'Constancia', detail: 'Completa 10 sesiones', target: 10, value: (s) => s.sessions, reward: { parcels: 2 } },
-  { id: 'focus-300', title: 'Cinco horas para ti', detail: 'Acumula 300 minutos de Cultivar', target: 300, value: (s) => s.focusMinutes, reward: { parcels: 3, coins: 100 } },
+  { id: 'sessions-10', title: 'Constancia', detail: 'Completa 10 sesiones', target: 10, value: (s) => s.sessions, reward: { parcels: 1 } },
+  { id: 'focus-300', title: 'Cinco horas para ti', detail: 'Acumula 300 minutos de Cultivar', target: 300, value: (s) => s.focusMinutes, reward: { parcels: 1, coins: 100 } },
   { id: 'roots-1', title: 'Primera raíz', detail: 'Escribe tu primera entrada en Raíces', target: 1, value: (s) => s.roots, reward: { parcels: 1 } },
-  { id: 'roots-7', title: 'Raíces profundas', detail: 'Escribe en Raíces 7 días', target: 7, value: (s) => s.roots, reward: { parcels: 2 } },
-  { id: 'roots-30', title: 'Un mes contigo', detail: 'Escribe en Raíces 30 días', target: 30, value: (s) => s.roots, reward: { parcels: 3 } },
+  { id: 'roots-7', title: 'Raíces profundas', detail: 'Escribe en Raíces 7 días', target: 7, value: (s) => s.roots, reward: { parcels: 1 } },
+  { id: 'roots-30', title: 'Un mes contigo', detail: 'Escribe en Raíces 30 días', target: 30, value: (s) => s.roots, reward: { parcels: 1 } },
   { id: 'grow-1', title: 'Primera cosecha', detail: 'Haz crecer tu primera planta', target: 1, value: (s) => s.plantsGrown, reward: { parcels: 1 } },
-  { id: 'grow-10', title: 'Mano verde', detail: 'Haz crecer 10 plantas', target: 10, value: (s) => s.plantsGrown, reward: { parcels: 2 } },
+  { id: 'grow-10', title: 'Mano verde', detail: 'Haz crecer 10 plantas', target: 10, value: (s) => s.plantsGrown, reward: { parcels: 1 } },
   { id: 'decor-10', title: 'Paisajista', detail: 'Coloca 10 objetos de decoración', target: 10, value: (s) => s.decorPlaced, reward: { coins: 50 } },
-  { id: 'week-1', title: 'Semana cumplida', detail: 'Cumple tu objetivo semanal', target: 1, value: (s) => s.weeksCompleted, reward: { parcels: 2 } },
+  { id: 'week-1', title: 'Semana cumplida', detail: 'Cumple tu objetivo semanal', target: 1, value: (s) => s.weeksCompleted, reward: { parcels: 1 } },
   { id: 'calm-30', title: 'Media hora de calma', detail: 'Acumula 30 minutos en Calma', target: 30, value: (s) => s.calmMinutes ?? 0, reward: { parcels: 1 } },
-  { id: 'visitors-5', title: 'Jardín acogedor', detail: 'Recibe 5 visitantes distintos', target: 5, value: (s) => s.visitors, reward: { parcels: 2 } },
+  { id: 'visitors-5', title: 'Jardín acogedor', detail: 'Recibe 5 visitantes distintos', target: 5, value: (s) => s.visitors, reward: { parcels: 1 } },
 ]
 
 export function rewardLabel(r: Reward): string {
