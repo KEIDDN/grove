@@ -9,6 +9,9 @@ import { moodColor, moodLabel } from '../game/mood'
 import { VISITORS } from '../game/visitors'
 import { WEATHER_NAMES, weatherForDay } from '../game/weather'
 import { useWeather } from '../scene/Weather'
+import { visitorSpots } from '../scene/Visitors'
+import { focusOn } from '../scene/camera'
+import { plotBounds } from '../game/garden'
 import { SEASONS } from '../game/seasons'
 import { parcelsAllowed, useGrove, useSeason } from '../game/store'
 import { dayKey, weekdayIndex } from '../game/time'
@@ -273,10 +276,10 @@ function WeekCard({ onClose }: { onClose: () => void }) {
         <div className="week-visitors">
           {visitors.length ? (
             visitors.map((v) => (
-              <span key={v.id} className="week-visitor">
+              <button key={v.id} className="week-visitor press" onClick={() => lookAtVisitor(v.id, onClose)}>
                 <VisitorGlyph type={v.type} size={20} />
                 {v.name}
-              </span>
+              </button>
             ))
           ) : (
             <span className="muted" style={{ fontSize: 12 }}>
@@ -299,4 +302,13 @@ function TodayMood({ onOpen }: { onOpen: () => void }) {
       <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: 'rotate(-90deg)', opacity: 0.5 }} />
     </button>
   )
+}
+
+/** Cierra "Tu semana" y lleva la cámara despacio hasta el visitante, que sigue a lo suyo. */
+function lookAtVisitor(id: string, close: () => void) {
+  const spot = visitorSpots.get(id)
+  close()
+  if (!spot) return
+  const b = plotBounds(useGrove.getState().plots)
+  focusOn(spot.x - b.cx, spot.z - b.cz, 2.3)
 }

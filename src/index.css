@@ -1919,10 +1919,13 @@ input[type='range'].slider {
   gap: 6px;
   height: 30px;
   padding: 0 11px 0 6px;
+  border: 0;
   border-radius: 999px;
   background: rgba(27, 31, 28, 0.05);
+  font: inherit;
   font-size: 12px;
   font-weight: 650;
+  color: var(--ink);
 }
 
 .app.night .week-visitor {

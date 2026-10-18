@@ -7,6 +7,7 @@ import { plotBounds, type GardenItem, type Plot } from '../game/garden'
 import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
 import { breath } from './breath'
+import { Visitors } from './Visitors'
 import { useWeather, WeatherLayer } from './Weather'
 import { framing, resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
@@ -180,6 +181,7 @@ export function GardenCanvas() {
           <PlacedItem key={it.id} item={it} theme={theme} />
         ))}
         <EditLayer plots={plots} theme={theme} />
+        <Visitors plots={plots} />
       </Floating>
       <Clouds size={size} />
       <CloudSea size={size} skyBottom={light.skyBottom} night={light.night} />

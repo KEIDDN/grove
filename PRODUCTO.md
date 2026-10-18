@@ -419,8 +419,11 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
   tuyo) → nombre, qué cuidar y ritmo en tarjetas sobre la isla → semilla de
   regalo que se planta delante → celebración grande. Copy publicitario.
 - **Inmersión:** clima sutil según la estación (lluvia fina, nieve, niebla solo
-  en el mar de nubes) que no tape la isla; firma sonora propia para cada nivel
-  de celebración; visitantes animados (se sientan, beben del estanque).
+  en la base de la isla) que no tapa la isla, con su sonido; firma sonora propia
+  para cada nivel de celebración. **Visitantes en 3D:** los que vinieron hoy
+  pasean por la isla (petirrojo y carbonero a saltitos, pato en el estanque,
+  rana, erizo, ardilla y zorro); al tocarlos en "Tu semana" la cámara va hacia
+  ellos. Mariposas y luciérnagas siguen siendo ambiente.
 - **Economía (ajustada con `src/devtools/economySim.ts`):** para un jugador típico
   (4 días/semana, 30 min) salen 19 parcelas al mes, 27 a los 3 meses y 49 al año;
   quien viene a diario completa la isla hacia los 9 meses y quien viene poco
