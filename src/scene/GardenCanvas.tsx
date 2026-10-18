@@ -7,6 +7,7 @@ import { plotBounds, type GardenItem, type Plot } from '../game/garden'
 import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
 import { breath } from './breath'
+import { useWeather, WeatherLayer } from './Weather'
 import { framing, resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
 import { useSheetExpanded } from '../ui/Sheet'
@@ -119,6 +120,9 @@ export function GardenCanvas() {
   const theme = SEASONS[useSeason()]
   const visible = items
   const light = useDaylight()
+  const weather = useWeather()
+  // Con lluvia, nieve o niebla el sol se apaga un poco: la luz se vuelve más suave
+  const overcast = weather === 'clear' ? 1 : weather === 'fog' ? 0.78 : 0.7
   // Calidad adaptativa en un solo sentido: si el dispositivo va justo, bajamos la calidad una vez y no
   // volvemos a subirla. Alternar resolución o efectos obliga a recrear buffers y shaders, y eso se ve
   // como parpadeos en negro.
@@ -156,7 +160,7 @@ export function GardenCanvas() {
       <ambientLight intensity={0.22 + light.night * 0.1} color={light.night > 0.5 ? '#9FB0E0' : '#FFFFFF'} />
       <directionalLight
         position={sun}
-        intensity={light.sunIntensity}
+        intensity={light.sunIntensity * overcast}
         color={light.sunColor}
         castShadow
         shadow-mapSize={COARSE ? [1024, 1024] : [2048, 2048]}
@@ -180,6 +184,7 @@ export function GardenCanvas() {
       <Clouds size={size} />
       <CloudSea size={size} skyBottom={light.skyBottom} night={light.night} />
       <Particles theme={theme} spread={size} />
+      <WeatherLayer weather={weather} spread={size} />
       <Life theme={theme} size={size} night={light.night} />
 
       <EffectComposer multisampling={0} enableNormalPass={false}>

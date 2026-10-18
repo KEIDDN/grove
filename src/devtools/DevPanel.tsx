@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { SEASON_ORDER, SEASONS } from '../game/seasons'
 import { useGrove } from '../game/store'
+import { WEATHER_NAMES } from '../game/weather'
 import { DEMOS } from './demos'
 import { addCoins, addDays, loadDemo, restoreRealGarden, setDevMode, simulateAway, testCelebration, useDev } from './devMode'
 
@@ -18,6 +19,8 @@ export function DevPanel() {
   const seasonOverride = useGrove((s) => s.seasonOverride)
   const hourOverride = useGrove((s) => s.hourOverride)
   const setHour = useGrove((s) => s.setHourOverride)
+  const weatherOverride = useGrove((s) => s.weatherOverride)
+  const setWeather = useGrove((s) => s.setWeatherOverride)
 
   return (
     <section className="dev-panel" aria-label="Modo desarrollador">
@@ -56,6 +59,14 @@ export function DevPanel() {
         {HOURS.map(([label, h]) => (
           <Chip key={label} on={hourOverride === h} onClick={() => setHour(h)}>
             {label}
+          </Chip>
+        ))}
+      </Group>
+
+      <Group label="Clima">
+        {(['real', 'clear', 'rain', 'snow', 'fog'] as const).map((w) => (
+          <Chip key={w} on={w === 'real' ? weatherOverride === null : weatherOverride === w} onClick={() => setWeather(w === 'real' ? null : w)}>
+            {w === 'real' ? 'Real' : WEATHER_NAMES[w]}
           </Chip>
         ))}
       </Group>

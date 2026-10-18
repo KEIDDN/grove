@@ -32,6 +32,7 @@ import type { QuestionGroup } from './questions'
 import { SEASON_ORDER, seasonForDate, type Season } from './seasons'
 import { rewardFor, type FocusSession } from './session'
 import { visitWhileAway } from './visitors'
+import type { Weather } from './weather'
 import { dayKey, TIME_SCALE, weekdayIndex, weekKey } from './time'
 
 export type Tab = 'garden' | 'tend' | 'roots' | 'calm' | 'read' | 'nursery' | 'inventory' | 'you'
@@ -139,6 +140,8 @@ interface GroveState extends Saved {
   paintFloor: FloorKind
   /** Hora fijada a mano para probar el ciclo día/noche (null = hora real). */
   hourOverride: number | null
+  /** Tiempo fijado desde el modo desarrollador (null = el del día). */
+  weatherOverride: Weather | null
   /** Pantalla de inicio visible (cada vez que se abre la app). */
   splash: boolean
 
@@ -148,6 +151,7 @@ interface GroveState extends Saved {
   showToast: (text: string) => void
   setRestMode: (on: boolean) => void
   setHourOverride: (hour: number | null) => void
+  setWeatherOverride: (weather: Weather | null) => void
 
   startSession: (targetMinutes: number | null) => void
   cancelSession: () => void
@@ -434,6 +438,8 @@ export const useGrove = create<GroveState>()(
         showToast: toast,
         setRestMode: (restMode) => set({ restMode }),
         setHourOverride: (hourOverride) => set({ hourOverride }),
+        weatherOverride: null,
+        setWeatherOverride: (weatherOverride) => set({ weatherOverride }),
 
         startSession: (targetMinutes) => set({ session: { startedAt: Date.now(), targetMinutes } }),
         cancelSession: () => {

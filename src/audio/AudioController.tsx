@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useGrove, useSeason } from '../game/store'
 import { useDaylight } from '../scene/useDaylight'
+import { useWeather } from '../scene/Weather'
 import { audio } from './engine'
 
 /** Conecta los ajustes y el estado del jardín con el motor de sonido. No pinta nada. */
@@ -9,6 +10,7 @@ export function AudioController() {
   const season = useSeason()
   const { night } = useDaylight()
   const hasWater = useGrove((s) => s.items.some((it) => it.kind === 'pond'))
+  const weather = useWeather()
 
   // Desbloqueo con el primer toque o tecla
   useEffect(() => {
@@ -30,7 +32,7 @@ export function AudioController() {
   useEffect(() => audio.setMusic(settings.music, settings.musicVolume), [settings.music, settings.musicVolume])
   useEffect(() => audio.setAmbient(settings.ambient, settings.ambientVolume), [settings.ambient, settings.ambientVolume])
   useEffect(() => audio.setSfx(settings.sfx, settings.sfxVolume), [settings.sfx, settings.sfxVolume])
-  useEffect(() => audio.setMood({ season, night: Math.round(night * 10) / 10, hasWater }), [season, night, hasWater])
+  useEffect(() => audio.setMood({ season, night: Math.round(night * 10) / 10, hasWater, weather }), [season, night, hasWater, weather])
 
   return null
 }

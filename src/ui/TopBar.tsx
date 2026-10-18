@@ -7,6 +7,8 @@ import { DAY_PARCELS, nextDayReward } from '../game/config'
 import { missionsFor } from '../game/goals'
 import { moodColor, moodLabel } from '../game/mood'
 import { VISITORS } from '../game/visitors'
+import { WEATHER_NAMES, weatherForDay } from '../game/weather'
+import { useWeather } from '../scene/Weather'
 import { SEASONS } from '../game/seasons'
 import { parcelsAllowed, useGrove, useSeason } from '../game/store'
 import { dayKey, weekdayIndex } from '../game/time'
@@ -158,6 +160,8 @@ function WeekCard({ onClose }: { onClose: () => void }) {
   const prev = [...DAY_PARCELS].reverse().find((m) => m.days <= totalDays)?.days ?? 0
   const missions = missionsFor(daily.day)
   const event = upcomingEvent()
+  const weather = useWeather()
+  const weatherOverride = useGrove((s) => s.weatherOverride)
   const visitors = recent.day === dayKey() ? VISITORS.filter((v) => recent.ids.includes(v.id)) : []
 
   return (
@@ -253,6 +257,12 @@ function WeekCard({ onClose }: { onClose: () => void }) {
           <span>{season.name}</span>
           <span className="muted">{realSeason ? `quedan ${daysLeftInSeason(seasonId)} días` : 'tu favorita'}</span>
         </div>
+        {weather !== 'clear' && (
+          <div className="week-row-text">
+            <span>{WEATHER_NAMES[weather]}</span>
+            <span className="muted">{weatherOverride ? 'ahora' : `hasta las ${weatherForDay(new Date(), seasonId).to}:00`}</span>
+          </div>
+        )}
         {event && (
           <div className="week-row-text">
             <span>{event.name}</span>

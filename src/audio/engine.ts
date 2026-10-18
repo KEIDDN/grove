@@ -11,6 +11,7 @@ export interface AmbientMood {
   /** 0 = día, 1 = noche */
   night: number
   hasWater: boolean
+  weather?: 'clear' | 'rain' | 'snow' | 'fog'
 }
 
 /** Rutas de pistas de música (en /public/audio). Vacío = melodía generada. */
@@ -313,10 +314,22 @@ class Engine {
     this.applyMood()
   }
 
+  private rain: Playing | null = null
+
   private applyMood() {
     if (!this.ctx) return
     const t = this.ctx.currentTime
-    const { season, night, hasWater } = this.mood
+    const { season, night, hasWater, weather = 'clear' } = this.mood
+    // Si llueve, una lluvia suave en el ambiente (no en Calma, que tiene su propio sonido)
+    if (weather === 'rain' && !this.rain) {
+      const g = this.ctx.createGain()
+      g.gain.value = 0.35
+      g.connect(this.ambientGain)
+      this.rain = startSoundscape(this.ctx, g, 'rain', this.buffers)
+    } else if (weather !== 'rain' && this.rain) {
+      this.rain.stop(3)
+      this.rain = null
+    }
     // Viento muy de fondo: solo una brisa; el protagonismo es de los pájaros
     const windy = season === 'autumn' ? 0.6 : season === 'winter' ? 0.5 : 0.25
     this.windGain.gain.setTargetAtTime(0.09 * windy, t, 2)
@@ -381,8 +394,10 @@ class Engine {
   /** Trinos cortos con barridos de frecuencia; más de día y en primavera. */
   private scheduleBirds() {
     const loop = () => {
-      const { season, night } = this.mood
-      const rate = night > 0.5 ? 0 : season === 'spring' ? 1 : season === 'summer' ? 0.85 : season === 'autumn' ? 0.55 : 0.3
+      const { season, night, weather = 'clear' } = this.mood
+      // Con lluvia o nieve los pájaros casi no cantan
+      const quiet = weather === 'rain' || weather === 'snow' ? 0.25 : 1
+      const rate = (night > 0.5 ? 0 : season === 'spring' ? 1 : season === 'summer' ? 0.85 : season === 'autumn' ? 0.55 : 0.3) * quiet
       if (this.ctx && this.ambientOn && Math.random() < rate) {
         if (Math.random() < 0.35) this.song()
         else this.chirp()
