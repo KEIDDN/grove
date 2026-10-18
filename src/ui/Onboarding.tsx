@@ -70,15 +70,16 @@ function playScene(id: SceneId): () => void {
     const seed = addDemo('pine', { growth: { by: 'focus', need: 60, progress: 0 } })
     later(() => look(seed, 1.45), 150)
     let progress = 0
+    // Pocas etapas bien marcadas (montículo, brote, arbolito, árbol): cada cambio es visible y barato
     const grow = () => {
-      progress += 6
+      progress += 15
       if (!seed) return
       useGrove.setState((s) => ({
         items: s.items.map((it) => (it.id === seed.id ? { ...it, growth: progress >= 60 ? undefined : { by: 'focus', need: 60, progress } } : it)),
       }))
-      if (progress === 24 || progress === 48) audio.sfx('tick', progress)
+      if (progress < 60) audio.sfx('tick', progress)
       if (progress >= 60) audio.sfx('medium')
-      else later(grow, 260)
+      else later(grow, 700)
     }
     later(grow, 1100)
   } else if (id === 'roots') {
@@ -201,6 +202,23 @@ export function Onboarding() {
     complete({ userName, gardenName: gardenName || (userName ? `El jardín de ${userName.trim()}` : 'Tu jardín'), focusAreas: areas, weekGoal, firstSeed: seed })
   }
 
+  // Con el teclado abierto (iPhone), todo sube para que la tarjeta no quede tapada
+  const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+    const onResize = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      root.current?.style.setProperty('--kb', `${kb}px`)
+    }
+    vv.addEventListener('resize', onResize)
+    vv.addEventListener('scroll', onResize)
+    return () => {
+      vv.removeEventListener('resize', onResize)
+      vv.removeEventListener('scroll', onResize)
+    }
+  }, [])
+
   // Deslizar a los lados en las escenas para avanzar o volver
   const swipe = useRef<{ x: number; y: number } | null>(null)
   const story = index < STORY
@@ -208,6 +226,7 @@ export function Onboarding() {
 
   return (
     <div
+      ref={root}
       className={story ? 'ob ob-story' : 'ob ob-personal'}
       onPointerDown={(e) => story && (swipe.current = { x: e.clientX, y: e.clientY })}
       onPointerUp={(e) => {
@@ -351,16 +370,17 @@ export function Onboarding() {
   )
 }
 
+// Solo opacidad y movimiento: el desenfoque animado en textos grandes es muy caro en el iPhone
 const fade = (delay: number) => ({
-  hidden: { opacity: 0, filter: 'blur(6px)' },
-  shown: { opacity: 1, filter: 'blur(0px)', transition: { duration: 0.8, delay, ease: EASE } },
-  gone: { opacity: 0, filter: 'blur(6px)', transition: { duration: 0.25 } },
+  hidden: { opacity: 0, y: 8 },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.8, delay, ease: EASE } },
+  gone: { opacity: 0, transition: { duration: 0.25 } },
 })
 
 const rise = (delay: number) => ({
-  hidden: { opacity: 0, y: 26, filter: 'blur(8px)' },
-  shown: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.9, delay, ease: EASE } },
-  gone: { opacity: 0, y: -10, filter: 'blur(6px)', transition: { duration: 0.25 } },
+  hidden: { opacity: 0, y: 28 },
+  shown: { opacity: 1, y: 0, transition: { duration: 0.9, delay, ease: EASE } },
+  gone: { opacity: 0, y: -10, transition: { duration: 0.25 } },
 })
 
 function Personal({ eyebrow, title, hint, children }: { eyebrow: string; title: string; hint?: string; children: ReactNode }) {

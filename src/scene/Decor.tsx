@@ -105,9 +105,14 @@ export function Decor({ plots, theme, items, floors }: { plots: Plot[]; theme: S
   const speck = useMemo(() => new IcosahedronGeometry(0.022, 0), [])
   const pebble = useMemo(() => new DodecahedronGeometry(0.035, 0), [])
 
+  // Solo cambia si se mueve o se pone un estanque: el resto de objetos no obliga a repartir la hierba otra vez
+  const pondKey = items
+    .filter((it) => it.kind === 'pond')
+    .map((it) => `${it.x},${it.z}`)
+    .join('|')
   const ponds = useMemo(
-    () => items.filter((it) => it.kind === 'pond').map((it) => cellToWorld(it.x, it.z, it.kind)),
-    [items],
+    () => (pondKey ? pondKey.split('|').map((k) => cellToWorld(Number(k.split(',')[0]), Number(k.split(',')[1]), 'pond')) : []),
+    [pondKey],
   )
 
   const allTufts = useMemo(() => scatter(22, plots, 11, theme.tuft, ponds, [0.8, 1.5]), [plots, theme, ponds])

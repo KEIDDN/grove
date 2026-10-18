@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { memo, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group, type Mesh } from 'three'
 import { Html } from '@react-three/drei'
@@ -341,8 +341,11 @@ export function ItemModel({ kind, color, seed, theme, growth }: { kind: ItemKind
   )
 }
 
-/** Coloca un objeto en su celda y lo hace aparecer con un pequeño rebote. */
-export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonTheme }) {
+/**
+ * Coloca un objeto en su celda y lo hace aparecer con un pequeño rebote. Memorizado: cuando cambia
+ * un objeto (crece, se mueve), los demás no se vuelven a dibujar.
+ */
+export const PlacedItem = memo(function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonTheme }) {
   const ref = useRef<Group>(null)
   const born = useRef<number | null>(null)
   const landed = useRef<number | null>(null)
@@ -444,7 +447,7 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
       )}
     </group>
   )
-}
+})
 
 /** Unas hojas que se desprenden y caen girando al tocar una planta. */
 function LeafBurst({ color, top }: { color: string; top: number }) {
