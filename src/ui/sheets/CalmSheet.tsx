@@ -8,6 +8,7 @@ import { formatClock, TIME_SCALE } from '../../game/time'
 import { breath } from '../../scene/breath'
 import { HeadphonesIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
+import { NumericText } from '../NumericText'
 import { useNow } from '../useNow'
 
 type Section = 'breath' | 'meditate'
@@ -240,22 +241,11 @@ export function CalmSpace() {
   )
 }
 
-/** Cifra que entra desenfocada y se aclara, y se va desenfocándose: como respirar. */
-function SoftNumber({ value, size }: { value: string; size: number }) {
+/** Cifra grande del espacio de calma, con el cambio "mantequilla" de iOS. */
+function SoftNumber({ value, size, direction }: { value: string; size: number; direction?: 1 | -1 }) {
   return (
-    <span className="soft-number" style={{ fontSize: size, height: size }}>
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.span
-          key={value}
-          className="display"
-          initial={{ opacity: 0, filter: 'blur(8px)', y: '0.1em' }}
-          animate={{ opacity: 1, filter: 'blur(0px)', y: '0em' }}
-          exit={{ opacity: 0, filter: 'blur(8px)', y: '-0.1em', transition: { duration: 0.3, ease: [0.4, 0, 1, 1] } }}
-          transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
-        >
-          {value}
-        </motion.span>
-      </AnimatePresence>
+    <span className="soft-number" style={{ fontSize: size }}>
+      <NumericText value={value} direction={direction} />
     </span>
   )
 }
@@ -264,7 +254,9 @@ function SpaceTop({ label, clock }: { label: string; clock: ReturnType<typeof us
   return (
     <div className="calm-space-top">
       <span className="calm-space-eyebrow">{label}</span>
-      <span className="calm-space-time">{formatClock(clock?.remaining ?? 0)}</span>
+      <span className="calm-space-time">
+        <NumericText value={formatClock(clock?.remaining ?? 0)} direction={-1} fast />
+      </span>
       <div className="calm-space-progress">
         <span style={{ transform: `scaleX(${clock?.progress ?? 0})` }} />
       </div>
@@ -341,9 +333,9 @@ function MeditateSpace() {
             <span className="calm-orb-core" />
           </div>
           <div className="calm-orb-text meditate-time">
-            <SoftNumber value={m} size={60} />
+            <SoftNumber value={m} size={60} direction={-1} />
             <span className="display meditate-colon">:</span>
-            <SoftNumber value={sec} size={60} />
+            <SoftNumber value={sec} size={60} direction={-1} />
           </div>
         </div>
         <div className="calm-space-phase">Respira a tu ritmo</div>

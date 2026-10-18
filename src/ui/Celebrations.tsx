@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ComponentType } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { animate, AnimatePresence, motion } from 'motion/react'
 import { audio } from '../audio/engine'
 import type { Celebration, CelebrationIcon, CelebrationLine } from '../game/celebrations'
 import { cellToWorld, plotBounds } from '../game/garden'
@@ -9,7 +9,7 @@ import { flyCoins } from './CoinFlights'
 import { iriStyle, KindGlyph, VisitorGlyph } from './glyphs'
 import { BookIcon, CalmIcon, CheckIcon, CoinIcon, ExpandIcon, HeartIcon, JournalIcon, SproutIcon, TimerIcon, TrophyIcon } from './icons'
 import { bouncy, softSpring, spring } from './motion'
-import { RollingNumber } from './RollingNumber'
+import { NumericText } from './NumericText'
 
 export const CELEBRATION_ICONS: Record<CelebrationIcon, ComponentType<{ size?: number }>> = {
   coin: CoinIcon,
@@ -95,9 +95,16 @@ function MediumCard({ c }: { c: Celebration }) {
   useCoinLaunch(c, number, 900)
   useEffect(() => {
     audio.sfx(c.first ? 'big' : 'medium')
-    // La cifra rueda desde cero en cuanto la tarjeta ha entrado
-    const id = setTimeout(() => setShown(c.coins ?? 0), 320)
-    return () => clearTimeout(id)
+    // La cifra cuenta desde cero en cuanto la tarjeta ha entrado: rápido al principio y frenando al final
+    let stop: (() => void) | undefined
+    const id = setTimeout(() => {
+      const a = animate(0, c.coins ?? 0, { duration: Math.min(1.1, 0.45 + (c.coins ?? 0) / 90), ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setShown(Math.round(v)) })
+      stop = () => a.stop()
+    }, 320)
+    return () => {
+      clearTimeout(id)
+      stop?.()
+    }
   }, [c])
 
   const Icon = CELEBRATION_ICONS[c.icon]
@@ -126,7 +133,7 @@ function MediumCard({ c }: { c: Celebration }) {
             <CoinIcon size={38} />
             <span ref={number} className="display" style={{ fontSize: 76 }}>
               <span className="celebrate-plus">+</span>
-              <RollingNumber value={shown} />
+              <NumericText value={shown} direction={1} fast />
             </span>
           </div>
         ) : null}

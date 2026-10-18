@@ -2451,8 +2451,7 @@ input[type='range'].slider {
   line-height: 1;
 }
 
-.soft-number > span {
-  grid-area: 1 / 1;
+.soft-number {
   font-weight: 200;
   letter-spacing: -0.04em;
 }
@@ -2514,4 +2513,23 @@ input[type='range'].slider {
   .calm-halo-slow {
     animation: none;
   }
+}
+
+/* Cifras estilo iOS: cada cifra en su hueco, la nueva y la vieja superpuestas mientras cambian */
+.numeric-text {
+  display: inline-flex;
+  align-items: flex-end;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.nt-slot {
+  display: inline-grid;
+  line-height: 1;
+}
+
+.nt-char {
+  grid-area: 1 / 1;
+  display: inline-block;
+  will-change: transform, opacity, filter;
 }

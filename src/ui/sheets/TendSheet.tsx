@@ -9,6 +9,7 @@ import { useGrove } from '../../game/store'
 import { formatClock, TIME_SCALE } from '../../game/time'
 import { MoonIcon } from '../icons'
 import { spring } from '../motion'
+import { NumericText } from '../NumericText'
 import { Odometer, RollingNumber } from '../RollingNumber'
 import { Sheet } from '../Sheet'
 import { useNow } from '../useNow'
@@ -48,10 +49,10 @@ function Setup() {
   const drag = useRef<{ y: number; base: number } | null>(null)
   // Valor con decimales que siguen las cifras: pegado al dedo al arrastrar y con muelle al elegir
   const shown = useMotionValue(minutes ?? 25)
+  // Arrastrando, las cifras ruedan pegadas al dedo; el resto del tiempo cambian como en iOS
+  const [dragging, setDragging] = useState(false)
   useEffect(() => {
-    if (minutes === null || drag.current) return
-    const a = animate(shown, minutes, { type: 'spring', stiffness: 150, damping: 24, mass: 1 })
-    return () => a.stop()
+    if (minutes !== null && !drag.current) shown.set(minutes)
   }, [minutes, shown])
 
   /** Elegir una duración desde los botones: suena un "tic" y las cifras ruedan hasta ella. */
@@ -65,7 +66,9 @@ function Setup() {
   const onPointerDown = (e: React.PointerEvent) => {
     if (minutes === null) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { y: e.clientY, base: shown.get() }
+    drag.current = { y: e.clientY, base: minutes }
+    shown.set(minutes)
+    setDragging(true)
   }
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current) return
@@ -84,8 +87,11 @@ function Setup() {
   const onPointerUp = () => {
     if (!drag.current) return
     drag.current = null
-    // Al soltar, la cifra se asienta en el minuto más cercano
-    if (minutes !== null) animate(shown, minutes, { type: 'spring', stiffness: 320, damping: 30 })
+    // Al soltar, la cifra se asienta en el minuto más cercano y luego vuelven las cifras de iOS
+    if (minutes === null) return setDragging(false)
+    void animate(shown, minutes, { type: 'spring', duration: 0.35, bounce: 0 }).then(() => {
+      if (!drag.current) setDragging(false)
+    })
   }
 
   return (
@@ -99,7 +105,7 @@ function Setup() {
         data-no-sheet-drag=""
       >
         <span className="display" style={{ fontSize: 96 }}>
-          {minutes === null ? <RollingNumber value={null} /> : <Odometer value={shown} />}
+          {minutes === null ? <RollingNumber value={null} /> : dragging ? <Odometer value={shown} /> : <NumericText value={minutes} />}
           <span className="sr-only">{minutes ?? 'sin límite'}</span>
         </span>
         <motion.span key={minutes ? 'min' : 'free'} className="muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring} style={{ fontSize: 16, fontWeight: 600 }}>
@@ -244,7 +250,7 @@ function Running() {
   return (
     <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="display" style={{ fontSize: 88 }}>
-        {formatClock(free ? clock.elapsed : (clock.remaining ?? 0))}
+        <NumericText value={formatClock(free ? clock.elapsed : (clock.remaining ?? 0))} direction={free ? 1 : -1} />
       </div>
       <div style={{ height: 4, borderRadius: 2, background: 'rgba(27,31,28,0.08)', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${clock.progress * 100}%`, background: 'var(--ink)', transition: 'width .25s linear' }} />
