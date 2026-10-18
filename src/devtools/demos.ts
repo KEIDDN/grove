@@ -2,8 +2,9 @@
 // desarrollador: tu partida real se guarda aparte y vuelve con "Volver a mi jardín".
 
 import { cellKey, type FloorKind } from '../game/floors'
-import { canPlace, FLOWER_COLORS, starterPlots, type GardenItem, type Growth, type ItemKind } from '../game/garden'
+import { canPlace, FLOWER_COLORS, MAX_PLOTS, plotSlots, starterPlots, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { ACHIEVEMENTS, emptyDaily, emptyStats, type Stats } from '../game/goals'
+import { emotionsFor, FACTORS, type Mood } from '../game/mood'
 import { QUESTIONS, type QuestionGroup } from '../game/questions'
 import { initialSaved, type RootEntry, type Saved } from '../game/store'
 import { dayKey, weekdayIndex, weekKey } from '../game/time'
@@ -164,6 +165,14 @@ const ANSWERS: Record<QuestionGroup, string[]> = {
   grow: ['Quiero dejar el móvil antes de dormir', 'Me cuesta decir que no, y está bien aprender', 'Ir más despacio también es avanzar', 'Agradecer más a menudo', 'Darme permiso para descansar'],
 }
 
+/** Ánimo creíble: casi siempre bien, con días regulares y alguno malo de vez en cuando. */
+function demoMood(i: number): Mood {
+  const wave = Math.sin(i * 0.7) + Math.sin(i * 0.23) * 0.8
+  const level = Math.min(7, Math.max(1, Math.round(5 + wave * 1.2)))
+  const emotions = emotionsFor(level)
+  return { level, emotions: [emotions[i % emotions.length], emotions[(i * 3 + 1) % emotions.length]].filter((e, k, a) => a.indexOf(e) === k), factors: [FACTORS[i % FACTORS.length]] }
+}
+
 function sampleEntries(n: number): RootEntry[] {
   const groups: QuestionGroup[] = ['feel', 'notice', 'grow']
   return Array.from({ length: n }, (_, i) => {
@@ -174,6 +183,7 @@ function sampleEntries(n: number): RootEntry[] {
       date: dayKey(date),
       answers: groups.map((g, k) => ({ group: g, question: QUESTIONS[g][(i + k * 3) % QUESTIONS[g].length], text: ANSWERS[g][(i * 7 + k) % ANSWERS[g].length] })),
       reflection: i % 4 === 0 ? 'Hoy ha sido un buen día para parar un poco.' : undefined,
+      mood: demoMood(i),
     }
   })
 }
@@ -183,6 +193,15 @@ export function buildDemo(id: DemoId): Saved {
   const layout = LAYOUTS[id]
   const p = PROGRESS[id]
   const plots = starterPlots(layout.side)
+  const claimed = ACHIEVEMENTS.filter((a) => a.value({ ...emptyStats(), ...p.stats, visitors: p.visitors }) >= a.target)
+  // Las parcelas de los logros ya recogidos también están puestas: la isla crece un poco por los bordes
+  let extra = claimed.reduce((sum, a) => sum + (a.reward.parcels ?? 0), 0)
+  const mid = (layout.side - 1) / 2
+  while (extra-- > 0 && plots.length < MAX_PLOTS) {
+    // Siempre la parcela libre más cercana al centro: la isla crece redondeada, no a trozos
+    const [best] = plotSlots(plots).sort((a, b) => Math.hypot(a[0] - mid, a[1] - mid) - Math.hypot(b[0] - mid, b[1] - mid) || a[0] - b[0] || a[1] - b[1])
+    plots.push(best)
+  }
   const items: GardenItem[] = []
   for (const [kind, x, z, rot = 0, color, growth] of layout.items) {
     // Si algo del diseño se pisa, se salta: mejor un hueco que un objeto encima de otro
@@ -214,7 +233,7 @@ export function buildDemo(id: DemoId): Saved {
     // Ya conocen las celebraciones de la primera vez
     firsts: id === 'day1' ? [] : ['session', 'root', 'read', 'plant', 'away'],
     // Lo conseguido ya está recogido, para que no haya avisos pendientes en las tomas
-    achievementsClaimed: ACHIEVEMENTS.filter((a) => a.value({ ...emptyStats(), ...p.stats, visitors: p.visitors }) >= a.target).map((a) => a.id),
+    achievementsClaimed: claimed.map((a) => a.id),
     audio: initialSaved().audio,
   }
 }

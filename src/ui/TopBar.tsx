@@ -5,6 +5,7 @@ import { spring } from './motion'
 import { daysLeftInSeason, upcomingEvent } from '../game/calendar'
 import { DAY_PARCELS, nextDayReward } from '../game/config'
 import { missionsFor } from '../game/goals'
+import { moodColor, moodLabel } from '../game/mood'
 import { VISITORS } from '../game/visitors'
 import { SEASONS } from '../game/seasons'
 import { parcelsAllowed, useGrove, useSeason } from '../game/store'
@@ -150,6 +151,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
   const freeParcels = useGrove((s) => parcelsAllowed(s) - s.plots.length)
   const setEditMode = useGrove((s) => s.setEditMode)
   const setEditTool = useGrove((s) => s.setEditTool)
+  const setTab = useGrove((s) => s.setTab)
   const today = weekdayIndex()
   const done = weekDays.filter(Boolean).length
   const next = nextDayReward(totalDays)
@@ -257,6 +259,7 @@ function WeekCard({ onClose }: { onClose: () => void }) {
             <span className="muted">{event.days === 0 ? 'es hoy' : event.days === 1 ? 'mañana' : `en ${event.days} días`}</span>
           </div>
         )}
+        <TodayMood onOpen={() => (onClose(), setTab('roots'))} />
         <div className="week-visitors">
           {visitors.length ? (
             visitors.map((v) => (
@@ -273,5 +276,17 @@ function WeekCard({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </motion.section>
+  )
+}
+
+/** Tu ánimo de hoy, si ya lo has apuntado; si no, una invitación a hacerlo en Raíces. */
+function TodayMood({ onOpen }: { onOpen: () => void }) {
+  const mood = useGrove((s) => s.entries.find((e) => e.date === dayKey())?.mood)
+  return (
+    <button className="week-mood press" onClick={onOpen}>
+      <span className="week-mood-dot" style={{ background: mood ? moodColor(mood.level) : undefined }} />
+      <span style={{ flex: 1, textAlign: 'left' }}>{mood ? `Hoy te sientes: ${moodLabel(mood.level).toLowerCase()}` : '¿Cómo te sientes hoy?'}</span>
+      <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: 'rotate(-90deg)', opacity: 0.5 }} />
+    </button>
   )
 }

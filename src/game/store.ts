@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware'
 import { calmRewardFor, type BreathPatternId, type CalmKind, type CalmSession } from './calm'
 import { CATALOG, KIND_NAMES } from './catalog'
+import type { Mood } from './mood'
 import type { Celebration, CelebrationIcon, CelebrationLine, FirstKey } from './celebrations'
 import { ECONOMY, legacySide, parcelsFromDays, STARTING_PARCELS } from './config'
 import { cellKey, type FloorKind } from './floors'
@@ -47,6 +48,8 @@ export interface RootEntry {
   date: string
   answers: RootAnswer[]
   reflection?: string
+  /** Cómo te has sentido hoy (el primer paso de la página). */
+  mood?: Mood
 }
 
 export interface AudioSettings {
@@ -161,7 +164,7 @@ interface GroveState extends Saved {
   cancelCalm: () => void
   setCalmPrefs: (patch: Partial<Saved['calmPrefs']>) => void
 
-  saveRoot: (answers: RootAnswer[], reflection: string) => void
+  saveRoot: (answers: RootAnswer[], reflection: string, mood?: Mood) => void
   buy: (catalogId: string) => void
 
   setEditMode: (on: boolean) => void
@@ -488,7 +491,10 @@ export const useGrove = create<GroveState>()(
         },
         // El panel se cierra: la calma ocupa toda la pantalla. Al parar se vuelve a Calma
         startCalm: (kind, minutes, pattern) => set({ calm: { kind, minutes, pattern, startedAt: Date.now() }, tab: 'garden' }),
-        cancelCalm: () => set({ calm: null, tab: 'calm' }),
+        cancelCalm: () => {
+          set({ calm: null, tab: 'calm' })
+          toast('Vuelve cuando quieras')
+        },
         setCalmPrefs: (patch) => set({ calmPrefs: { ...get().calmPrefs, ...patch } }),
         completeCalm: (early = false) => {
           const s = fresh()
@@ -498,7 +504,7 @@ export const useGrove = create<GroveState>()(
           // Menos de un minuto no cuenta: se cierra sin más
           if (minutes < 1) {
             set({ calm: null, tab: 'calm' })
-            return toast('Menos de un minuto no cuenta todavía. Vuelve cuando quieras.')
+            return toast('Vuelve cuando quieras')
           }
           const reward = calmRewardFor(minutes, s.coinsToday)
           const seeds = s.items.filter((it) => it.growth?.by === 'focus')
@@ -564,12 +570,12 @@ export const useGrove = create<GroveState>()(
           })
         },
 
-        saveRoot: (answers, reflection) => {
+        saveRoot: (answers, reflection, mood) => {
           const s = fresh()
           const today = dayKey()
           const clean = answers.map((a) => ({ ...a, text: a.text.trim() })).filter((a) => a.text)
-          if (!clean.length && !reflection.trim()) return
-          const entry: RootEntry = { date: today, answers: clean, reflection: reflection.trim() || undefined }
+          if (!clean.length && !reflection.trim() && !mood) return
+          const entry: RootEntry = { date: today, answers: clean, reflection: reflection.trim() || undefined, mood }
           // Editar la página de hoy no vuelve a dar recompensas
           if (s.entries.some((e) => e.date === today)) {
             set({ entries: s.entries.map((e) => (e.date === today ? entry : e)) })

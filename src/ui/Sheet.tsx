@@ -127,13 +127,25 @@ function MobileSheet({ contentKey, children }: { contentKey: string; children: R
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // Salida: baja por detrás del dock y luego se desmonta
+  // Salida: baja por detrás del dock y luego se desmonta. Si se vuelve a abrir una sección mientras
+  // baja, el mismo panel "revive" y tiene que volver a subir (si no, se quedaba escondido abajo).
+  const leaving = useRef(false)
   useEffect(() => {
-    if (isPresent) return
+    if (isPresent) {
+      if (leaving.current) {
+        leaving.current = false
+        anim.current?.stop()
+        anim.current = animate(y, geo.current.medium, detentSpring)
+      }
+      return
+    }
+    leaving.current = true
     anim.current?.stop()
     // El jardín vuelve a dibujarse desde que el panel empieza a irse, no cuando ya se ha ido
     setExpandedState(false)
-    animate(y, geo.current.full + 40, { type: 'spring', stiffness: 380, damping: 40, restDelta: 2 }).then(() => safeToRemove?.())
+    const out = animate(y, geo.current.full + 40, { type: 'spring', stiffness: 380, damping: 40, restDelta: 2 })
+    anim.current = out
+    void out.then(() => leaving.current && safeToRemove?.())
   }, [isPresent])
 
   // Pausa el 3D a pantalla completa
