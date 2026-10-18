@@ -2217,7 +2217,7 @@ input[type='range'].slider {
   }
 }
 
-/* ——— Espacio de calma: a pantalla completa, solo el círculo y la respiración ——— */
+/* ——— Espacio de calma: a pantalla completa, oscuro y cálido, como a la luz de una vela ——— */
 
 .calm-space {
   position: absolute;
@@ -2228,71 +2228,63 @@ input[type='range'].slider {
   align-items: center;
   padding: calc(var(--safe-top) + 28px) 24px calc(var(--safe-bottom) + 28px);
   overflow: hidden;
-  color: #2a2740;
-  background: radial-gradient(120% 80% at 50% 45%, #fdfbff 0%, #f2eefb 45%, #e6eef0 100%);
+  color: #f6ebe0;
+  background: radial-gradient(110% 75% at 50% 46%, #4a332c 0%, #2b1d1a 38%, #140e0d 72%, #080505 100%);
 }
 
+/* De noche, el mismo calor con un fondo más hondo */
 .app.night .calm-space {
-  color: #ece9ff;
-  background: radial-gradient(120% 80% at 50% 45%, #2a2a52 0%, #17182f 50%, #0b0c1a 100%);
+  background: radial-gradient(110% 75% at 50% 46%, #3e2c35 0%, #221822 40%, #0e0a10 74%, #050306 100%);
 }
 
-/* Manchas de luz que se mueven muy despacio, para que el fondo esté vivo sin distraer */
+/* Luces cálidas que se mueven muy despacio y una viñeta que oscurece los bordes */
 .calm-aurora {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
+.calm-aurora::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 60% at 50% 46%, transparent 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+
 .calm-aurora span {
   position: absolute;
-  width: 70vmax;
-  height: 70vmax;
+  width: 60vmax;
+  height: 60vmax;
   border-radius: 50%;
-  filter: blur(60px);
-  opacity: 0.55;
-  animation: aurora 26s ease-in-out infinite alternate;
+  filter: blur(80px);
+  opacity: 0.22;
+  animation: aurora 30s ease-in-out infinite alternate;
 }
 
 .calm-aurora span:nth-child(1) {
-  left: -30vmax;
-  top: -25vmax;
-  background: #e4dafc;
+  left: -24vmax;
+  top: -22vmax;
+  background: #c98a5a;
 }
 
 .calm-aurora span:nth-child(2) {
-  right: -32vmax;
-  bottom: -28vmax;
-  background: #d5efe6;
-  animation-delay: -9s;
+  right: -26vmax;
+  bottom: -24vmax;
+  background: #a85a68;
+  animation-delay: -11s;
 }
 
 .calm-aurora span:nth-child(3) {
-  left: 10vmax;
-  bottom: -40vmax;
-  background: #fde3ea;
-  opacity: 0.4;
-  animation-delay: -17s;
-}
-
-.app.night .calm-aurora span:nth-child(1) {
-  background: #4b3f9a;
-  opacity: 0.45;
-}
-
-.app.night .calm-aurora span:nth-child(2) {
-  background: #1f5a5a;
-  opacity: 0.4;
-}
-
-.app.night .calm-aurora span:nth-child(3) {
-  background: #5a3a6e;
-  opacity: 0.3;
+  left: 8vmax;
+  top: 30vmax;
+  background: #e0a873;
+  opacity: 0.14;
+  animation-delay: -19s;
 }
 
 @keyframes aurora {
   to {
-    transform: translate(12vmax, 8vmax) scale(1.15);
+    transform: translate(10vmax, 7vmax) scale(1.18);
   }
 }
 
@@ -2301,38 +2293,37 @@ input[type='range'].slider {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  width: min(220px, 60vw);
+  gap: 7px;
+  width: min(200px, 56vw);
 }
 
 .calm-space-eyebrow {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 650;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .calm-space-time {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 .calm-space-progress {
   width: 100%;
   height: 2px;
   border-radius: 1px;
-  background: currentColor;
-  opacity: 0.25;
+  background: rgba(246, 235, 224, 0.14);
   overflow: hidden;
 }
 
 .calm-space-progress span {
   display: block;
   height: 100%;
-  background: currentColor;
+  background: rgba(246, 235, 224, 0.6);
   transform-origin: left;
   transition: transform 0.3s linear;
 }
@@ -2344,33 +2335,113 @@ input[type='range'].slider {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 44px;
+  gap: 52px;
 }
 
-.breath-stage-xl {
-  width: min(310px, 76vw);
-  margin: 0;
+/* La bola: una luz cálida con un borde que se deforma muy despacio, como algo vivo */
+.calm-stage {
+  position: relative;
+  width: min(300px, 74vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
 }
 
-.calm-space .breath-text {
-  color: inherit;
+.calm-halo {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 190, 140, 0.55) 0%, rgba(240, 140, 120, 0.22) 38%, rgba(240, 140, 120, 0) 68%);
+  filter: blur(14px);
 }
 
-.breath-ripple {
+.calm-halo-slow {
+  animation: calm-swell 9s ease-in-out infinite;
+}
+
+.calm-ripple {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid currentColor;
+  border: 1px solid rgba(255, 220, 190, 0.9);
 }
 
-.app.night .calm-space .breath-orb {
-  background:
-    radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 40%),
-    linear-gradient(150deg, #7b6fd0 0%, #9b74b4 45%, #4f9a90 100%);
+.calm-orb {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 49% 51% 52% 48% / 50% 47% 53% 50%;
+  background: radial-gradient(circle at 50% 40%, #fff3e4 0%, #ffd8b4 34%, #f2a882 66%, #d9786e 100%);
   box-shadow:
-    0 30px 80px rgba(110, 90, 220, 0.35),
-    inset 0 -10px 30px rgba(20, 10, 60, 0.25),
-    inset 0 2px 2px rgba(255, 255, 255, 0.5);
+    0 0 80px rgba(255, 170, 120, 0.35),
+    0 30px 70px rgba(0, 0, 0, 0.35),
+    inset 0 -18px 40px rgba(170, 70, 70, 0.35),
+    inset 0 8px 24px rgba(255, 255, 255, 0.55);
+  animation: calm-blob 14s ease-in-out infinite;
+  will-change: transform, border-radius;
+}
+
+.calm-orb-slow {
+  animation:
+    calm-blob 14s ease-in-out infinite,
+    calm-swell 9s ease-in-out infinite;
+  scale: 0.82;
+}
+
+/* Un reflejo que gira lento por encima, para que la luz no esté quieta */
+.calm-orb-sheen {
+  position: absolute;
+  inset: -20%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.35) 60deg, rgba(255, 255, 255, 0) 140deg, rgba(255, 200, 170, 0.25) 230deg, rgba(255, 255, 255, 0) 320deg);
+  mix-blend-mode: soft-light;
+  animation: calm-spin 22s linear infinite;
+}
+
+.calm-orb-core {
+  position: absolute;
+  left: 22%;
+  top: 14%;
+  width: 46%;
+  height: 34%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 70%);
+  filter: blur(6px);
+}
+
+@keyframes calm-blob {
+  0%,
+  100% {
+    border-radius: 49% 51% 52% 48% / 50% 47% 53% 50%;
+  }
+  33% {
+    border-radius: 53% 47% 48% 52% / 47% 53% 47% 53%;
+  }
+  66% {
+    border-radius: 47% 53% 51% 49% / 53% 49% 51% 47%;
+  }
+}
+
+@keyframes calm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes calm-swell {
+  0%,
+  100% {
+    transform: scale(0.94);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.calm-orb-text {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #6b3a2e;
 }
 
 .soft-number {
@@ -2391,9 +2462,9 @@ input[type='range'].slider {
   height: 40px;
   display: grid;
   place-items: center;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 300;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
 }
 
 .calm-space-phase > span {
@@ -2402,19 +2473,13 @@ input[type='range'].slider {
 
 .meditate-time {
   flex-direction: row;
-  align-items: center;
 }
 
 .meditate-colon {
-  font-size: 52px;
+  font-size: 50px;
   font-weight: 200;
   opacity: 0.5;
-  margin: 0 2px 8px;
-}
-
-.meditate-orb {
-  inset: 8%;
-  opacity: 0.85;
+  margin: 0 2px 6px;
 }
 
 .calm-space-actions {
@@ -2425,34 +2490,28 @@ input[type='range'].slider {
 
 .calm-space-btn {
   height: 46px;
-  padding: 0 24px;
+  padding: 0 26px;
   border-radius: 999px;
   border: 0;
   font: inherit;
   font-size: 14px;
   font-weight: 650;
   color: inherit;
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 0 0 1px rgba(42, 39, 64, 0.08);
-}
-
-.app.night .calm-space-btn {
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  background: rgba(246, 235, 224, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(246, 235, 224, 0.14);
 }
 
 .calm-space-btn-strong {
-  background: #2a2740;
-  color: #fdfbff;
-}
-
-.app.night .calm-space-btn-strong {
-  background: #ece9ff;
-  color: #17182f;
+  background: #f6ebe0;
+  color: #2b1d1a;
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .calm-aurora span {
+  .calm-aurora span,
+  .calm-orb,
+  .calm-orb-sheen,
+  .calm-halo-slow {
     animation: none;
   }
 }

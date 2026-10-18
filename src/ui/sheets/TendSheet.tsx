@@ -1,6 +1,6 @@
 import { audio } from '../../audio/engine'
 import { useEffect, useRef, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
+import { animate, AnimatePresence, motion, useMotionValue } from 'motion/react'
 import { KIND_NAMES } from '../../game/catalog'
 import { ECONOMY } from '../../game/config'
 import { paletteFor } from '../../game/variants'
@@ -9,7 +9,7 @@ import { useGrove } from '../../game/store'
 import { formatClock, TIME_SCALE } from '../../game/time'
 import { MoonIcon } from '../icons'
 import { spring } from '../motion'
-import { RollingNumber } from '../RollingNumber'
+import { Odometer, RollingNumber } from '../RollingNumber'
 import { Sheet } from '../Sheet'
 import { useNow } from '../useNow'
 
@@ -46,19 +46,35 @@ function Setup() {
   const coinsToday = useGrove((s) => s.coinsToday)
   const start = useGrove((s) => s.startSession)
   const drag = useRef<{ y: number; base: number } | null>(null)
+  // Valor con decimales que siguen las cifras: pegado al dedo al arrastrar y con muelle al elegir
+  const shown = useMotionValue(minutes ?? 25)
+  useEffect(() => {
+    if (minutes === null || drag.current) return
+    const a = animate(shown, minutes, { type: 'spring', stiffness: 150, damping: 24, mass: 1 })
+    return () => a.stop()
+  }, [minutes, shown])
 
-  // Arrastrar el número grande hacia arriba o abajo cambia los minutos de uno en uno, con un "tic" en cada cambio
+  /** Elegir una duración desde los botones: suena un "tic" y las cifras ruedan hasta ella. */
+  const choose = (d: number | null, isCustom = false) => {
+    setCustom(isCustom)
+    if (d !== minutes) audio.sfx('tick', d ?? 0)
+    setMinutes(d)
+  }
+
+  // Arrastrar el número grande hacia arriba o abajo: las cifras siguen al dedo y suena un "tic" en cada minuto
   const onPointerDown = (e: React.PointerEvent) => {
     if (minutes === null) return
     e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { y: e.clientY, base: minutes }
+    drag.current = { y: e.clientY, base: shown.get() }
   }
   const onPointerMove = (e: React.PointerEvent) => {
     if (!drag.current) return
     const dy = drag.current.y - e.clientY
     // Aceleración suave: con recorridos largos se avanza más deprisa, sin perder la precisión cerca
-    const steps = Math.sign(dy) * Math.round(Math.abs(dy) / PX_PER_MINUTE + Math.max(0, Math.abs(dy) - 120) / 18)
-    const next = clampMinutes(drag.current.base + steps)
+    const delta = Math.sign(dy) * (Math.abs(dy) / PX_PER_MINUTE + Math.max(0, Math.abs(dy) - 120) / 18)
+    const exact = Math.min(MAX_CUSTOM, Math.max(MIN_CUSTOM, drag.current.base + delta))
+    shown.set(exact)
+    const next = clampMinutes(exact)
     if (next !== minutes) {
       setMinutes(next)
       setCustom(!DURATIONS.includes(next))
@@ -66,7 +82,10 @@ function Setup() {
     }
   }
   const onPointerUp = () => {
+    if (!drag.current) return
     drag.current = null
+    // Al soltar, la cifra se asienta en el minuto más cercano
+    if (minutes !== null) animate(shown, minutes, { type: 'spring', stiffness: 320, damping: 30 })
   }
 
   return (
@@ -80,7 +99,8 @@ function Setup() {
         data-no-sheet-drag=""
       >
         <span className="display" style={{ fontSize: 96 }}>
-          <RollingNumber value={minutes} />
+          {minutes === null ? <RollingNumber value={null} /> : <Odometer value={shown} />}
+          <span className="sr-only">{minutes ?? 'sin límite'}</span>
         </span>
         <motion.span key={minutes ? 'min' : 'free'} className="muted" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring} style={{ fontSize: 16, fontWeight: 600 }}>
           {minutes ? 'minutos' : 'modo libre'}
@@ -92,10 +112,7 @@ function Setup() {
             key={d ?? 'free'}
             className="pill pill-ghost press"
             aria-pressed={!custom && minutes === d}
-            onClick={() => {
-              setCustom(false)
-              setMinutes(d)
-            }}
+            onClick={() => choose(d)}
             style={{ height: 40 }}
           >
             {d ? `${d} min` : 'Libre'}
@@ -104,10 +121,7 @@ function Setup() {
         <button
           className="pill pill-ghost press"
           aria-pressed={custom}
-          onClick={() => {
-            setCustom(true)
-            if (minutes === null) setMinutes(30)
-          }}
+          onClick={() => choose(minutes ?? 30, true)}
           style={{ height: 40 }}
         >
           Otra

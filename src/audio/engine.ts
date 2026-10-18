@@ -116,7 +116,8 @@ class Engine {
 
   /**
    * Paisaje sonoro de Calma. "Jardín" deja sonar el ambiente de siempre (aunque lo tengas
-   * apagado); cualquier otro aparta la música y el ambiente mientras dura.
+   * apagado); "Silencio" y los demás apartan la música y el ambiente mientras dura. `none` es
+   * salir de Calma: todo vuelve a como estaba.
    */
   setSoundscape(id: SoundscapeId, volume = 0.8) {
     const ctx = this.ctx

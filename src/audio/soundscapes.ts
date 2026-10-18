@@ -4,7 +4,8 @@
 // amplios, no "dentro de la cabeza"), se filtran para quitar el chiado agudo y el bucle se funde
 // consigo mismo para que no haya clic al repetirse. Todo entra y sale con fundidos largos.
 
-export type SoundscapeId = 'none' | 'nature' | 'rain' | 'pink' | 'brown' | 'white' | 'alpha' | 'theta' | 'delta'
+/** `none`: fuera de Calma (suena lo de siempre). `silence`: en Calma, sin nada de nada. */
+export type SoundscapeId = 'none' | 'silence' | 'nature' | 'rain' | 'pink' | 'brown' | 'white' | 'alpha' | 'theta' | 'delta'
 
 export const SOUNDSCAPES: Array<{ id: SoundscapeId; name: string; group: 'Naturaleza' | 'Ruido' | 'Binaural'; hint: string }> = [
   { id: 'nature', name: 'Jardín', group: 'Naturaleza', hint: 'Pájaros, brisa y agua según la hora' },
@@ -71,7 +72,7 @@ export interface Playing {
 }
 
 export function startSoundscape(ctx: AudioContext, out: AudioNode, id: SoundscapeId, cache: Map<string, AudioBuffer>): Playing | null {
-  if (id === 'none' || id === 'nature') return null
+  if (id === 'none' || id === 'silence' || id === 'nature') return null
   const t = ctx.currentTime
   const gain = ctx.createGain()
   gain.gain.setValueAtTime(0, t)

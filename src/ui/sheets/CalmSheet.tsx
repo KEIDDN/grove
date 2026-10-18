@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useSpring, useTransform } from 'motion/react'
 import { audio } from '../../audio/engine'
 import { SOUNDSCAPES, type SoundscapeId } from '../../audio/soundscapes'
 import { BREATH_PATTERNS, PHASE_LABELS, phaseAt, type BreathPatternId } from '../../game/calm'
@@ -42,6 +42,11 @@ export function CalmSheet() {
       </div>
     </Sheet>
   )
+}
+
+/** El sonido elegido en Calma. Las partidas de antes guardaban el silencio como `none`. */
+function calmSound(saved: string): SoundscapeId {
+  return saved === 'none' ? 'silence' : (saved as SoundscapeId)
 }
 
 // ——— Preparar ———
@@ -130,7 +135,8 @@ function SoundPicker() {
     audio.setSoundscape(id, prefs.volume)
     setPlaying(id)
   }
-  const current = SOUNDSCAPES.find((s) => s.id === prefs.sound)
+  const sound = calmSound(prefs.sound)
+  const current = SOUNDSCAPES.find((s) => s.id === sound)
   const groups = ['Naturaleza', 'Ruido', 'Binaural'] as const
   return (
     <div className="calm-block">
@@ -140,12 +146,12 @@ function SoundPicker() {
           <span className="calm-sound-group-name">{g}</span>
           <div className="calm-chips">
             {g === 'Naturaleza' && (
-              <button className="pill pill-ghost press calm-chip" aria-pressed={prefs.sound === 'none'} onClick={() => pick('none')}>
+              <button className="pill pill-ghost press calm-chip" aria-pressed={sound === 'silence'} onClick={() => pick('silence')}>
                 Silencio
               </button>
             )}
             {SOUNDSCAPES.filter((s) => s.group === g).map((s) => (
-              <button key={s.id} className="pill pill-ghost press calm-chip" aria-pressed={prefs.sound === s.id} onClick={() => pick(s.id)}>
+              <button key={s.id} className="pill pill-ghost press calm-chip" aria-pressed={sound === s.id} onClick={() => pick(s.id)}>
                 {playing === s.id && <span className="calm-eq" aria-hidden="true"><i /><i /><i /></span>}
                 {s.name}
               </button>
@@ -159,7 +165,7 @@ function SoundPicker() {
           {current.group === 'Binaural' ? `${current.hint}. Usa auriculares: cada oído oye un tono distinto.` : current.hint}
         </div>
       )}
-      {prefs.sound !== 'none' && (
+      {sound !== 'silence' && (
         <input
           className="slider"
           type="range"
@@ -171,7 +177,7 @@ function SoundPicker() {
           onChange={(e) => {
             const volume = Number(e.target.value)
             set({ volume })
-            if (audio.soundscape !== 'none') audio.setSoundscape(audio.soundscape, volume)
+            if (audio.soundscape !== 'none' && audio.soundscape !== 'silence') audio.setSoundscape(audio.soundscape, volume)
           }}
         />
       )}
@@ -242,10 +248,10 @@ function SoftNumber({ value, size }: { value: string; size: number }) {
         <motion.span
           key={value}
           className="display"
-          initial={{ opacity: 0, filter: 'blur(10px)', scale: 1.18 }}
-          animate={{ opacity: 1, filter: 'blur(0px)', scale: 1 }}
-          exit={{ opacity: 0, filter: 'blur(10px)', scale: 0.86 }}
-          transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }}
+          initial={{ opacity: 0, filter: 'blur(8px)', y: '0.1em' }}
+          animate={{ opacity: 1, filter: 'blur(0px)', y: '0em' }}
+          exit={{ opacity: 0, filter: 'blur(8px)', y: '-0.1em', transition: { duration: 0.3, ease: [0.4, 0, 1, 1] } }}
+          transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
         >
           {value}
         </motion.span>
@@ -272,10 +278,13 @@ function BreathSpace() {
   const clock = useCalmClock()
   const pattern = BREATH_PATTERNS.find((p) => p.id === calm?.pattern) ?? BREATH_PATTERNS[0]
   const fill = useMotionValue(0)
-  const scale = useTransform(fill, (f) => 0.46 + f * 0.54)
-  const glow = useTransform(fill, (f) => 0.25 + f * 0.75)
-  const ring = useTransform(fill, (f) => 0.62 + f * 0.4)
-  const ringOpacity = useTransform(fill, (f) => f * 0.22)
+  // El halo y las ondas siguen a la bola con un poco de retraso: se siente orgánico, no mecánico
+  const trail = useSpring(fill, { stiffness: 40, damping: 14, mass: 1 })
+  const scale = useTransform(fill, (f) => 0.5 + f * 0.5)
+  const haloScale = useTransform(trail, (f) => 0.62 + f * 0.6)
+  const haloOpacity = useTransform(trail, (f) => 0.35 + f * 0.65)
+  const ripple = useTransform(trail, (f) => 0.6 + f * 0.48)
+  const rippleOpacity = useTransform(trail, (f) => f * 0.18)
   const [phase, setPhase] = useState(() => phaseAt(pattern, 0))
   useAnimationFrame(() => {
     if (!calm) return
@@ -288,22 +297,25 @@ function BreathSpace() {
     <>
       <SpaceTop label={`${pattern.name} · ${pattern.phases.map((p) => p.seconds).join(' · ')}`} clock={clock} />
       <div className="calm-space-center" aria-live="polite">
-        <div className="breath-stage breath-stage-xl">
-          <motion.div className="breath-ripple" style={{ scale: ring, opacity: ringOpacity }} />
-          <motion.div className="breath-halo" style={{ scale, opacity: glow }} />
-          <motion.div className="breath-orb" style={{ scale }} />
-          <div className="breath-text">
-            <SoftNumber value={String(phase.left)} size={92} />
+        <div className="calm-stage">
+          <motion.div className="calm-ripple" style={{ scale: ripple, opacity: rippleOpacity }} />
+          <motion.div className="calm-halo" style={{ scale: haloScale, opacity: haloOpacity }} />
+          <motion.div className="calm-orb" style={{ scale }}>
+            <span className="calm-orb-sheen" />
+            <span className="calm-orb-core" />
+          </motion.div>
+          <div className="calm-orb-text">
+            <SoftNumber value={String(phase.left)} size={84} />
           </div>
         </div>
         <div className="calm-space-phase">
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
               key={`${phase.cycle}-${phase.index}`}
-              initial={{ opacity: 0, y: 10, filter: 'blur(6px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              exit={{ opacity: 0, y: -8, filter: 'blur(6px)' }}
-              transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
+              initial={{ opacity: 0, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, filter: 'blur(8px)' }}
+              transition={{ duration: 0.9, ease: [0.25, 0.1, 0.25, 1] }}
             >
               {PHASE_LABELS[phase.phase]}
             </motion.span>
@@ -322,11 +334,13 @@ function MeditateSpace() {
     <>
       <SpaceTop label="Meditación" clock={clock} />
       <div className="calm-space-center">
-        <div className="breath-stage breath-stage-xl meditate-stage">
-          <div className="meditate-ring" />
-          <div className="meditate-ring meditate-ring-2" />
-          <div className="breath-orb meditate-orb" />
-          <div className="breath-text meditate-time">
+        <div className="calm-stage">
+          <div className="calm-halo calm-halo-slow" />
+          <div className="calm-orb calm-orb-slow">
+            <span className="calm-orb-sheen" />
+            <span className="calm-orb-core" />
+          </div>
+          <div className="calm-orb-text meditate-time">
             <SoftNumber value={m} size={60} />
             <span className="display meditate-colon">:</span>
             <SoftNumber value={sec} size={60} />
@@ -341,18 +355,14 @@ function MeditateSpace() {
 function SpaceActions() {
   const complete = useGrove((s) => s.completeCalm)
   const cancel = useGrove((s) => s.cancelCalm)
-  const clock = useCalmClock()
-  const minutes = Math.floor((clock?.elapsed ?? 0) / 60)
   return (
     <div className="calm-space-actions">
       <button className="calm-space-btn press" onClick={cancel}>
         Parar
       </button>
-      {minutes >= 1 && (
-        <button className="calm-space-btn calm-space-btn-strong press" onClick={() => complete(true)}>
-          Terminar ya
-        </button>
-      )}
+      <button className="calm-space-btn calm-space-btn-strong press" onClick={() => complete(true)}>
+        Terminar
+      </button>
     </div>
   )
 }
@@ -371,7 +381,7 @@ export function CalmController() {
   useEffect(() => {
     if (!calm) return
     const prefs = useGrove.getState().calmPrefs
-    audio.setSoundscape(prefs.sound as SoundscapeId, prefs.volume)
+    audio.setSoundscape(calmSound(prefs.sound), prefs.volume)
     if (bowledFor !== calm.startedAt) {
       bowledFor = calm.startedAt
       audio.bowl(0.8)

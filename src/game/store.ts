@@ -496,7 +496,10 @@ export const useGrove = create<GroveState>()(
           const elapsed = ((Date.now() - s.calm.startedAt) / 60000) * TIME_SCALE
           const minutes = early ? Math.floor(elapsed) : s.calm.minutes
           // Menos de un minuto no cuenta: se cierra sin más
-          if (minutes < 1) return set({ calm: null, tab: 'calm' })
+          if (minutes < 1) {
+            set({ calm: null, tab: 'calm' })
+            return toast('Menos de un minuto no cuenta todavía. Vuelve cuando quieras.')
+          }
           const reward = calmRewardFor(minutes, s.coinsToday)
           const seeds = s.items.filter((it) => it.growth?.by === 'focus')
           const watered = water(s.items, 'focus', minutes)
