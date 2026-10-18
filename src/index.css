@@ -853,11 +853,11 @@ input[type='range'].slider {
     max-height: none;
     border-radius: 0;
     box-shadow: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(253, 250, 245, 0.98) 40%, #fbf7f0);
+    background: linear-gradient(180deg, #ffffff, #fdfaf5 40%, #fbf7f0);
   }
 
   .app.night .sheet.sheet-mobile {
-    background: linear-gradient(180deg, rgba(48, 52, 88, 0.98), #23274a 40%, #1d2140);
+    background: linear-gradient(180deg, #303458, #23274a 40%, #1d2140);
   }
 
   .sheet-mobile.expanded .sheet-body {

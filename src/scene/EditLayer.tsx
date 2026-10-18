@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, Float32BufferAttribute, type Group, type Mesh } from 'three'
-import { canPlace, CELL, CELLS_PER_TILE, cellToWorld, footprint, plotKey, plotSlots, type Plot } from '../game/garden'
+import { canPlace, occupied, CELL, CELLS_PER_TILE, cellToWorld, footprint, plotKey, plotSlots, type Plot } from '../game/garden'
 import type { SeasonTheme } from '../game/seasons'
 import { parcelsAllowed, useGrove } from '../game/store'
 import { GROUND_Y } from './Island'
@@ -109,7 +109,7 @@ export function EditLayer({ plots, theme }: { plots: Plot[]; theme: SeasonTheme 
       {tool === 'paint' && hoverCell && (
         <mesh position={[(hoverCell[0] + 0.5) * CELL, GROUND_Y + 0.07, (hoverCell[1] + 0.5) * CELL]} rotation={[-Math.PI / 2, 0, 0]}>
           <planeGeometry args={[CELL - 0.03, CELL - 0.03]} />
-          <meshBasicMaterial color={paintFloor === 'grass' ? '#7BD88F' : '#FFFFFF'} transparent opacity={0.6} depthWrite={false} />
+          <meshBasicMaterial color={occupied(items).has(`${hoverCell[0]},${hoverCell[1]}`) ? '#F08A7E' : paintFloor === 'grass' ? '#7BD88F' : '#FFFFFF'} transparent opacity={0.6} depthWrite={false} />
         </mesh>
       )}
 

@@ -3,7 +3,6 @@ import {
   BoxGeometry,
   BufferAttribute,
   type BufferGeometry,
-  CatmullRomCurve3,
   Color,
   ConeGeometry,
   CylinderGeometry,
@@ -12,8 +11,6 @@ import {
   type InstancedMesh,
   Object3D,
   PlaneGeometry,
-  TubeGeometry,
-  Vector3,
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { plotKey, type Plot } from '../game/garden'
@@ -30,7 +27,6 @@ const SOIL = '#A87A52'
 const SOIL_DARK = '#8C6442'
 const SOIL_LOW = '#97704C'
 const ROCK = ['#A8A094', '#978F83', '#B4AD9F', '#8C8478']
-const ROOT = '#6E4E36'
 const STONES = ['#B9B3A6', '#A39D91', '#C9C3B6']
 
 type Side = [dx: number, dz: number]
@@ -117,20 +113,6 @@ function rockBase(plot: Plot, depthFromEdge: number) {
   return tinted(geo, (f) => ROCK[(f * 7 + Math.floor(rand() * 3)) % ROCK.length])
 }
 
-/** Raíz que asoma por el lado de la isla y cuelga hacia abajo. */
-function root(start: Vector3, out: Vector3, seed: number) {
-  const rand = seeded(seed)
-  const side = new Vector3(out.z, 0, -out.x).multiplyScalar((rand() - 0.5) * 0.12)
-  const pts = [
-    start.clone(),
-    start.clone().addScaledVector(out, 0.08).add(new Vector3(0, -0.1, 0)),
-    start.clone().addScaledVector(out, 0.13).add(side).add(new Vector3(0, -0.32 - rand() * 0.1, 0)),
-    start.clone().addScaledVector(out, 0.12).add(side.multiplyScalar(2)).add(new Vector3(0, -0.55 - rand() * 0.25, 0)),
-  ]
-  const tube = new TubeGeometry(new CatmullRomCurve3(pts), 10, 0.011 + rand() * 0.006, 4)
-  return tinted(tube, ROOT)
-}
-
 /** Distancia (en parcelas) de cada parcela al borde de la isla. */
 function edgeDistance(plots: Plot[]) {
   const owned = new Set(plots.map(([x, z]) => plotKey(x, z)))
@@ -195,16 +177,15 @@ function Scatter({ geometry, items, color, vertexColors }: { geometry: BufferGeo
 
 /**
  * Isla flotante: césped facetado, tierra en capas con piedras incrustadas, un borde de césped que
- * cae un poco por los lados y una base de roca con musgo y raíces colgando. Todo va fusionado en
+ * cae un poco por los lados y una base de roca con musgo. Todo va fusionado en
  * pocas mallas para que sea ligero en el móvil.
  */
 export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) {
-  const { top, body, rock, roots, drips, stones, moss } = useMemo(() => {
+  const { top, body, rock, drips, stones, moss } = useMemo(() => {
     const { owned, dist } = edgeDistance(plots)
     const tops: BufferGeometry[] = []
     const bodies: BufferGeometry[] = []
     const rocks: BufferGeometry[] = []
-    const rootList: BufferGeometry[] = []
     const drips: Instance[] = []
     const stones: Instance[] = []
     const moss: Instance[] = []
@@ -243,11 +224,6 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
           const r = 0.05 + rand() * 0.05
           moss.push({ p: at(rand(), SOIL_BOTTOM - 0.01, -0.02), s: [r, r * 0.45, r], r: rand() * Math.PI })
         }
-        // Alguna raíz asomando y colgando
-        if (rand() < 0.45) {
-          const [sx, sy, sz] = at(0.15 + rand() * 0.7, SOIL_BOTTOM + 0.04, -0.01)
-          rootList.push(root(new Vector3(sx, sy, sz), new Vector3(dx, 0, dz), hashString(`root:${px},${pz},${dx},${dz}`)))
-        }
       }
     }
 
@@ -256,7 +232,7 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
       list.forEach((l) => l.dispose())
       return g
     }
-    return { top: merge(tops), body: merge(bodies), rock: merge(rocks), roots: rootList.length ? merge(rootList) : null, drips, stones, moss }
+    return { top: merge(tops), body: merge(bodies), rock: merge(rocks), drips, stones, moss }
   }, [plots, theme])
 
   const drip = useMemo(() => {
@@ -272,9 +248,8 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
       top.dispose()
       body.dispose()
       rock.dispose()
-      roots?.dispose()
     },
-    [top, body, rock, roots],
+    [top, body, rock],
   )
 
   return (
@@ -288,11 +263,6 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
       <mesh geometry={rock} castShadow receiveShadow>
         <meshStandardMaterial vertexColors flatShading roughness={1} />
       </mesh>
-      {roots && (
-        <mesh geometry={roots} castShadow>
-          <meshStandardMaterial vertexColors flatShading roughness={1} />
-        </mesh>
-      )}
       <Scatter geometry={drip} items={drips} color={theme.grass[3]} />
       <Scatter geometry={stone} items={stones} vertexColors={STONES} />
       <Scatter geometry={mossGeo} items={moss} color={theme.grass[2]} />

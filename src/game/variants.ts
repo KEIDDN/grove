@@ -26,6 +26,15 @@ const WOOD: Variant[] = [
 export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
   tree: FOLIAGE,
   bush: FOLIAGE,
+  birch: FOLIAGE,
+  willow: FOLIAGE,
+  berrybush: FOLIAGE,
+  tent: [
+    { id: 'red', name: 'Roja', colors: ['#D9604C', '#C24C3A'] },
+    { id: 'sage', name: 'Salvia', colors: ['#9DB596', '#839E7C'] },
+    { id: 'sand', name: 'Arena', colors: ['#E6CFA3', '#D2B887'] },
+    { id: 'sky', name: 'Cielo', colors: ['#8FB3D6', '#7598BE'] },
+  ],
   pine: [
     { id: 'green', name: 'Verde', colors: ['#4FA066', '#3F8F5B', '#5DAA70', '#357E4F'] },
     { id: 'blue', name: 'Abeto azul', colors: ['#78A6A6', '#5E8F92', '#8BB6B4', '#4F7F82'] },
@@ -70,6 +79,8 @@ export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
   bench: WOOD,
   fence: WOOD,
   birdhouse: WOOD,
+  sign: WOOD,
+  logpile: WOOD,
 }
 
 /** Tonos de un objeto según su variante; vacío si usa los de la estación. */

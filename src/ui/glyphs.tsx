@@ -1,10 +1,41 @@
-import type { CSSProperties } from 'react'
+import { SEASONS } from '../game/seasons'
+import { useSeason } from '../game/store'
+import { MODEL_KINDS } from '../scene/models'
+import { cachedThumb, thumbKey, thumbnail } from '../scene/thumbs'
+import { useEffect, useState, type CSSProperties } from 'react'
 import type { ItemKind } from '../game/garden'
 import type { VisitorType } from '../game/visitors'
 
-// Ilustraciones planas low poly para las tarjetas (el 3D vive solo en el jardín).
+// Iconos de las tarjetas: miniaturas de los modelos 3D o, si no hay modelo, ilustraciones planas.
 
-export function KindGlyph({ kind, color = '#EBA3B8', size = 64 }: { kind: ItemKind; color?: string; size?: number }) {
+/**
+ * Icono de un objeto. Los que usan un modelo 3D muestran una miniatura renderizada del propio
+ * modelo (igual que en el jardín); los hechos con código, su dibujo.
+ */
+export function KindGlyph({ kind, color, size = 64 }: { kind: ItemKind; color?: string; size?: number }) {
+  const theme = SEASONS[useSeason()]
+  const key = thumbKey(kind, color, theme)
+  const [url, setUrl] = useState(() => cachedThumb(key))
+  useEffect(() => {
+    const cached = cachedThumb(key)
+    if (cached) return setUrl(cached)
+    let alive = true
+    thumbnail(kind, color, theme)?.then((u) => alive && setUrl(u)).catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [key])
+  if (MODEL_KINDS[kind]) {
+    return url ? (
+      <img src={url} width={size} height={size} alt="" aria-hidden="true" draggable={false} style={{ display: 'block', objectFit: 'contain' }} />
+    ) : (
+      <span aria-hidden="true" style={{ display: 'block', width: size, height: size }} />
+    )
+  }
+  return <DrawnGlyph kind={kind} color={color ?? '#EBA3B8'} size={size} />
+}
+
+function DrawnGlyph({ kind, color, size }: { kind: ItemKind; color: string; size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
       {kind === 'tree' && (

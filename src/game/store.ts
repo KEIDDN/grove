@@ -7,6 +7,8 @@ import {
   autoPlace,
   canPlace,
   cellOwned,
+  footprint,
+  occupied,
   FLOWER_COLORS,
   MAX_PLOTS,
   newId,
@@ -240,6 +242,13 @@ const initialSaved = (): Saved => ({
 
 let toastId = 0
 
+/** El agua no lleva suelo debajo: al colocar un estanque se limpia lo pintado en su sitio. */
+function clearFloors(floors: Record<string, FloorKind>, x: number, z: number, size: number) {
+  const next = { ...floors }
+  for (let a = 0; a < size; a++) for (let b = 0; b < size; b++) delete next[cellKey(x + a, z + b)]
+  return next
+}
+
 /**
  * Guardado diferido: zustand persiste en cada cambio, y al pintar o arrastrar eso son decenas de
  * escrituras síncronas por segundo de toda la partida. Aquí se agrupan y se escriben como mucho
@@ -454,13 +463,20 @@ export const useGrove = create<GroveState>()(
           const ignore = p.from === 'garden' ? p.itemId : undefined
           if (!canPlace(s.items, s.plots, p.kind, x, z, ignore)) return toast('Ahí no cabe')
           if (p.from === 'garden') {
-            set({ items: s.items.map((it) => (it.id === p.itemId ? { ...it, x, z } : it)), placing: null, selectedId: p.itemId, hoverCell: null })
+            set({
+              items: s.items.map((it) => (it.id === p.itemId ? { ...it, x, z } : it)),
+              floors: p.kind === 'pond' ? clearFloors(s.floors, x, z, footprint(p.kind)) : s.floors,
+              placing: null,
+              selectedId: p.itemId,
+              hoverCell: null,
+            })
             return
           }
           const isSeed = !!p.growth && p.growth.progress === 0
           set({
             ...rollover(get()),
             items: [...s.items, { id: p.invId, kind: p.kind, color: p.color, x, z, rot: 0, growth: p.growth }],
+            floors: p.kind === 'pond' ? clearFloors(s.floors, x, z, footprint(p.kind)) : s.floors,
             inventory: s.inventory.filter((i) => i.id !== p.invId),
             placing: null,
             selectedId: p.invId,
@@ -485,6 +501,8 @@ export const useGrove = create<GroveState>()(
         paintCell: (x, z) => {
           const s = get()
           if (!cellOwned(plotSet(s.plots), x, z)) return
+          // Bajo un objeto no se pinta: hay que moverlo antes
+          if (occupied(s.items).has(`${x},${z}`)) return
           const key = cellKey(x, z)
           if ((s.floors[key] ?? 'grass') === s.paintFloor) return
           const next = { ...s.floors }

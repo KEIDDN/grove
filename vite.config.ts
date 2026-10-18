@@ -5,5 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: { host: true },
   // Se preparan al arrancar: si Vite los descubre más tarde, puede empaquetar dos copias de React
-  optimizeDeps: { include: ['@phosphor-icons/react'] },
+  optimizeDeps: {
+    include: ['@phosphor-icons/react', 'three/examples/jsm/loaders/GLTFLoader.js', 'three/examples/jsm/utils/BufferGeometryUtils.js'],
+  },
 })

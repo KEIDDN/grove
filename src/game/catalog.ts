@@ -23,6 +23,11 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'bush', kind: 'bush', name: 'Arbusto', price: 35, seed: { by: 'focus', need: 30 } },
   { id: 'pine', kind: 'pine', name: 'Pino', price: 70, seed: { by: 'focus', need: 60 } },
   { id: 'tree', kind: 'tree', name: 'Árbol', price: 100, seed: { by: 'focus', need: 120 } },
+  { id: 'fern', kind: 'fern', name: 'Helecho', price: 25, seed: { by: 'focus', need: 20 } },
+  { id: 'wheat', kind: 'wheat', name: 'Trigo', price: 30, seed: { by: 'roots', need: 3 } },
+  { id: 'berrybush', kind: 'berrybush', name: 'Arbusto de bayas', price: 55, seed: { by: 'focus', need: 45 } },
+  { id: 'birch', kind: 'birch', name: 'Abedul', price: 110, seed: { by: 'focus', need: 90 } },
+  { id: 'willow', kind: 'willow', name: 'Sauce llorón', price: 180, seed: { by: 'focus', need: 150 } },
 
   { id: 'rock', kind: 'rock', name: 'Rocas', price: 50 },
   { id: 'mushroom', kind: 'mushroom', name: 'Seta', price: 60 },
@@ -32,6 +37,13 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'lantern', kind: 'lantern', name: 'Farol', price: 150 },
   { id: 'birdhouse', kind: 'birdhouse', name: 'Casita de pájaros', price: 160 },
   { id: 'pond', kind: 'pond', name: 'Estanque', price: 260 },
+  { id: 'stones', kind: 'stones', name: 'Piedras de paso', price: 30 },
+  { id: 'sign', kind: 'sign', name: 'Cartel', price: 45 },
+  { id: 'planter', kind: 'planter', name: 'Maceta', price: 50 },
+  { id: 'log', kind: 'log', name: 'Tronco con musgo', price: 60 },
+  { id: 'logpile', kind: 'logpile', name: 'Leña', price: 80 },
+  { id: 'campfire', kind: 'campfire', name: 'Hoguera', price: 180 },
+  { id: 'tent', kind: 'tent', name: 'Tienda de campaña', price: 320 },
 ]
 
 export const KIND_NAMES: Record<string, string> = { sapling: 'Brote', ...Object.fromEntries(CATALOG.map((c) => [c.kind, c.name])) }

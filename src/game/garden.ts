@@ -20,6 +20,18 @@ export type ItemKind =
   | 'birdhouse'
   | 'tulips'
   | 'reeds'
+  | 'birch'
+  | 'willow'
+  | 'berrybush'
+  | 'fern'
+  | 'wheat'
+  | 'log'
+  | 'logpile'
+  | 'campfire'
+  | 'tent'
+  | 'planter'
+  | 'sign'
+  | 'stones'
 
 export interface GardenItem {
   id: string
@@ -53,7 +65,7 @@ export const CELLS_PER_TILE = 2
 export const CELL = 1 / CELLS_PER_TILE
 export const FLOWER_COLORS = ['#EBA3B8', '#B9A5DB', '#F0CF6E', '#F2B48A']
 
-const LARGE: ItemKind[] = ['tree', 'pine', 'pond']
+const LARGE: ItemKind[] = ['tree', 'pine', 'pond', 'birch', 'willow', 'tent']
 
 export function footprint(kind: ItemKind): number {
   return LARGE.includes(kind) ? 2 : 1
@@ -125,7 +137,8 @@ export function plotBounds(plots: Plot[]): Bounds {
   return { cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2, span: Math.max(maxX - minX, maxZ - minZ) }
 }
 
-function occupied(items: GardenItem[], ignoreId?: string): Set<string> {
+/** Celdas ocupadas por objetos, como "x,z". */
+export function occupied(items: GardenItem[], ignoreId?: string): Set<string> {
   const set = new Set<string>()
   for (const it of items) {
     if (it.id === ignoreId) continue

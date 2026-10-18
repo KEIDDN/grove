@@ -1,6 +1,6 @@
-import { useMemo, useRef, type ReactNode } from 'react'
+import { Suspense, useMemo, useRef, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { BufferGeometry, ConeGeometry, CylinderGeometry, DodecahedronGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group, type Mesh } from 'three'
+import { BufferGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group, type Mesh } from 'three'
 import { Html } from '@react-three/drei'
 import { cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
@@ -8,14 +8,12 @@ import { paletteFor } from '../game/variants'
 import type { SeasonTheme } from '../game/seasons'
 import { GROUND_Y } from './Island'
 import { hashString, jitter, pick, seeded } from './lowpoly'
+import { Model, MODEL_KINDS, paintFor } from './models'
 import { useDaylight } from './useDaylight'
 
 /** Escala global de los objetos respecto a la casilla. */
 const ITEM_SCALE = 1.3
-const TRUNK = '#8A6244'
-const TRUNK_DARK = '#74513A'
 const STEM = '#6E9A5A'
-const PINE = ['#3F8F5B', '#4FA066', '#357E4F', '#5DAA70']
 const WATER = '#4DB3B0'
 
 interface PartProps {
@@ -50,93 +48,6 @@ function Sway({ seed, strength = 0.035, children }: { seed: number; strength?: n
     ref.current.rotation.x = Math.cos(t * 0.8) * strength * 0.6
   })
   return <group ref={ref}>{children}</group>
-}
-
-/** Árbol de copa en racimo: muchas bolas facetadas de verdes distintos. */
-function Tree({ theme, seed, palette }: PartProps) {
-  const leaves = palette ?? theme.leaf
-  const blobs = useMemo(() => {
-    const rand = seeded(seed)
-    const list = [{ p: [0, 0.92, 0] as [number, number, number], r: 0.28 }]
-    const n = 9
-    for (let k = 0; k < n; k++) {
-      const a = (k / n) * Math.PI * 2 + rand() * 0.4
-      const ring = k % 2 === 0 ? 0.3 : 0.23
-      list.push({ p: [Math.cos(a) * ring, 0.78 + (k % 3) * 0.14 + rand() * 0.05, Math.sin(a) * ring], r: 0.15 + rand() * 0.08 })
-    }
-    list.push({ p: [0.02, 1.18, 0.02], r: 0.17 })
-    return list.map((b, i) => ({ ...b, geo: jitter(new IcosahedronGeometry(b.r, 0), b.r * 0.15, seed + i), color: pick(leaves, seed + i * 7) }))
-  }, [seed, leaves])
-  return (
-    <group>
-      <mesh position={[0, 0.32, 0]} castShadow>
-        <cylinderGeometry args={[0.055, 0.09, 0.64, 6]} />
-        <Mat color={TRUNK} />
-      </mesh>
-      <mesh position={[0.09, 0.66, 0.02]} rotation={[0, 0, -0.75]} castShadow>
-        <cylinderGeometry args={[0.022, 0.035, 0.26, 5]} />
-        <Mat color={TRUNK_DARK} />
-      </mesh>
-      <mesh position={[-0.08, 0.7, -0.02]} rotation={[0.2, 0, 0.7]} castShadow>
-        <cylinderGeometry args={[0.02, 0.03, 0.22, 5]} />
-        <Mat color={TRUNK_DARK} />
-      </mesh>
-      <Sway seed={seed} strength={0.02}>
-        {blobs.map((b, i) => (
-          <mesh key={i} geometry={b.geo} position={b.p} castShadow receiveShadow>
-            <Mat color={theme.particleKind === 'snow' && b.p[1] > 1.05 ? '#FFFFFF' : b.color} />
-          </mesh>
-        ))}
-      </Sway>
-    </group>
-  )
-}
-
-/** Pino de capas, con el borde inferior de cada capa irregular como escamas. */
-function Pine({ theme, seed, palette }: PartProps) {
-  const greens = palette ?? PINE
-  const layers = useMemo(() => {
-    const out = []
-    const count = 6
-    for (let k = 0; k < count; k++) {
-      const r = 0.36 * (1 - k / (count + 1.2))
-      const h = 0.34
-      const g = new ConeGeometry(r, h, 11, 1, true)
-      const pos = g.attributes.position
-      const rand = seeded(seed + k * 13)
-      for (let v = 0; v < pos.count; v++) {
-        if (pos.getY(v) < 0) {
-          // Escamas: cada vértice del borde baja o sube un poco
-          pos.setY(v, pos.getY(v) - rand() * 0.07)
-          pos.setX(v, pos.getX(v) * (1 + rand() * 0.12))
-          pos.setZ(v, pos.getZ(v) * (1 + rand() * 0.12))
-        }
-      }
-      g.computeVertexNormals()
-      out.push({ geo: g, y: 0.42 + k * 0.17, rot: rand() * Math.PI, color: greens[(seed + k) % greens.length] })
-    }
-    return out
-  }, [seed, greens])
-  const snow = theme.particleKind === 'snow'
-  return (
-    <group>
-      <mesh position={[0, 0.2, 0]} castShadow>
-        <cylinderGeometry args={[0.045, 0.065, 0.4, 6]} />
-        <Mat color={TRUNK} />
-      </mesh>
-      <Sway seed={seed} strength={0.012}>
-        <mesh position={[0, 0.85, 0]}>
-          <coneGeometry args={[0.2, 1.05, 8]} />
-          <Mat color="#2E6E45" />
-        </mesh>
-        {layers.map((l, i) => (
-          <mesh key={i} geometry={l.geo} position={[0, l.y, 0]} rotation={[0, l.rot, 0]} castShadow receiveShadow>
-            <Mat color={snow && i % 2 === 1 ? '#F2F6F8' : l.color} doubleSide />
-          </mesh>
-        ))}
-      </Sway>
-    </group>
-  )
 }
 
 /** Disco facetado: anillos concéntricos con un poco de ruido para el agua. */
@@ -246,117 +157,6 @@ function Sapling({ theme, seed }: PartProps) {
   )
 }
 
-function Flower({ seed, palette }: PartProps) {
-  const color = palette?.[0] ?? '#EBA3B8'
-  const petals = 5
-  return (
-    <Sway seed={seed} strength={0.07}>
-      <mesh position={[0, 0.17, 0]} castShadow>
-        <cylinderGeometry args={[0.012, 0.016, 0.34, 4]} />
-        <Mat color={STEM} />
-      </mesh>
-      <mesh position={[0.05, 0.09, 0]} rotation={[0, 0, -0.8]} scale={[1, 0.3, 0.6]}>
-        <tetrahedronGeometry args={[0.07, 0]} />
-        <Mat color="#7FB36C" />
-      </mesh>
-      <group position={[0, 0.35, 0]}>
-        {Array.from({ length: petals }, (_, k) => {
-          const a = (k / petals) * Math.PI * 2
-          return (
-            <mesh key={k} position={[Math.cos(a) * 0.05, 0, Math.sin(a) * 0.05]} rotation={[0, -a, 0.35]} scale={[1, 0.35, 0.75]} castShadow>
-              <dodecahedronGeometry args={[0.05, 0]} />
-              <Mat color={color} />
-            </mesh>
-          )
-        })}
-        <mesh position={[0, 0.02, 0]}>
-          <icosahedronGeometry args={[0.03, 0]} />
-          <Mat color="#F4D27A" />
-        </mesh>
-      </group>
-    </Sway>
-  )
-}
-
-function Bush({ theme, seed, palette }: PartProps) {
-  const leaves = palette ?? theme.leaf
-  const blobs = useMemo(() => {
-    const rand = seeded(seed)
-    return Array.from({ length: 6 }, (_, k) => {
-      const a = (k / 6) * Math.PI * 2 + rand()
-      const ring = k === 0 ? 0 : 0.14
-      const r = k === 0 ? 0.17 : 0.1 + rand() * 0.04
-      return {
-        p: [Math.cos(a) * ring, k === 0 ? 0.16 : 0.09 + rand() * 0.06, Math.sin(a) * ring] as [number, number, number],
-        geo: jitter(new IcosahedronGeometry(r, 0), r * 0.18, seed + k),
-        color: pick(leaves, seed + k * 3),
-      }
-    })
-  }, [seed, leaves])
-  return (
-    <group>
-      {blobs.map((b, i) => (
-        <mesh key={i} geometry={b.geo} position={b.p} castShadow receiveShadow>
-          <Mat color={b.color} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-const ROCK = ['#C2C1BA', '#ABAAA3', '#B7B6AF']
-
-function Rock({ seed, palette = ROCK }: PartProps) {
-  const rocks = useMemo(
-    () =>
-      [
-        { r: 0.17, p: [0, 0.08, 0], s: [1.25, 0.8, 1], c: palette[0] },
-        { r: 0.11, p: [0.2, 0.05, 0.08], s: [1, 0.85, 1], c: palette[1] },
-        { r: 0.07, p: [-0.15, 0.03, 0.12], s: [1, 0.8, 1], c: palette[2] },
-      ].map((b, i) => ({ ...b, geo: jitter(new DodecahedronGeometry(b.r, 0), b.r * 0.22, seed + i) })),
-    [seed, palette],
-  )
-  return (
-    <group>
-      {rocks.map((b, i) => (
-        <mesh key={i} geometry={b.geo} position={b.p as [number, number, number]} scale={b.s as [number, number, number]} castShadow receiveShadow>
-          <Mat color={b.c} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-function Mushroom({ seed, palette }: PartProps) {
-  return (
-    <Sway seed={seed} strength={0.02}>
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <cylinderGeometry args={[0.04, 0.05, 0.2, 6]} />
-        <Mat color="#F1E6D2" />
-      </mesh>
-      <mesh position={[0, 0.22, 0]} castShadow>
-        <coneGeometry args={[0.16, 0.14, 7]} />
-        <Mat color={palette?.[0] ?? '#D9604C'} />
-      </mesh>
-    </Sway>
-  )
-}
-
-function Pumpkin({ seed, palette }: PartProps) {
-  const geo = useMemo(() => jitter(new IcosahedronGeometry(0.2, 0), 0.02, seed), [seed])
-  return (
-    <group>
-      <mesh geometry={geo} position={[0, 0.13, 0]} scale={[1.15, 0.72, 1.15]} castShadow>
-        <Mat color={palette?.[0] ?? '#E58A3A'} />
-      </mesh>
-      <mesh position={[0, 0.3, 0]} rotation={[0, 0, 0.3]}>
-        <cylinderGeometry args={[0.02, 0.03, 0.1, 4]} />
-        <Mat color="#6E7A3E" />
-      </mesh>
-    </group>
-  )
-}
-
 function Lantern({ palette }: PartProps) {
   const light = palette?.[0] ?? '#F6C766'
   const { night } = useDaylight()
@@ -412,68 +212,6 @@ function Bench({ palette = WOOD }: PartProps) {
           <Mat color={wood} />
         </mesh>
       ))}
-    </group>
-  )
-}
-
-/** Un tramo de valla: se gira para formar recintos. */
-function Fence({ palette = WOOD }: PartProps) {
-  const [wood, dark] = palette
-  return (
-    <group>
-      {[-0.22, 0.22].map((x) => (
-        <mesh key={x} position={[x, 0.13, 0]} castShadow>
-          <boxGeometry args={[0.05, 0.26, 0.05]} />
-          <Mat color={dark} />
-        </mesh>
-      ))}
-      {[0.09, 0.19].map((y) => (
-        <mesh key={y} position={[0, y, 0]} castShadow>
-          <boxGeometry args={[0.46, 0.03, 0.022]} />
-          <Mat color={wood} />
-        </mesh>
-      ))}
-      {[-0.11, 0, 0.11].map((x) => (
-        <group key={x} position={[x, 0, 0.018]}>
-          <mesh position={[0, 0.12, 0]} castShadow>
-            <boxGeometry args={[0.045, 0.22, 0.015]} />
-            <Mat color={wood} />
-          </mesh>
-          <mesh position={[0, 0.245, 0]} rotation={[0, 0, Math.PI / 4]}>
-            <boxGeometry args={[0.032, 0.032, 0.015]} />
-            <Mat color={wood} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  )
-}
-
-function Stump({ seed }: PartProps) {
-  const geo = useMemo(() => jitter(new CylinderGeometry(0.12, 0.15, 0.16, 8, 1), 0.012, seed), [seed])
-  return (
-    <group>
-      <mesh geometry={geo} position={[0, 0.08, 0]} castShadow receiveShadow>
-        <Mat color="#8A6244" />
-      </mesh>
-      <mesh position={[0, 0.162, 0]}>
-        <cylinderGeometry args={[0.105, 0.105, 0.006, 8]} />
-        <Mat color="#E3C59A" />
-      </mesh>
-      <mesh position={[0, 0.166, 0]}>
-        <cylinderGeometry args={[0.05, 0.05, 0.006, 8]} />
-        <Mat color="#C9A678" />
-      </mesh>
-      <group position={[0.13, 0, 0.07]} scale={0.45}>
-        <mesh position={[0, 0.08, 0]}>
-          <cylinderGeometry args={[0.04, 0.05, 0.16, 6]} />
-          <Mat color="#F1E6D2" />
-        </mesh>
-        <mesh position={[0, 0.18, 0]}>
-          <coneGeometry args={[0.13, 0.11, 7]} />
-          <Mat color="#B07A50" />
-        </mesh>
-      </group>
     </group>
   )
 }
@@ -538,54 +276,13 @@ function Tulips({ seed, palette }: PartProps) {
   )
 }
 
-function Reeds({ seed }: PartProps) {
-  const blades = useMemo(() => {
-    const rand = seeded(seed)
-    return Array.from({ length: 7 }, (_, k) => ({
-      x: (rand() - 0.5) * 0.24,
-      z: (rand() - 0.5) * 0.24,
-      h: 0.3 + rand() * 0.25,
-      tilt: (rand() - 0.5) * 0.3,
-      cat: k % 2 === 0,
-    }))
-  }, [seed])
-  return (
-    <Sway seed={seed} strength={0.06}>
-      {blades.map((b, i) => (
-        <group key={i} position={[b.x, 0, b.z]} rotation={[0, 0, b.tilt]}>
-          <mesh position={[0, b.h / 2, 0]} castShadow>
-            <coneGeometry args={[0.014, b.h, 3]} />
-            <Mat color={i % 3 === 0 ? '#5E9C48' : '#76B35A'} />
-          </mesh>
-          {b.cat && (
-            <mesh position={[0, b.h * 0.8, 0]}>
-              <cylinderGeometry args={[0.022, 0.022, 0.09, 6]} />
-              <Mat color="#7A5236" />
-            </mesh>
-          )}
-        </group>
-      ))}
-    </Sway>
-  )
-}
-
-const PARTS: Record<GardenItem['kind'], (p: PartProps) => ReactNode> = {
-  tree: Tree,
-  pine: Pine,
+const PARTS: Partial<Record<GardenItem['kind'], (p: PartProps) => ReactNode>> = {
   pond: Pond,
   sapling: Sapling,
-  flower: Flower,
-  bush: Bush,
-  rock: Rock,
-  mushroom: Mushroom,
-  pumpkin: Pumpkin,
   lantern: Lantern,
   bench: Bench,
-  fence: Fence,
-  stump: Stump,
   birdhouse: Birdhouse,
   tulips: Tulips,
-  reeds: Reeds,
 }
 
 /** Escala extra de los objetos pequeños, que ocupan media casilla. */
@@ -621,9 +318,17 @@ export function ItemModel({ kind, color, seed, theme, growth }: { kind: ItemKind
   }
   // Mientras crece, la planta va ganando tamaño hasta el adulto
   const stage = growth ? 0.4 + ratio * 0.5 : 1
+  const model = MODEL_KINDS[kind]
+  const palette = paletteFor(kind, color)
   return (
     <group scale={kindScale(kind) * stage}>
-      <Part theme={theme} seed={seed} palette={paletteFor(kind, color)} />
+      {model ? (
+        <Suspense fallback={null}>
+          <Model def={model.def} paint={paintFor(theme, palette, model.use)} />
+        </Suspense>
+      ) : (
+        Part && <Part theme={theme} seed={seed} palette={palette} />
+      )}
     </group>
   )
 }
