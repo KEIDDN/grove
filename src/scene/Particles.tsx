@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Object3D, type InstancedMesh } from 'three'
 import type { SeasonTheme } from '../game/seasons'
+import { sceneFx } from './breath'
 import { seeded } from './lowpoly'
 
 const COUNT = 48
@@ -30,12 +31,12 @@ export function Particles({ theme, spread }: { theme: SeasonTheme; spread: numbe
     if (!mesh) return
     const t = clock.elapsedTime
     seeds.forEach((p, i) => {
-      p.y += (rising ? 1 : -1) * p.speed * delta
+      p.y += (rising ? 1 : -1) * p.speed * delta * (0.6 + sceneFx.particles * 0.4)
       if (p.y < -2) p.y = 4
       if (p.y > 4) p.y = -2
       dummy.position.set(p.x + Math.sin(t * 0.5 + p.drift) * 0.4, p.y, p.z + Math.cos(t * 0.4 + p.drift) * 0.3)
       dummy.rotation.set(t * p.spin, t * p.spin * 0.7, 0)
-      dummy.scale.setScalar(theme.particleKind === 'snow' || rising ? 0.6 : 1)
+      dummy.scale.setScalar((theme.particleKind === 'snow' || rising ? 0.6 : 1) * (0.7 + sceneFx.particles * 0.3))
       dummy.updateMatrix()
       mesh.setMatrixAt(i, dummy.matrix)
     })

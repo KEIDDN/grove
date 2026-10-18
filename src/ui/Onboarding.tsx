@@ -5,8 +5,8 @@ import { CATALOG, growthLabel } from '../game/catalog'
 import { cellToWorld, findSpot, plotBounds, type GardenItem, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
 import { paletteFor } from '../game/variants'
-import { breath } from '../scene/breath'
-import { craneIn, focusOn, framing, resetView } from '../scene/camera'
+import { breath, sceneFx } from '../scene/breath'
+import { craneIn, focusOn, framing, view } from '../scene/camera'
 import { iriStyle, KindGlyph } from './glyphs'
 import { CalmIcon, JournalIcon, SproutIcon, TimerIcon } from './icons'
 import { NumericText } from './NumericText'
@@ -22,14 +22,46 @@ const AREAS = ['Estrés', 'Concentración', 'Descanso', 'Relaciones', 'Autoestim
 const FIRST_SEEDS = ['flower', 'bush', 'pine']
 const EASE = [0.2, 0.8, 0.2, 1] as const
 
-type SceneId = 'intro' | 'focus' | 'roots' | 'calm' | 'yours' | 'name' | 'care' | 'rhythm' | 'gift'
+type SceneId = 'intro' | 'focus' | 'roots' | 'calm' | 'yours' | 'promise' | 'name' | 'care' | 'rhythm' | 'gift'
 
+// El guion: cercano, en segunda persona, sin prisa. Cada escena cuenta qué hace esa parte de la
+// app y por qué te cuida, con la metáfora del jardín: tú eres lo que crece.
 const SCENES: Array<{ id: SceneId; eyebrow?: string; title: string; body: string; chip?: { label: string; icon: ReactNode } }> = [
-  { id: 'intro', eyebrow: 'Grove', title: 'Cuídate.\nMira cómo florece.', body: 'Un pequeño jardín que crece cada vez que te dedicas un rato a ti.' },
-  { id: 'focus', title: 'Concéntrate.', body: 'Cada minuto de foco riega tus semillas. Lo que siembras hoy, mañana da sombra.', chip: { label: 'Cultivar', icon: <TimerIcon size={14} /> } },
-  { id: 'roots', title: 'Escúchate.', body: 'Cuéntale a tu diario cómo estás. Cada página hace florecer algo, y solo la lees tú.', chip: { label: 'Raíces', icon: <JournalIcon size={14} /> } },
-  { id: 'calm', title: 'Respira.', body: 'Un minuto de calma también cuenta. Tu isla respira contigo.', chip: { label: 'Calma', icon: <CalmIcon size={14} /> } },
-  { id: 'yours', title: 'Hazlo tuyo.', body: 'Decóralo, haz que crezca y descubre quién viene de visita mientras no estás.', chip: { label: 'Tu jardín', icon: <SproutIcon size={14} /> } },
+  {
+    id: 'intro',
+    eyebrow: 'Grove',
+    title: 'Cuídate.\nMira cómo florece.',
+    body: 'Sabemos que a veces cuesta parar. Por eso esta isla es tuya: crece cada vez que te regalas un rato, por pequeño que sea.',
+  },
+  {
+    id: 'focus',
+    title: 'Siembra tu tiempo.',
+    body: 'Cuando tengas algo entre manos, pon un temporizador y quédate ahí un rato. Cada minuto riega tus semillas: hoy un brote, mañana un árbol.',
+    chip: { label: 'Cultivar', icon: <TimerIcon size={14} /> },
+  },
+  {
+    id: 'roots',
+    title: 'Echa raíces.',
+    body: '¿Qué tal estás, de verdad? Aquí puedes contarlo sin filtros. Cada día te haremos un par de preguntas para escucharte, y cada página hace florecer algo. Solo lo lees tú.',
+    chip: { label: 'Raíces', icon: <JournalIcon size={14} /> },
+  },
+  {
+    id: 'calm',
+    title: 'Respira.',
+    body: 'Hay días que van demasiado rápido. Para un minuto y respira con tu isla. Eso también cuenta, y también la hace crecer.',
+    chip: { label: 'Calma', icon: <CalmIcon size={14} /> },
+  },
+  {
+    id: 'yours',
+    title: 'Hazlo tuyo.',
+    body: 'Con lo que ganas, decórala a tu manera. Y mientras estás fuera, alguien pasará a verte y te dejará un detalle.',
+    chip: { label: 'Tu jardín', icon: <SproutIcon size={14} /> },
+  },
+  {
+    id: 'promise',
+    title: 'Aquí nada\nse marchita.',
+    body: 'Si un día no puedes venir, no pasa nada. Tu jardín te espera tal y como lo dejaste. Vuelve cuando lo necesites.',
+  },
 ]
 const STORY = SCENES.length
 
@@ -43,11 +75,38 @@ function addDemo(kind: ItemKind, extra: Partial<GardenItem> = {}): GardenItem | 
   return item
 }
 
+/** Desliza la cámara hacia un objeto: despacio, sin cortes, como un travelling. */
 function look(item: GardenItem | null, zoom: number) {
   if (!item) return
   const b = plotBounds(useGrove.getState().plots)
   const [wx, wz] = cellToWorld(item.x, item.z, item.kind)
   focusOn(wx - b.cx, wz - b.cz, zoom)
+  view.speed = 1.15
+}
+
+/** Vuelve al plano general con la misma suavidad. */
+function wide(zoom = 1) {
+  view.targetZoom = zoom
+  view.targetPanX = 0
+  view.targetPanZ = 0
+  view.speed = 1.15
+}
+
+/** Lleva la luz a una hora poco a poco (o de vuelta a la real con `null`). */
+function tweenHour(to: number | null, ms = 2600): () => void {
+  const from = useGrove.getState().hourOverride ?? new Date().getHours() + new Date().getMinutes() / 60
+  const target = to ?? new Date().getHours() + new Date().getMinutes() / 60
+  const t0 = performance.now()
+  let raf = 0
+  const step = () => {
+    const k = Math.min(1, (performance.now() - t0) / ms)
+    const e = 0.5 - Math.cos(k * Math.PI) / 2
+    useGrove.getState().setHourOverride(k >= 1 && to === null ? null : from + (target - from) * e)
+    // Unos 15 pasos por segundo bastan para que la luz cambie suave
+    if (k < 1) raf = window.setTimeout(step, 66)
+  }
+  step()
+  return () => clearTimeout(raf)
 }
 
 const clearDemos = () => useGrove.setState((s) => ({ items: s.items.filter((it) => !it.id.startsWith('ob-')) }))
@@ -103,8 +162,10 @@ function playScene(id: SceneId): () => void {
   } else if (id === 'calm') {
     framing.lift = 0.18
     framing.factor = 0.8
-    resetView(1.4)
-    // La isla respira: cuatro segundos para llenarse y cuatro para soltar
+    wide(1.05)
+    // La luz baja hacia el atardecer mientras la isla respira: cuatro segundos para llenarse y cuatro para soltar
+    const hourBefore = useGrove.getState().hourOverride
+    const stopLight = tweenHour(19.1)
     breath.active = true
     const t0 = performance.now()
     let raf = 0
@@ -118,6 +179,8 @@ function playScene(id: SceneId): () => void {
     return () => {
       timers.forEach(clearTimeout)
       cancelAnimationFrame(raf)
+      stopLight()
+      tweenHour(hourBefore, 1400)
       breath.active = false
       breath.fill = 0
     }
@@ -139,11 +202,25 @@ function playScene(id: SceneId): () => void {
       addDemo('birdhouse')
       audio.sfx('small')
     }, 1700)
+    // Y alguien viene de visita: así se entiende lo de los visitantes
+    later(() => {
+      useGrove.setState({ toast: { id: Date.now(), text: 'Una ardilla ha pasado a verte', icon: 'visitor' } })
+    }, 2700)
+  } else if (id === 'promise') {
+    framing.lift = 0.14
+    framing.factor = 0.84
+    wide(0.92)
+    // Hojas que caen despacio sobre la isla: el tiempo pasa y aquí no se pierde nada
+    sceneFx.particles = 2.6
+    return () => {
+      timers.forEach(clearTimeout)
+      sceneFx.particles = 1
+    }
   } else {
     // Lo personal: tarjeta abajo y la isla más arriba y más pequeña
     framing.lift = 0.3
     framing.factor = 0.55
-    resetView(2)
+    wide()
   }
   return () => timers.forEach(clearTimeout)
 }
@@ -168,9 +245,21 @@ export function Onboarding() {
     // Sin portada: al terminar se entra directo al jardín
     useGrove.getState().dismissSplash()
     framing.active = true
+    // La cámara no se para nunca: gira muy despacio alrededor de la isla durante toda la bienvenida
+    let last = performance.now()
+    let raf = 0
+    const orbit = () => {
+      const now = performance.now()
+      view.targetAzimuth += ((now - last) / 1000) * 0.07
+      last = now
+      raf = requestAnimationFrame(orbit)
+    }
+    raf = requestAnimationFrame(orbit)
     return () => {
+      cancelAnimationFrame(raf)
       framing.active = false
       breath.active = false
+      sceneFx.particles = 1
     }
   }, [])
 
@@ -291,13 +380,13 @@ export function Onboarding() {
             transition={{ type: 'spring', duration: 0.6, bounce: 0.1 }}
           >
             {id === 'name' && (
-              <Personal eyebrow="Para empezar" title="¿Cómo te llamas?">
+              <Personal eyebrow="Para empezar" title="¿Cómo te llamas?" hint="Para saludarte cuando vuelvas.">
                 <Field label="Tu nombre (opcional)" value={userName} onChange={setUserName} placeholder="Tu nombre" />
                 <Field label="El nombre de tu jardín" value={gardenName} onChange={setGardenName} placeholder={userName ? `El jardín de ${userName}` : 'Tu jardín'} />
               </Personal>
             )}
             {id === 'care' && (
-              <Personal eyebrow="Tu bienestar" title="¿Qué quieres cuidar?" hint="Elige lo que quieras: así tu diario te hará mejores preguntas.">
+              <Personal eyebrow="Tu bienestar" title="¿Qué te gustaría cuidar?" hint="No hay respuestas correctas. Elige lo que sientas hoy y tus preguntas serán más tuyas.">
                 <div className="ob-areas">
                   {AREAS.map((a) => (
                     <button
@@ -317,7 +406,7 @@ export function Onboarding() {
               </Personal>
             )}
             {id === 'rhythm' && (
-              <Personal eyebrow="Tu ritmo" title="¿Cuántos días a la semana?" hint="Sin rachas que castigan. Un día cuenta si te dedicas un rato; si una semana no llegas, empiezas otra.">
+              <Personal eyebrow="Tu ritmo" title="¿Cuántos días a la semana quieres venir?" hint="Elige algo que puedas cumplir. Si una semana no llegas, empiezas otra sin perder nada.">
                 <div className="ob-rhythm">
                   <button className="pill pill-ghost press" onClick={() => (audio.sfx('tick', weekGoal - 1), setWeekGoal((g) => Math.max(1, g - 1)))} aria-label="Menos días">
                     −
@@ -332,7 +421,7 @@ export function Onboarding() {
               </Personal>
             )}
             {id === 'gift' && (
-              <Personal eyebrow="Un regalo" title="Elige tu primera semilla" hint="La plantamos ahora mismo. Crecerá con los minutos que te dediques.">
+              <Personal eyebrow="Un regalo para empezar" title="Elige tu primera semilla" hint="La plantamos juntos ahora mismo. Crecerá con cada rato que te dediques.">
                 <div className="ob-seeds">
                   {FIRST_SEEDS.map((sid, i) => {
                     const c = CATALOG.find((x) => x.id === sid)!
