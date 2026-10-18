@@ -576,7 +576,7 @@ textarea:focus-visible {
   gap: 6px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: -4px -22px 18px;
+  margin: -4px -22px 22px;
   padding: 0 22px;
 }
 
@@ -587,8 +587,8 @@ textarea:focus-visible {
 .segments button {
   position: relative;
   flex: none;
-  height: 34px;
-  padding: 0 14px;
+  height: 38px;
+  padding: 0 16px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 650;
@@ -831,4 +831,111 @@ input[type='range'].slider {
 
 .app.night .care-note {
   background: rgba(255, 160, 150, 0.12);
+}
+
+/* ——— Pantalla completa (Raíces, Lecturas, Álbum) ——— */
+.page {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #fffdf9 0%, var(--bg) 70%);
+  box-shadow: 0 -20px 60px rgba(45, 40, 30, 0.12);
+}
+
+.app.night .page {
+  background: linear-gradient(180deg, #23274a 0%, #1b1f3b 70%);
+}
+
+.page-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: calc(var(--safe-top) + 56px);
+  padding: var(--safe-top) 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  transition:
+    background 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.page-bar.compact {
+  background: rgba(255, 253, 249, 0.78);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: 0 1px 0 var(--line);
+}
+
+.app.night .page-bar.compact {
+  background: rgba(35, 39, 74, 0.78);
+}
+
+/* Título pequeño centrado que aparece al hacer scroll, como en las apps de iOS */
+.page-bar-title {
+  position: absolute;
+  left: 64px;
+  right: 64px;
+  bottom: 18px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.25s var(--ease);
+  pointer-events: none;
+}
+
+.page-bar.compact .page-bar-title {
+  opacity: 1;
+  transform: none;
+}
+
+.page-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(27, 31, 28, 0.07);
+}
+
+.app.night .page-close {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.page-body.sheet-body {
+  flex: 1;
+  padding: calc(var(--safe-top) + 56px) 0 calc(var(--safe-bottom) + 40px);
+}
+
+.page-inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+.page-header {
+  margin: 8px 0 22px;
+}
+
+.page-title {
+  margin: 6px 0 0;
+  font-size: 38px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
 }

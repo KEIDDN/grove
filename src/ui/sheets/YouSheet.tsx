@@ -6,7 +6,7 @@ import { parcelsAllowed, useGrove, type YouSection } from '../../game/store'
 import { iriStyle } from '../glyphs'
 import { CheckIcon, CoinIcon, TrophyIcon } from '../icons'
 import { Segments, Sheet, SwapIn } from '../Sheet'
-import { AlbumContent } from './AlbumContent'
+import { AlbumEntry } from './AlbumContent'
 
 const SECTIONS: Array<{ id: YouSection; label: string }> = [
   { id: 'today', label: 'Hoy' },
@@ -35,7 +35,7 @@ export function YouSheet() {
       <SwapIn id={section}>
         {section === 'today' && <Today />}
         {section === 'achievements' && <Achievements />}
-        {section === 'album' && <AlbumContent />}
+        {section === 'album' && <AlbumEntry />}
         {section === 'progress' && <Progress />}
         {section === 'settings' && <Settings />}
       </SwapIn>

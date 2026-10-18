@@ -8,7 +8,9 @@ import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
 import { resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
+import { useFullPageOpen } from '../ui/Page'
 import { Clouds } from './Clouds'
+import { CloudSea } from './CloudSea'
 import { Decor } from './Decor'
 import { EditLayer } from './EditLayer'
 import { Floors } from './Floors'
@@ -48,8 +50,8 @@ function CameraRig({ size }: { size: number }) {
     const narrow = width < 1000
     // En el inicio el jardín baja para dejar sitio al nombre
     // La bienvenida ocupa más pantalla: el jardín sube más y se hace más pequeño
-    const lift = splash ? -height * 0.1 : onboarding && narrow ? height * 0.34 : sheetOpen && narrow ? height * 0.27 : rest ? height * 0.07 : height * 0.02
-    const factor = splash ? 0.85 : onboarding && narrow ? 0.45 : sheetOpen && narrow ? 0.6 : 1
+    const lift = splash ? -height * 0.1 : onboarding && narrow ? height * 0.34 : sheetOpen && narrow ? height * 0.3 : rest ? height * 0.07 : height * 0.02
+    const factor = splash ? 0.85 : onboarding && narrow ? 0.45 : sheetOpen && narrow ? 0.55 : 1
     const usable = Math.min(width, height * 0.78, 780)
     const targetZoom = ((usable * 0.9) / (size * 1.42 + 0.4)) * factor
     const k = 1 - Math.exp(-delta * 5)
@@ -116,6 +118,8 @@ export function GardenCanvas() {
   // como parpadeos en negro.
   const [low, setLow] = useState(false)
   const garden = useRef<Group>(null)
+  // Con una pantalla completa encima no se ve el jardín: no se dibuja y el móvil descansa
+  const paused = useFullPageOpen()
   const degrade = () => setLow(true)
   const sunDistance = 10
   const sun: [number, number, number] = [
@@ -129,6 +133,7 @@ export function GardenCanvas() {
       className="garden-canvas"
       shadows
       orthographic
+      frameloop={paused ? 'never' : 'always'}
       dpr={low ? 1 : COARSE ? [1, 1.5] : [1, 1.75]}
       gl={{ antialias: false, alpha: false, powerPreference: 'high-performance' }}
       camera={{ position: [9, 8.2, 9], zoom: 60, near: -50, far: 100 }}
@@ -163,6 +168,7 @@ export function GardenCanvas() {
         <EditLayer plots={plots} theme={theme} />
       </Floating>
       <Clouds size={size} />
+      <CloudSea size={size} skyBottom={light.skyBottom} night={light.night} />
       <Particles theme={theme} spread={size} />
       <Life theme={theme} size={size} night={light.night} />
 

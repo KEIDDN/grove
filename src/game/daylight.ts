@@ -13,6 +13,8 @@ export interface Daylight {
   /** 0 = pleno día, 1 = noche cerrada. */
   night: number
   label: 'Madrugada' | 'Amanecer' | 'Mañana' | 'Mediodía' | 'Tarde' | 'Atardecer' | 'Noche'
+  /** Hora decimal (0–24) a la que corresponde esta luz. */
+  hour: number
 }
 
 interface Key {
@@ -82,6 +84,7 @@ export function daylightAt(hour: number, seasonTint?: string): Daylight {
     hemiIntensity: lerp(a.hemi, b.hemi, t),
     night: lerp(a.night, b.night, t),
     label: labelFor(h),
+    hour: h,
   }
 }
 

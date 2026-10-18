@@ -3,7 +3,8 @@ import { GROUP_NAMES, questionsFor } from '../../game/questions'
 import { useGrove, type RootAnswer, type RootEntry } from '../../game/store'
 import { dayKey } from '../../game/time'
 import { ChevronIcon, EditIcon, LockIcon } from '../icons'
-import { Segments, Sheet, SwapIn } from '../Sheet'
+import { Page as FullPage } from '../Page'
+import { Segments, SwapIn } from '../Sheet'
 
 const longDate = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
 const monthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' })
@@ -15,9 +16,10 @@ const parseDay = (key: string) => {
 }
 
 export function RootsSheet() {
+  const setTab = useGrove((s) => s.setTab)
   const [view, setView] = useState<'today' | 'journal'>('today')
   return (
-    <Sheet eyebrow={longDate.format(new Date())} title="Raíces">
+    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" onClose={() => setTab('garden')}>
       <Segments
         id="roots"
         items={[
@@ -28,7 +30,7 @@ export function RootsSheet() {
         onChange={setView}
       />
       <SwapIn id={view}>{view === 'today' ? <Today /> : <Journal />}</SwapIn>
-    </Sheet>
+    </FullPage>
   )
 }
 

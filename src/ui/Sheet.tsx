@@ -13,7 +13,7 @@ const CLOSE_VELOCITY = 0.6
  * contenido cuando ya está arriba del todo. Si el contenido tiene scroll, primero se desplaza él.
  * Usa la propiedad `translate` para no pelearse con la animación de entrada y salida (transform).
  */
-function useDragToClose(ref: React.RefObject<HTMLElement | null>, enabled: boolean, close: () => void) {
+export function useDragToClose(ref: React.RefObject<HTMLElement | null>, enabled: boolean, close: () => void) {
   const closeRef = useRef(close)
   closeRef.current = close
   useEffect(() => {
