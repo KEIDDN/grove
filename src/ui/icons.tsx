@@ -8,6 +8,8 @@ import {
   CaretDown,
   Check,
   CornersOut,
+  FlowerLotus,
+  Headphones,
   Heart,
   type Icon as PhosphorIcon,
   Lock,
@@ -68,6 +70,8 @@ export const ExpandIcon = wrap(CornersOut)
 export const TrophyIcon = wrap(Trophy)
 export const BookIcon = wrap(BookOpen)
 export const HeartIcon = wrap(Heart)
+export const CalmIcon = wrap(FlowerLotus)
+export const HeadphonesIcon = wrap(Headphones)
 
 /** Moneda-hoja de Grove. */
 export function CoinIcon({ size = 20 }: { size?: number }) {

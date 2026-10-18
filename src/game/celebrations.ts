@@ -10,7 +10,7 @@ import type { VisitorType } from './visitors'
  */
 export type CelebrationLevel = 'small' | 'medium' | 'big'
 
-export type CelebrationIcon = 'coin' | 'focus' | 'roots' | 'read' | 'parcel' | 'trophy' | 'mission' | 'plant' | 'visitor'
+export type CelebrationIcon = 'coin' | 'focus' | 'roots' | 'read' | 'parcel' | 'trophy' | 'mission' | 'plant' | 'visitor' | 'calm'
 
 export interface CelebrationLine {
   text: string
@@ -34,8 +34,8 @@ export interface Celebration {
   /** La primera vez: partículas y un poco más de ceremonia. */
   first?: boolean
   /** Botón secundario. */
-  action?: 'tend' | 'expand' | 'album'
+  action?: 'tend' | 'expand' | 'album' | 'calm'
 }
 
 /** Momentos que se celebran a lo grande solo la primera vez. */
-export type FirstKey = 'session' | 'root' | 'read' | 'plant' | 'away'
+export type FirstKey = 'session' | 'root' | 'read' | 'plant' | 'away' | 'calm'

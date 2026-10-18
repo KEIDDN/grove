@@ -3,7 +3,7 @@ import { ARTICLES, type Article } from '../../content/articles'
 import { useGrove } from '../../game/store'
 import { iriStyle } from '../glyphs'
 import { CheckIcon, ChevronIcon, HeartIcon, SproutIcon } from '../icons'
-import { Sheet, SwapIn } from '../Sheet'
+import { SwapIn } from '../Sheet'
 
 const dateLabel = new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'long' })
 const parseDay = (key: string) => {
@@ -35,14 +35,11 @@ export function CareNote({ compact }: { compact?: boolean }) {
   )
 }
 
-export function ReadSheet() {
+/** Lecturas breves, dentro de Calma: la lista y, al tocar una, el artículo. */
+export function ReadContent() {
   const [open, setOpen] = useState<string | null>(null)
   const article = ARTICLES.find((a) => a.id === open)
-  return (
-    <Sheet eyebrow={article ? article.category : 'Lecturas breves'} title={article ? 'Leer' : 'Brotes'} accent="read">
-      <SwapIn id={open ?? 'list'}>{article ? <Reader article={article} onBack={() => setOpen(null)} /> : <List onOpen={setOpen} />}</SwapIn>
-    </Sheet>
-  )
+  return <SwapIn id={open ?? 'list'}>{article ? <Reader article={article} onBack={() => setOpen(null)} /> : <List onOpen={setOpen} />}</SwapIn>
 }
 
 function List({ onOpen }: { onOpen: (id: string) => void }) {

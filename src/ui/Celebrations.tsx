@@ -7,7 +7,7 @@ import { useGrove } from '../game/store'
 import { focusOn, resetView } from '../scene/camera'
 import { flyCoins } from './CoinFlights'
 import { iriStyle, KindGlyph, VisitorGlyph } from './glyphs'
-import { BookIcon, CheckIcon, CoinIcon, ExpandIcon, HeartIcon, JournalIcon, SproutIcon, TimerIcon, TrophyIcon } from './icons'
+import { BookIcon, CalmIcon, CheckIcon, CoinIcon, ExpandIcon, HeartIcon, JournalIcon, SproutIcon, TimerIcon, TrophyIcon } from './icons'
 import { bouncy, softSpring, spring } from './motion'
 import { RollingNumber } from './RollingNumber'
 
@@ -21,9 +21,10 @@ export const CELEBRATION_ICONS: Record<CelebrationIcon, ComponentType<{ size?: n
   mission: CheckIcon,
   plant: SproutIcon,
   visitor: HeartIcon,
+  calm: CalmIcon,
 }
 
-const ACTION_LABELS = { tend: 'Otra sesión', expand: 'Ampliar ahora', album: 'Ver el álbum' } as const
+const ACTION_LABELS = { tend: 'Otra sesión', expand: 'Ampliar ahora', album: 'Ver el álbum', calm: 'Otra vez' } as const
 
 /** Enseña de una en una las celebraciones medianas y grandes que hay en cola. */
 export function Celebrations() {
@@ -60,6 +61,7 @@ function useDismiss() {
     if (c.coins && !launched.has(c.id)) useGrove.getState().releaseCoins(c.coins)
     dismiss()
     if (action === 'tend') setTab('tend')
+    if (action === 'calm') setTab('calm')
     if (action === 'album') openYou('album')
     if (action === 'expand') {
       setEditMode(true)

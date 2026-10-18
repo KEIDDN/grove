@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, type PersistStorage, type StorageValue } from 'zustand/middleware'
+import { calmRewardFor, type BreathPatternId, type CalmKind, type CalmSession } from './calm'
 import { CATALOG, KIND_NAMES } from './catalog'
 import type { Celebration, CelebrationIcon, CelebrationLine, FirstKey } from './celebrations'
 import { ECONOMY, legacySide, parcelsFromDays, STARTING_PARCELS } from './config'
@@ -32,7 +33,7 @@ import { rewardFor, type FocusSession } from './session'
 import { visitWhileAway } from './visitors'
 import { dayKey, TIME_SCALE, weekdayIndex, weekKey } from './time'
 
-export type Tab = 'garden' | 'tend' | 'roots' | 'read' | 'nursery' | 'inventory' | 'you'
+export type Tab = 'garden' | 'tend' | 'roots' | 'calm' | 'nursery' | 'inventory' | 'you'
 export type YouSection = 'today' | 'achievements' | 'album' | 'progress' | 'settings'
 
 export interface RootAnswer {
@@ -104,6 +105,9 @@ export interface Saved {
   firsts: FirstKey[]
   /** Quién vino la última vez que estuviste fuera: siguen por el jardín hasta el día siguiente. */
   recentVisitors: { ids: string[]; day: string }
+  calm: CalmSession | null
+  /** Lo último que elegiste en Calma, para que la próxima vez esté igual. */
+  calmPrefs: { sound: string; guide: boolean; pattern: BreathPatternId; breathMinutes: number; meditateMinutes: number; volume: number }
 }
 
 export interface ToastData {
@@ -150,6 +154,12 @@ interface GroveState extends Saved {
   /** Al volver a la app: apunta la hora y, si has estado fuera, quién ha venido. */
   welcomeBack: () => void
   markSeen: () => void
+
+  startCalm: (kind: CalmKind, minutes: number, pattern?: BreathPatternId) => void
+  /** Termina la calma. `early`: antes de tiempo, cuenta lo que llevabas. */
+  completeCalm: (early?: boolean) => void
+  cancelCalm: () => void
+  setCalmPrefs: (patch: Partial<Saved['calmPrefs']>) => void
 
   saveRoot: (answers: RootAnswer[], reflection: string) => void
   buy: (catalogId: string) => void
@@ -271,6 +281,8 @@ export const initialSaved = (): Saved => ({
   lastSeenAt: Date.now(),
   firsts: [],
   recentVisitors: { ids: [], day: '' },
+  calm: null,
+  calmPrefs: { sound: 'nature', guide: true, pattern: 'box', breathMinutes: 2, meditateMinutes: 5, volume: 0.8 },
 })
 
 let toastId = 0
@@ -471,6 +483,54 @@ export const useGrove = create<GroveState>()(
             first,
             focus: look ? { kind: look.kind, color: look.color, x: look.x, z: look.z } : undefined,
             action: 'tend',
+          })
+          announceGrown(watered.grown)
+        },
+        startCalm: (kind, minutes, pattern) => set({ calm: { kind, minutes, pattern, startedAt: Date.now() } }),
+        cancelCalm: () => set({ calm: null }),
+        setCalmPrefs: (patch) => set({ calmPrefs: { ...get().calmPrefs, ...patch } }),
+        completeCalm: (early = false) => {
+          const s = fresh()
+          if (!s.calm) return
+          const elapsed = ((Date.now() - s.calm.startedAt) / 60000) * TIME_SCALE
+          const minutes = early ? Math.floor(elapsed) : s.calm.minutes
+          // Menos de un minuto no cuenta: se cierra sin más
+          if (minutes < 1) return set({ calm: null })
+          const reward = calmRewardFor(minutes, s.coinsToday)
+          const seeds = s.items.filter((it) => it.growth?.by === 'focus')
+          const watered = water(s.items, 'focus', minutes)
+          const day = withDay(s)
+          const stats = day.stats ?? s.stats
+          const first = firstTime('calm')
+          const breath = s.calm.kind === 'breath'
+          set({
+            ...rollover(get()),
+            ...day,
+            calm: null,
+            coins: s.coins + reward.coins,
+            coinsToday: s.coinsToday + reward.coins,
+            items: watered.items,
+            stats: { ...stats, calmMinutes: (stats.calmMinutes ?? 0) + minutes, plantsGrown: stats.plantsGrown + watered.grown.length },
+            daily: { ...s.daily, calmMinutes: (s.daily.calmMinutes ?? 0) + minutes },
+            tab: 'garden',
+          })
+          const growing = seeds.length - watered.grown.length
+          const look = watered.grown[0] ?? watered.items.find((it) => it.growth?.by === 'focus')
+          celebrate({
+            level: 'medium',
+            icon: 'calm',
+            eyebrow: first ? 'Tu primer rato de calma' : breath ? 'Respiración completada' : 'Meditación completada',
+            title: `${minutes} minuto${minutes === 1 ? '' : 's'} de calma`,
+            coins: reward.coins,
+            lines: [
+              ...grownLines(watered.grown),
+              ...(growing > 0 ? [{ text: growing === 1 ? 'Tu calma ha regado tu semilla' : `Tu calma ha regado tus ${growing} semillas`, kind: 'sapling' as ItemKind }] : []),
+              ...dayLine(s, day),
+              ...(reward.capped ? [{ text: 'Has llegado al tope de monedas de hoy. Tu tiempo sigue contando.' }] : []),
+            ],
+            first,
+            focus: look ? { kind: look.kind, color: look.color, x: look.x, z: look.z } : undefined,
+            action: 'calm',
           })
           announceGrown(watered.grown)
         },

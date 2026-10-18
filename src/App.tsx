@@ -15,7 +15,7 @@ import { EditBar } from './ui/EditBar'
 import { RestMode } from './ui/RestMode'
 import { InventorySheet } from './ui/sheets/InventorySheet'
 import { NurserySheet } from './ui/sheets/NurserySheet'
-import { ReadSheet } from './ui/sheets/ReadSheet'
+import { CalmController, CalmSheet } from './ui/sheets/CalmSheet'
 import { RootsSheet } from './ui/sheets/RootsSheet'
 import { SessionWatcher, TendSheet } from './ui/sheets/TendSheet'
 import { YouSheet } from './ui/sheets/YouSheet'
@@ -40,6 +40,7 @@ export function App() {
     <div className={night ? 'app night' : dusk ? 'app dusk' : 'app'} style={{ '--bg': theme.bg, '--bg-deep': theme.bgDeep } as CSSProperties}>
       <GardenCanvas />
       <SessionWatcher />
+      <CalmController />
       <AudioController />
       <AnimatePresence mode="wait">
         {splash ? (
@@ -59,7 +60,7 @@ export function App() {
                 <SheetHost key="sheet" contentKey={tab}>
                   {tab === 'tend' && <TendSheet key="tend" />}
                   {tab === 'roots' && <RootsSheet key="roots" />}
-                  {tab === 'read' && <ReadSheet key="read" />}
+                  {tab === 'calm' && <CalmSheet key="calm" />}
                   {tab === 'nursery' && <NurserySheet key="nursery" />}
                   {tab === 'you' && <YouSheet key="you" />}
                   {tab === 'inventory' && <InventorySheet key="inventory" />}

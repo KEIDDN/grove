@@ -5,6 +5,8 @@ export const ECONOMY = {
   minMinutesForCoins: 10,
   dailyCoinCap: 120,
   startingCoins: 140,
+  /** Calma da la mitad que Cultivar. */
+  calmCoinsPerMinute: 0.5,
 } as const
 
 /** Visitantes que llegan mientras no estás. */

@@ -10,6 +10,7 @@ export interface Stats {
   decorPlaced: number
   weeksCompleted: number
   visitors: number
+  calmMinutes?: number
 }
 
 /** Contadores del día que alimentan las misiones diarias. */
@@ -22,6 +23,7 @@ export interface DailyStats {
   placed: number
   painted: number
   recolored: number
+  calmMinutes?: number
 }
 
 export interface Reward {
@@ -43,6 +45,7 @@ export const MISSIONS: Mission[] = [
   { id: 'focus30', title: 'Cultiva 30 minutos', target: 30, value: (d) => d.focusMinutes, reward: { coins: 35 }, group: 'focus' },
   { id: 'session', title: 'Completa una sesión de Cultivar', target: 1, value: (d) => d.sessions, reward: { coins: 20 }, group: 'focus' },
   { id: 'roots', title: 'Escribe en Raíces', target: 1, value: (d) => d.roots, reward: { coins: 20 }, group: 'care' },
+  { id: 'calm2', title: 'Respira 2 minutos', target: 2, value: (d) => d.calmMinutes ?? 0, reward: { coins: 15 }, group: 'care' },
   { id: 'plant', title: 'Planta una semilla', target: 1, value: (d) => d.planted, reward: { coins: 15 }, group: 'create' },
   { id: 'decorate', title: 'Coloca algo en tu jardín', target: 1, value: (d) => d.placed, reward: { coins: 15 }, group: 'create' },
   { id: 'paint', title: 'Pinta 3 celdas de camino', target: 3, value: (d) => d.painted, reward: { coins: 10 }, group: 'create' },
@@ -80,6 +83,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'grow-10', title: 'Mano verde', detail: 'Haz crecer 10 plantas', target: 10, value: (s) => s.plantsGrown, reward: { parcels: 2 } },
   { id: 'decor-10', title: 'Paisajista', detail: 'Coloca 10 objetos de decoración', target: 10, value: (s) => s.decorPlaced, reward: { coins: 50 } },
   { id: 'week-1', title: 'Semana cumplida', detail: 'Cumple tu objetivo semanal', target: 1, value: (s) => s.weeksCompleted, reward: { parcels: 2 } },
+  { id: 'calm-30', title: 'Media hora de calma', detail: 'Acumula 30 minutos en Calma', target: 30, value: (s) => s.calmMinutes ?? 0, reward: { parcels: 1 } },
   { id: 'visitors-5', title: 'Jardín acogedor', detail: 'Recibe 5 visitantes distintos', target: 5, value: (s) => s.visitors, reward: { parcels: 2 } },
 ]
 
@@ -90,6 +94,6 @@ export function rewardLabel(r: Reward): string {
   return parts.join(' · ')
 }
 
-export const emptyDaily = (day: string): DailyStats => ({ day, focusMinutes: 0, sessions: 0, roots: 0, planted: 0, placed: 0, painted: 0, recolored: 0 })
+export const emptyDaily = (day: string): DailyStats => ({ day, focusMinutes: 0, sessions: 0, roots: 0, planted: 0, placed: 0, painted: 0, recolored: 0, calmMinutes: 0 })
 
-export const emptyStats = (): Stats => ({ sessions: 0, focusMinutes: 0, roots: 0, seedsPlanted: 0, plantsGrown: 0, decorPlaced: 0, weeksCompleted: 0, visitors: 1 })
+export const emptyStats = (): Stats => ({ sessions: 0, focusMinutes: 0, roots: 0, seedsPlanted: 0, plantsGrown: 0, decorPlaced: 0, weeksCompleted: 0, visitors: 1, calmMinutes: 0 })

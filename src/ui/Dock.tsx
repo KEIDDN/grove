@@ -1,14 +1,14 @@
 import type { ComponentType } from 'react'
 import { motion } from 'motion/react'
 import { pendingRewards, useGrove, type Tab } from '../game/store'
-import { BagIcon, BookIcon, JournalIcon, SproutIcon, TimerIcon, UserIcon } from './icons'
+import { BagIcon, CalmIcon, JournalIcon, SproutIcon, TimerIcon, UserIcon } from './icons'
 import { spring, tap } from './motion'
 
 const TABS: Array<{ id: Tab; label: string; Icon: ComponentType<{ size?: number; active?: boolean }> }> = [
   { id: 'garden', label: 'Jardín', Icon: SproutIcon },
   { id: 'tend', label: 'Cultivar', Icon: TimerIcon },
   { id: 'roots', label: 'Raíces', Icon: JournalIcon },
-  { id: 'read', label: 'Leer', Icon: BookIcon },
+  { id: 'calm', label: 'Calma', Icon: CalmIcon },
   { id: 'nursery', label: 'Vivero', Icon: BagIcon },
   { id: 'you', label: 'Tú', Icon: UserIcon },
 ]

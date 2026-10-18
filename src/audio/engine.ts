@@ -4,6 +4,7 @@
 // - Efectos: la firma sonora de las celebraciones y el "tin" de cada moneda.
 
 import type { Season } from '../game/seasons'
+import { startSoundscape, type Playing, type SoundscapeId } from './soundscapes'
 
 export interface AmbientMood {
   season: Season
@@ -35,6 +36,14 @@ class Engine {
   private trackEl: HTMLAudioElement | null = null
   private musicOn = false
   private ambientOn = false
+  private musicVolume = 0.5
+  private ambientVolume = 0.6
+  /** Durante Calma con un paisaje propio, la música y el ambiente se apartan. */
+  private ducked = false
+  private calmGain!: GainNode
+  private scape: Playing | null = null
+  private scapeId: SoundscapeId = 'none'
+  private buffers = new Map<string, AudioBuffer>()
 
   /** El navegador solo permite sonar tras un gesto del usuario. */
   unlock() {
@@ -71,6 +80,10 @@ class Engine {
     sfxTone.connect(ctx.destination)
     sfxTone.connect(this.reverb)
 
+    this.calmGain = ctx.createGain()
+    this.calmGain.gain.value = 0.8
+    this.calmGain.connect(ctx.destination)
+
     this.windGain = this.loopNoise(ctx, 'lowpass', 380, 0.2)
     this.waterGain = this.loopNoise(ctx, 'bandpass', 1800, 0.0)
     this.cricketGain = ctx.createGain()
@@ -85,16 +98,100 @@ class Engine {
 
   setMusic(on: boolean, volume: number) {
     this.musicOn = on
+    this.musicVolume = volume
     if (!this.ctx) return
-    const target = on ? volume * 0.35 : 0
+    const target = on && !this.ducked ? volume * 0.35 : 0
     this.musicGain.gain.setTargetAtTime(target, this.ctx.currentTime, 0.8)
     if (MUSIC_TRACKS.length) this.playTrack(on, volume)
   }
 
   setAmbient(on: boolean, volume: number) {
     this.ambientOn = on
+    this.ambientVolume = volume
     if (!this.ctx) return
-    this.ambientGain.gain.setTargetAtTime(on ? volume * 0.5 : 0, this.ctx.currentTime, 0.8)
+    this.ambientGain.gain.setTargetAtTime(on && !this.ducked ? volume * 0.5 : 0, this.ctx.currentTime, 0.8)
+  }
+
+  // ——— Calma ———
+
+  /**
+   * Paisaje sonoro de Calma. "Jardín" deja sonar el ambiente de siempre (aunque lo tengas
+   * apagado); cualquier otro aparta la música y el ambiente mientras dura.
+   */
+  setSoundscape(id: SoundscapeId, volume = 0.8) {
+    const ctx = this.ctx
+    if (!ctx) return
+    this.calmGain.gain.setTargetAtTime(volume, ctx.currentTime, 0.2)
+    if (id === this.scapeId) return
+    this.scape?.stop()
+    this.scapeId = id
+    this.scape = startSoundscape(ctx, this.calmGain, id, this.buffers)
+    this.ducked = id !== 'none'
+    const t = ctx.currentTime
+    this.musicGain.gain.setTargetAtTime(this.musicOn && !this.ducked ? this.musicVolume * 0.35 : 0, t, 0.8)
+    // Con "Jardín" el ambiente suena aunque estuviera apagado: es lo que has elegido
+    const ambient = id === 'nature' ? Math.max(this.ambientVolume, 0.5) * 0.5 : this.ambientOn && !this.ducked ? this.ambientVolume * 0.5 : 0
+    this.ambientGain.gain.setTargetAtTime(ambient, t, 0.8)
+    if (this.trackEl && this.ducked) this.trackEl.pause()
+    else if (this.trackEl && this.musicOn) void this.trackEl.play()
+  }
+
+  /** Para vista previa en la pantalla de elegir sonido. */
+  get soundscape() {
+    return this.scapeId
+  }
+
+  /**
+   * Cuenco tibetano: parciales inarmónicos que se apagan a distinto ritmo y, cada uno, dos
+   * osciladores un pelín desafinados para que "canten" con ese batido lento tan suyo.
+   */
+  bowl(strength = 1, pitch = 220) {
+    const ctx = this.ctx
+    if (!ctx || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.02
+    const partials: Array<[number, number, number]> = [
+      [1, 1, 9],
+      [2.76, 0.42, 6.5],
+      [5.4, 0.18, 4],
+      [8.93, 0.07, 2.4],
+    ]
+    for (const [ratio, amp, decay] of partials) {
+      for (const beat of [-0.6, 0.6]) {
+        const osc = ctx.createOscillator()
+        const g = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = pitch * ratio + beat * ratio
+        const peak = 0.05 * amp * strength
+        g.gain.setValueAtTime(0, t)
+        g.gain.linearRampToValueAtTime(peak, t + 0.012)
+        g.gain.exponentialRampToValueAtTime(0.0001, t + decay)
+        osc.connect(g)
+        g.connect(this.calmGain)
+        g.connect(this.reverb)
+        osc.start(t)
+        osc.stop(t + decay + 0.1)
+      }
+    }
+  }
+
+  /** Guía de la respiración: una nota suave al empezar cada fase. */
+  breathCue(phase: 'in' | 'hold' | 'out') {
+    const ctx = this.ctx
+    if (!ctx || ctx.state !== 'running') return
+    const t = ctx.currentTime + 0.01
+    const freq = phase === 'in' ? 440 : phase === 'out' ? 329.63 : 392
+    const osc = ctx.createOscillator()
+    const g = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+    g.gain.setValueAtTime(0, t)
+    g.gain.linearRampToValueAtTime(phase === 'hold' ? 0.018 : 0.03, t + 0.08)
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 2.2)
+    osc.connect(g)
+    g.connect(this.calmGain)
+    g.connect(this.reverb)
+    osc.start(t)
+    osc.stop(t + 2.3)
   }
 
   setSfx(on: boolean, volume: number) {

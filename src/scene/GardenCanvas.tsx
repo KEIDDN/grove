@@ -6,6 +6,7 @@ import type { Group, OrthographicCamera } from 'three'
 import { plotBounds, type GardenItem, type Plot } from '../game/garden'
 import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
+import { breath } from './breath'
 import { resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
 import { useSheetExpanded } from '../ui/Sheet'
@@ -78,6 +79,7 @@ function CameraRig({ size }: { size: number }) {
  */
 function Floating({ center, children, groupRef }: { center: [number, number]; children: React.ReactNode; groupRef: React.RefObject<Group | null> }) {
   const amp = useRef(1)
+  const filled = useRef(0)
   useFrame(({ clock }, delta) => {
     const g = groupRef.current
     if (!g) return
@@ -86,7 +88,10 @@ function Floating({ center, children, groupRef }: { center: [number, number]; ch
     g.position.z += (-center[1] - g.position.z) * k
     const still = useGrove.getState().editMode || view.held
     amp.current += ((still ? 0 : 1) - amp.current) * Math.min(1, delta * 3)
-    g.position.y = Math.sin(clock.elapsedTime * 0.6) * 0.05 * amp.current
+    // Al respirar en Calma la isla se hincha y se eleva un poco con cada inspiración
+    filled.current += ((breath.active ? breath.fill : 0) - filled.current) * Math.min(1, delta * 6)
+    g.scale.setScalar(1 + filled.current * 0.045)
+    g.position.y = Math.sin(clock.elapsedTime * 0.6) * 0.05 * amp.current * (breath.active ? 0.3 : 1) + filled.current * 0.12
   })
   return (
     <group ref={groupRef} position={[-center[0], 0, -center[1]]}>

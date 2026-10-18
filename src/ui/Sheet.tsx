@@ -268,7 +268,7 @@ export function Sheet({
   /** Algo propio bajo el título (la semana en Raíces, por ejemplo). */
   hero?: ReactNode
   /** Aura de color tras la cabecera. */
-  accent?: 'roots' | 'read' | 'album'
+  accent?: 'roots' | 'read' | 'album' | 'calm'
   children: ReactNode
   onClose?: () => void
 }) {
