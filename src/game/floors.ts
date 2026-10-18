@@ -1,6 +1,6 @@
 // Suelos que se pintan celda a celda. El césped es el suelo por defecto.
 
-export type FloorKind = 'grass' | 'path' | 'gravel' | 'sand' | 'deck' | 'moss'
+export type FloorKind = 'grass' | 'lawn' | 'path' | 'gravel' | 'sand' | 'deck' | 'moss'
 
 export interface FloorStyle {
   id: FloorKind
@@ -11,6 +11,8 @@ export interface FloorStyle {
 
 export const FLOORS: FloorStyle[] = [
   { id: 'grass', name: 'Césped', colors: ['#A6D47C'] },
+  // Mismo verde que el césped, pero sin hierbas altas: para jardines limpios (zen, japonés…)
+  { id: 'lawn', name: 'Corto', colors: ['#B9DE95'] },
   { id: 'path', name: 'Piedra', colors: ['#D8D3C8', '#C6C0B3', '#E4E0D7'] },
   { id: 'gravel', name: 'Grava', colors: ['#D9CDB4', '#CFC2A6', '#E2D7C1'] },
   { id: 'sand', name: 'Arena', colors: ['#EAD9AE', '#E2CF9F', '#F0E2BE'] },

@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { type BufferGeometry, Color, ConeGeometry, DodecahedronGeometry, IcosahedronGeometry, Object3D, type InstancedMesh } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { CELL, cellToWorld, plotKey, type GardenItem, type Plot } from '../game/garden'
+import { CELL, cellToWorld, footprint, plotKey, type GardenItem, type Plot } from '../game/garden'
 import { cellKey, type FloorKind } from '../game/floors'
 import type { SeasonTheme } from '../game/seasons'
 import { GROUND_Y, TILE } from './Island'
@@ -114,12 +114,25 @@ export function Decor({ plots, theme, items, floors }: { plots: Plot[]; theme: S
   const allSpecks = useMemo(() => scatter(9, plots, 23, theme.speck, ponds, [0.7, 1.2]), [plots, theme, ponds])
   const allPebbles = useMemo(() => scatter(2, plots, 37, ['#B9B8B1', '#A6A59E', '#C8C7C0'], ponds, [0.7, 1.4]), [plots, ponds])
 
-  // La hierba solo crece donde sigue habiendo césped
+  // Celdas con un objeto encima: ahí la hierba atravesaría el modelo
+  const covered = useMemo(() => {
+    const set = new Set<string>()
+    for (const it of items) {
+      const fp = footprint(it.kind)
+      for (let a = 0; a < fp; a++) for (let b = 0; b < fp; b++) set.add(cellKey(it.x + a, it.z + b))
+    }
+    return set
+  }, [items])
+
+  // La hierba solo crece en el césped libre: ni en suelos pintados ni bajo los objetos
   const onGrass = (list: Scatter[]) =>
-    list.filter((p) => !floors[cellKey(Math.floor(p.x / CELL), Math.floor(p.z / CELL))])
-  const tufts = useMemo(() => onGrass(allTufts), [allTufts, floors])
-  const specks = useMemo(() => onGrass(allSpecks), [allSpecks, floors])
-  const pebbles = useMemo(() => onGrass(allPebbles), [allPebbles, floors])
+    list.filter((p) => {
+      const key = cellKey(Math.floor(p.x / CELL), Math.floor(p.z / CELL))
+      return !floors[key] && !covered.has(key)
+    })
+  const tufts = useMemo(() => onGrass(allTufts), [allTufts, floors, covered])
+  const specks = useMemo(() => onGrass(allSpecks), [allSpecks, floors, covered])
+  const pebbles = useMemo(() => onGrass(allPebbles), [allPebbles, floors, covered])
 
   return (
     <group>

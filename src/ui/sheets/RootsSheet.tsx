@@ -15,11 +15,23 @@ const parseDay = (key: string) => {
   return new Date(y, m - 1, d)
 }
 
+const capitalize = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
+
 export function RootsSheet() {
   const setTab = useGrove((s) => s.setTab)
   const [view, setView] = useState<'today' | 'journal'>('today')
+  const [openDay, setOpenDay] = useState<string | null>(null)
+  // Tocar un día escrito de la semana abre esa página (hoy, en la pestaña Hoy)
+  const pickDay = (date: string) => {
+    if (date === dayKey()) {
+      setView('today')
+      return
+    }
+    setOpenDay(date)
+    setView('journal')
+  }
   return (
-    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip />} onClose={() => setTab('garden')}>
+    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip onPick={pickDay} />} onClose={() => setTab('garden')}>
       <Segments
         id="roots"
         items={[
@@ -27,9 +39,12 @@ export function RootsSheet() {
           { id: 'journal', label: 'Diario' },
         ]}
         value={view}
-        onChange={setView}
+        onChange={(v) => {
+          setOpenDay(null)
+          setView(v)
+        }}
       />
-      <SwapIn id={view}>{view === 'today' ? <Today /> : <Journal />}</SwapIn>
+      <SwapIn id={view}>{view === 'today' ? <Today /> : <Journal open={openDay} setOpen={setOpenDay} />}</SwapIn>
     </FullPage>
   )
 }
@@ -91,12 +106,12 @@ function Today() {
         <AutoArea id="reflection" value={reflection} onChange={setReflection} placeholder="Hoy…" />
       </div>
 
-      <Privacy />
-      <div className="save-dock">
-        <button className="pill pill-dark press" disabled={!answered && !reflection.trim()} onClick={submit} style={{ height: 52, fontSize: 15, padding: '0 26px' }}>
+      <div className="save-row">
+        <button className="pill pill-dark press" disabled={!answered && !reflection.trim()} onClick={submit} style={{ height: 54, fontSize: 15 }}>
           {today ? 'Guardar cambios' : `Guardar en Raíces${answered ? ` · ${answered}/3` : ''}`}
         </button>
       </div>
+      <Privacy />
     </div>
   )
 }
@@ -114,7 +129,7 @@ function AutoArea({ id, value, onChange, placeholder }: { id: string; value: str
 }
 
 /** La semana de un vistazo: qué días has escrito. */
-function WeekStrip() {
+function WeekStrip({ onPick }: { onPick: (date: string) => void }) {
   const entries = useGrove((s) => s.entries)
   const written = new Set(entries.map((e) => e.date))
   const today = new Date()
@@ -133,10 +148,17 @@ function WeekStrip() {
         const done = written.has(key)
         const isToday = key === dayKey(today)
         return (
-          <div key={key} role="listitem" className={`week-day${done ? ' done' : ''}${isToday ? ' today' : ''}`} aria-label={`${letters[i]} ${done ? 'escrito' : 'sin escribir'}`}>
+          <button
+            key={key}
+            role="listitem"
+            className={`week-day press${done ? ' done' : ''}${isToday ? ' today' : ''}`}
+            disabled={!done && !isToday}
+            onClick={() => onPick(key)}
+            aria-label={`${letters[i]} ${d.getDate()}: ${done ? 'ver lo que escribiste' : 'sin escribir'}`}
+          >
             <i>{d.getDate()}</i>
             {letters[i]}
-          </div>
+          </button>
         )
       })}
     </div>
@@ -172,9 +194,8 @@ function Page({ entry }: { entry: RootEntry }) {
   )
 }
 
-function Journal() {
+function Journal({ open, setOpen }: { open: string | null; setOpen: (date: string | null) => void }) {
   const entries = useGrove((s) => s.entries)
-  const [open, setOpen] = useState<string | null>(null)
   const selected = entries.find((e) => e.date === open)
 
   if (selected) {
@@ -183,7 +204,7 @@ function Journal() {
         <button className="press muted" onClick={() => setOpen(null)} style={{ alignSelf: 'flex-start', display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700 }}>
           <ChevronIcon size={15} strokeWidth={2.4} style={{ transform: 'rotate(90deg)' }} /> Todas las páginas
         </button>
-        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', textTransform: 'capitalize' }}>{longDate.format(parseDay(selected.date))}</div>
+        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em' }}>{capitalize(longDate.format(parseDay(selected.date)))}</div>
         <Page entry={selected} />
       </div>
     )
