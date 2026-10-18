@@ -421,7 +421,7 @@ export const useGrove = create<GroveState>()(
         },
 
         setEditMode: (on) => set({ inspectId: null, editMode: on, selectedId: null, placing: null, hoverCell: null, editTool: 'select', tab: 'garden' }),
-        select: (id) => set({ selectedId: id, placing: null }),
+        select: (id) => set(id ? { selectedId: id, placing: null, tab: 'garden' } : { selectedId: null, placing: null }),
         inspect: (inspectId) => set({ inspectId }),
         rotateSelected: () => {
           const { selectedId, items } = get()
@@ -479,7 +479,8 @@ export const useGrove = create<GroveState>()(
             daily: { ...s.daily, recolored: s.daily.recolored + 1 },
           })
         },
-        setEditTool: (editTool) => set({ editTool, selectedId: null, placing: null, hoverCell: null }),
+        // Cada herramienta es un modo exclusivo: cierra el Inventario o el Vivero que hubiera abierto
+        setEditTool: (editTool) => set({ editTool, tab: 'garden', selectedId: null, placing: null, hoverCell: null }),
         setPaintFloor: (paintFloor) => set({ paintFloor }),
         paintCell: (x, z) => {
           const s = get()

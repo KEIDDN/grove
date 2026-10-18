@@ -103,6 +103,7 @@ export function EditBar() {
   const setEditTool = useGrove((s) => s.setEditTool)
   const setPaintFloor = useGrove((s) => s.setPaintFloor)
   const setTab = useGrove((s) => s.setTab)
+  const tab = useGrove((s) => s.tab)
   const rotate = useGrove((s) => s.rotateSelected)
   const store = useGrove((s) => s.storeSelected)
   const recolor = useGrove((s) => s.recolorSelected)
@@ -194,10 +195,10 @@ export function EditBar() {
   } else {
     bar = (
       <Bar key="main" label="Edición">
-        <Action label={`Objetos${inventory.length ? ` · ${inventory.length}` : ''}`} onClick={() => setTab('inventory')}>
+        <Action label={`Objetos${inventory.length ? ` · ${inventory.length}` : ''}`} onClick={() => setTab(tab === 'inventory' ? 'garden' : 'inventory')} active={tab === 'inventory'}>
           <BoxIcon size={20} />
         </Action>
-        <Action label="Vivero" onClick={() => setTab('nursery')}>
+        <Action label="Vivero" onClick={() => setTab(tab === 'nursery' ? 'garden' : 'nursery')} active={tab === 'nursery'}>
           <BagIcon size={20} />
         </Action>
         <Action label="Suelos" onClick={() => setEditTool('paint')}>
