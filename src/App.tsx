@@ -28,10 +28,13 @@ export function App() {
   const splash = useGrove((s) => s.splash)
   const onboarded = useGrove((s) => s.onboarded)
   const theme = SEASONS[useSeason()]
-  const night = useDaylight().night > 0.55
+  const nightLevel = useDaylight().night
+  const night = nightLevel > 0.55
+  // Atardecer y amanecer: el cielo ya oscurece arriba, pero la interfaz aún no es la de noche
+  const dusk = !night && nightLevel > 0.18
 
   return (
-    <div className={night ? 'app night' : 'app'} style={{ '--bg': theme.bg, '--bg-deep': theme.bgDeep } as CSSProperties}>
+    <div className={night ? 'app night' : dusk ? 'app dusk' : 'app'} style={{ '--bg': theme.bg, '--bg-deep': theme.bgDeep } as CSSProperties}>
       <GardenCanvas />
       <SessionWatcher />
       <AudioController />

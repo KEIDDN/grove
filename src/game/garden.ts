@@ -32,6 +32,23 @@ export type ItemKind =
   | 'planter'
   | 'sign'
   | 'stones'
+  | 'roundtree'
+  | 'tallpine'
+  | 'palm'
+  | 'cactus'
+  | 'tallgrass'
+  | 'corn'
+  | 'carrots'
+  | 'melon'
+  | 'boulder'
+  | 'menhir'
+  | 'column'
+  | 'stonehead'
+  | 'boardwalk'
+  | 'canoe'
+  | 'fountain'
+  | 'cart'
+  | 'stall'
 
 export interface GardenItem {
   id: string
@@ -65,7 +82,7 @@ export const CELLS_PER_TILE = 2
 export const CELL = 1 / CELLS_PER_TILE
 export const FLOWER_COLORS = ['#EBA3B8', '#B9A5DB', '#F0CF6E', '#F2B48A']
 
-const LARGE: ItemKind[] = ['tree', 'pine', 'pond', 'birch', 'willow', 'tent']
+const LARGE: ItemKind[] = ['tree', 'pine', 'pond', 'birch', 'willow', 'tent', 'roundtree', 'tallpine', 'palm', 'fountain', 'stall']
 
 export function footprint(kind: ItemKind): number {
   return LARGE.includes(kind) ? 2 : 1

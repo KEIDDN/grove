@@ -70,8 +70,8 @@ export interface ModelDef {
   height?: number
   /** O bien la anchura máxima (para cosas planas, como caminos o hogueras). */
   width?: number
-  /** Cambia el hueco de color de algún material concreto de este modelo. */
-  slots?: Record<string, Slot>
+  /** Cambia el hueco de color de algún material concreto de este modelo (o le fija un color). */
+  slots?: Record<string, Slot | `#${string}`>
   /** Giro base, si el modelo viene orientado de otra forma. */
   yaw?: number
 }
@@ -146,7 +146,7 @@ function foliageGeometry(geo: BufferGeometry, tones: string[]) {
   return g
 }
 
-function recolor(root: Object3D, paint: Paint, slots?: Record<string, Slot>) {
+function recolor(root: Object3D, paint: Paint, slots?: ModelDef['slots']) {
   root.traverse((o) => {
     if (!(o instanceof Mesh)) return
     o.castShadow = true
@@ -155,12 +155,13 @@ function recolor(root: Object3D, paint: Paint, slots?: Record<string, Slot>) {
     const swap = (m: Material) => {
       const slot = slots?.[m.name] ?? SLOT_BY_NAME[m.name]
       if (!slot || slot === 'keep') return m
+      if (slot.startsWith('#')) return flatMaterial(slot)
       // Hojas con varios tonos (solo si la malla tiene un único material, para no mezclar partes)
       if (slot === 'leaf' && single && paint.leaves.length > 1) {
         o.geometry = foliageGeometry(o.geometry, paint.leaves)
         return foliageMaterial
       }
-      return flatMaterial(paint[slot])
+      return flatMaterial(paint[slot as Exclude<Slot, 'keep'>])
     }
     o.material = Array.isArray(o.material) ? o.material.map(swap) : swap(o.material)
   })
@@ -225,4 +226,21 @@ export const MODEL_KINDS: Partial<Record<string, { def: ModelDef; use: Use }>> =
   planter: { def: { url: '/models/planter.glb', width: 0.36 }, use: 'none' },
   sign: { def: { url: '/models/sign.glb', height: 0.45 }, use: 'wood' },
   stones: { def: { url: '/models/stones.glb', width: 0.48 }, use: 'stone' },
+  roundtree: { def: { url: '/models/roundtree.glb', height: 1.3 }, use: 'foliage' },
+  tallpine: { def: { url: '/models/tallpine.glb', height: 1.55 }, use: 'foliage' },
+  palm: { def: { url: '/models/palm.glb', height: 1.6 }, use: 'foliage' },
+  cactus: { def: { url: '/models/cactus.glb', height: 0.6, slots: { leafsGreen: '#7FAF6A' } }, use: 'none' },
+  tallgrass: { def: { url: '/models/tallgrass.glb', height: 0.5 }, use: 'foliage' },
+  corn: { def: { url: '/models/corn.glb', height: 0.75, slots: { Green: 'moss' } }, use: 'none' },
+  carrots: { def: { url: '/models/carrots.glb', height: 0.35, slots: { grass: 'moss', leafsFall: 'keep' } }, use: 'none' },
+  melon: { def: { url: '/models/melon.glb', width: 0.4, slots: { grass: 'moss', leafsDark: '#7FA85E', dirt: 'soil' } }, use: 'none' },
+  boulder: { def: { url: '/models/boulder.glb', width: 0.6 }, use: 'stone' },
+  menhir: { def: { url: '/models/menhir.glb', height: 0.7 }, use: 'stone' },
+  column: { def: { url: '/models/column.glb', height: 0.85 }, use: 'stone' },
+  stonehead: { def: { url: '/models/stonehead.glb', height: 0.75 }, use: 'stone' },
+  boardwalk: { def: { url: '/models/boardwalk.glb', width: 0.5, slots: { dirt: 'woodLight', dirtDark: 'wood' } }, use: 'wood' },
+  canoe: { def: { url: '/models/canoe.glb', width: 0.55, slots: { leafsFall: 'wood', wood: 'woodLight' } }, use: 'wood' },
+  fountain: { def: { url: '/models/fountain.glb', width: 0.78 }, use: 'none' },
+  cart: { def: { url: '/models/cart.glb', width: 0.55 }, use: 'none' },
+  stall: { def: { url: '/models/stall.glb', width: 0.78 }, use: 'none' },
 }

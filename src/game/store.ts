@@ -3,6 +3,7 @@ import { persist, type PersistStorage, type StorageValue } from 'zustand/middlew
 import { CATALOG, KIND_NAMES } from './catalog'
 import { ECONOMY, legacySide, parcelsFromDays, STARTING_PARCELS } from './config'
 import { cellKey, type FloorKind } from './floors'
+import type { IslandStyleId } from './island'
 import {
   autoPlace,
   canPlace,
@@ -58,6 +59,8 @@ export type Placing =
   | { from: 'garden'; itemId: string; kind: ItemKind }
 
 interface Saved {
+  /** Estilo de la roca bajo la isla. */
+  islandStyle: IslandStyleId
   coins: number
   coinsToday: number
   coinsDate: string
@@ -139,6 +142,7 @@ interface GroveState extends Saved {
   recolorSelected: (variantId: string) => void
   setEditTool: (tool: 'select' | 'paint' | 'expand') => void
   setPaintFloor: (floor: FloorKind) => void
+  setIslandStyle: (style: IslandStyleId) => void
   paintCell: (x: number, z: number) => void
   addPlot: (tx: number, tz: number) => void
 
@@ -210,6 +214,7 @@ function water(items: GardenItem[], by: Growth['by'], amount: number): { items: 
 }
 
 const initialSaved = (): Saved => ({
+  islandStyle: 'rock',
   coins: ECONOMY.startingCoins,
   coinsToday: 0,
   coinsDate: dayKey(),
@@ -498,6 +503,7 @@ export const useGrove = create<GroveState>()(
         // Cada herramienta es un modo exclusivo: cierra el Inventario o el Vivero que hubiera abierto
         setEditTool: (editTool) => set({ editTool, tab: 'garden', selectedId: null, placing: null, hoverCell: null }),
         setPaintFloor: (paintFloor) => set({ paintFloor }),
+        setIslandStyle: (islandStyle) => set({ islandStyle }),
         paintCell: (x, z) => {
           const s = get()
           if (!cellOwned(plotSet(s.plots), x, z)) return
@@ -518,7 +524,6 @@ export const useGrove = create<GroveState>()(
           if (!isSlot || plotSet(s.plots).has(plotKey(tx, tz))) return
           const plots: Plot[] = [...s.plots, [tx, tz]]
           set({ plots })
-          if (plots.length >= parcelsAllowed(s)) set({ editTool: 'select' })
         },
 
         claimMission: (id) => {

@@ -28,6 +28,8 @@ export function TopBar() {
   const placing = useGrove((s) => s.placing)
   const selected = useGrove((s) => s.selectedId)
   const painting = useGrove((s) => s.editTool === 'paint')
+  const done = useGrove((s) => s.weekDays.filter(Boolean).length)
+  const weekGoal = useGrove((s) => s.weekGoal)
 
   if (editMode) {
     return (
@@ -45,17 +47,26 @@ export function TopBar() {
 
   return (
     <div className="topbar">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button className="press" onClick={() => setOpen((o) => !o)} aria-expanded={open} style={{ textAlign: 'left' }}>
-          <span className="eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+      <div className="topbar-left">
+        <h1 className="title garden-title" style={{ fontSize: gardenName.length > 14 ? 24 : 30 }}>
+          {gardenName}
+        </h1>
+        <button className="week-chip glass press" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Tu semana: ${done} de ${weekGoal} días`}>
+          <WeekRing done={done} goal={weekGoal} />
+          <span>
             {season.name} · Día {totalDays}
-            <ChevronIcon size={13} strokeWidth={2.4} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .3s' }} />
           </span>
-          <h1 className="title" style={{ marginTop: 4, maxWidth: '58vw', fontSize: gardenName.length > 14 ? 24 : 30 }}>
-            {gardenName}
-          </h1>
+          <ChevronIcon size={12} strokeWidth={2.6} style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .3s var(--ease)', opacity: 0.6 }} />
         </button>
-        <AnimatePresence>{open && <WeekCard key="week" />}</AnimatePresence>
+        <AnimatePresence>
+          {open && (
+            <>
+              {/* Tocar fuera cierra el panel */}
+              <motion.div key="scrim" className="week-scrim" onClick={() => setOpen(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+              <WeekCard key="week" />
+            </>
+          )}
+        </AnimatePresence>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button
@@ -69,6 +80,32 @@ export function TopBar() {
         <Coins coins={coins} />
       </div>
     </div>
+  )
+}
+
+/** Anillo pequeño con los días cumplidos de la semana frente al objetivo. */
+function WeekRing({ done, goal }: { done: number; goal: number }) {
+  const r = 7.5
+  const c = 2 * Math.PI * r
+  const ratio = Math.min(1, done / Math.max(1, goal))
+  return (
+    <svg width={20} height={20} viewBox="0 0 20 20" aria-hidden="true" style={{ flex: 'none' }}>
+      <circle cx="10" cy="10" r={r} fill="none" stroke="currentColor" strokeOpacity={0.15} strokeWidth={2.6} />
+      <motion.circle
+        cx="10"
+        cy="10"
+        r={r}
+        fill="none"
+        stroke={ratio >= 1 ? '#3FA066' : 'currentColor'}
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        strokeDasharray={c}
+        initial={false}
+        animate={{ strokeDashoffset: c * (1 - ratio) }}
+        transition={spring}
+        transform="rotate(-90 10 10)"
+      />
+    </svg>
   )
 }
 
@@ -104,7 +141,7 @@ function WeekCard() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.97, transition: { duration: 0.15 } }}
       transition={spring}
-      style={{ transformOrigin: 'top left', width: 300, borderRadius: 26, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      style={{ position: 'absolute', top: 'calc(100% + 10px)', left: 0, zIndex: 2, transformOrigin: 'top left', width: 'min(300px, calc(100vw - 44px))', borderRadius: 26, padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span className="display" style={{ fontSize: 44 }}>
           {done}

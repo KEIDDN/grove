@@ -14,7 +14,9 @@ import {
 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { plotKey, type Plot } from '../game/garden'
+import { islandStyle } from '../game/island'
 import type { SeasonTheme } from '../game/seasons'
+import { useGrove } from '../game/store'
 import { hashString, jitter, seeded } from './lowpoly'
 
 export const TILE = 1
@@ -26,7 +28,6 @@ const SOIL_BOTTOM = GROUND_Y - RIM - SOIL_DEPTH
 const SOIL = '#A87A52'
 const SOIL_DARK = '#8C6442'
 const SOIL_LOW = '#97704C'
-const ROCK = ['#A8A094', '#978F83', '#B4AD9F', '#8C8478']
 const STONES = ['#B9B3A6', '#A39D91', '#C9C3B6']
 
 type Side = [dx: number, dz: number]
@@ -100,7 +101,7 @@ function soilBody(plot: Plot, theme: SeasonTheme) {
  * Base de roca bajo una parcela: una pirámide truncada facetada que se estrecha hacia abajo.
  * Es más honda cuanto más lejos está la parcela del borde, así el conjunto parece una isla flotante.
  */
-function rockBase(plot: Plot, depthFromEdge: number) {
+function rockBase(plot: Plot, depthFromEdge: number, rock: string[]) {
   const rand = seeded(hashString(`rock:${plotKey(plot[0], plot[1])}`))
   const h = 0.5 + Math.min(depthFromEdge, 3) * 0.38 + rand() * 0.18
   const top = Math.SQRT1_2 * TILE
@@ -110,7 +111,7 @@ function rockBase(plot: Plot, depthFromEdge: number) {
   // La cara de arriba no se mueve: encaja con la tierra y con las parcelas vecinas
   jitter(geo, 0.085, hashString(plotKey(plot[0], plot[1])), (_, py) => py > -0.001)
   geo.translate(plot[0] + 0.5, SOIL_BOTTOM + 0.002, plot[1] + 0.5)
-  return tinted(geo, (f) => ROCK[(f * 7 + Math.floor(rand() * 3)) % ROCK.length])
+  return tinted(geo, (f) => rock[(f * 7 + Math.floor(rand() * 3)) % rock.length])
 }
 
 /** Distancia (en parcelas) de cada parcela al borde de la isla. */
@@ -181,6 +182,7 @@ function Scatter({ geometry, items, color, vertexColors }: { geometry: BufferGeo
  * pocas mallas para que sea ligero en el móvil.
  */
 export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) {
+  const style = islandStyle(useGrove((s) => s.islandStyle))
   const { top, body, rock, drips, stones, moss } = useMemo(() => {
     const { owned, dist } = edgeDistance(plots)
     const tops: BufferGeometry[] = []
@@ -194,7 +196,7 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
       const [px, pz] = plot
       tops.push(grassTop(plot, theme))
       bodies.push(...soilBody(plot, theme))
-      rocks.push(rockBase(plot, dist.get(plotKey(px, pz)) ?? 0))
+      rocks.push(rockBase(plot, dist.get(plotKey(px, pz)) ?? 0, style.rock))
 
       const rand = seeded(hashString(`edge:${plotKey(px, pz)}`))
       for (const [dx, dz] of SIDES) {
@@ -220,7 +222,7 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
           stones.push({ p: at(0.1 + rand() * 0.8, GROUND_Y - RIM - 0.06 - rand() * 0.3, -r * 0.35), s: [r, r * 0.8, r], r: rand() * Math.PI })
         }
         // Musgo donde la tierra se junta con la roca
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < Math.round(2 * style.moss); i++) {
           const r = 0.05 + rand() * 0.05
           moss.push({ p: at(rand(), SOIL_BOTTOM - 0.01, -0.02), s: [r, r * 0.45, r], r: rand() * Math.PI })
         }
@@ -233,7 +235,7 @@ export function Island({ plots, theme }: { plots: Plot[]; theme: SeasonTheme }) 
       return g
     }
     return { top: merge(tops), body: merge(bodies), rock: merge(rocks), drips, stones, moss }
-  }, [plots, theme])
+  }, [plots, theme, style])
 
   const drip = useMemo(() => {
     const g = new ConeGeometry(0.03, 1, 4)

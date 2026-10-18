@@ -1,8 +1,8 @@
-import { Suspense, useMemo, useRef, type ReactNode } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { BufferGeometry, DoubleSide, Float32BufferAttribute, IcosahedronGeometry, type Group, type Mesh } from 'three'
 import { Html } from '@react-three/drei'
-import { cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
+import { CELL, cellToWorld, footprint, type GardenItem, type Growth, type ItemKind } from '../game/garden'
 import { useGrove } from '../game/store'
 import { paletteFor } from '../game/variants'
 import type { SeasonTheme } from '../game/seasons'
@@ -10,6 +10,11 @@ import { GROUND_Y } from './Island'
 import { hashString, jitter, pick, seeded } from './lowpoly'
 import { Model, MODEL_KINDS, paintFor } from './models'
 import { useDaylight } from './useDaylight'
+
+/** Lo vivo: se sacude al tocarlo y suelta hojas. */
+const ORGANIC: ItemKind[] = ['tree', 'pine', 'birch', 'willow', 'roundtree', 'tallpine', 'palm', 'bush', 'berrybush', 'fern', 'flower', 'tulips', 'reeds', 'wheat', 'tallgrass', 'corn', 'cactus']
+/** Altura (en el mundo) de la copa, de donde caen las hojas al tocar. */
+const CANOPY: Partial<Record<ItemKind, number>> = { tree: 1.35, birch: 1.45, willow: 1.15, roundtree: 1.3, palm: 1.5, pine: 1.1, tallpine: 1.5, bush: 0.5, berrybush: 0.5 }
 
 /** Escala global de los objetos respecto a la casilla. */
 const ITEM_SCALE = 1.3
@@ -347,15 +352,20 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
 
   const [cx, cz] = moving && hoverCell ? hoverCell : [item.x, item.z]
   const [wx, wz] = cellToWorld(cx, cz, item.kind)
-  const organic = ['tree', 'flower', 'bush', 'pine', 'tulips', 'reeds'].includes(item.kind)
-  const yaw = (item.rot * Math.PI) / 2 + (organic ? (seed % 628) / 100 : 0)
+  const organic = ORGANIC.includes(item.kind)
+  const yaw = item.kind === 'fence' ? 0 : (item.rot * Math.PI) / 2 + (organic ? (seed % 628) / 100 : 0)
   // La posición inicial solo se usa al montar; después el objeto se desliza hasta su sitio
   const initial = useMemo<[number, number, number]>(() => [wx, GROUND_Y, wz], [])
   const target = useRef({ x: wx, z: wz })
-  // Al tocarlo da un saltito, para que se note cuál es
-  const wasInspected = useRef(false)
-  if (inspected && !wasInspected.current) landed.current = -1
-  wasInspected.current = inspected
+  const base = useRef(GROUND_Y)
+  // Al tocarlo reacciona: las plantas se sacuden y sueltan unas hojas; lo demás da un saltito
+  const poked = useRef<number | null>(null)
+  const [burst, setBurst] = useState(0)
+  useEffect(() => {
+    if (!inspected) return
+    poked.current = -1
+    if (organic) setBurst((b) => b + 1)
+  }, [inspected, organic])
   if (target.current.x !== wx || target.current.z !== wz) {
     target.current = { x: wx, z: wz }
     if (!moving) landed.current = -1 // marca un aterrizaje en el próximo fotograma
@@ -379,13 +389,33 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
       else landed.current = null
     }
     if (selected && !moving) s *= 1.04
+    let hop = 0
+    let swayX = 0
+    let swayZ = 0
+    if (poked.current === -1) poked.current = now
+    if (poked.current !== null) {
+      const pt = now - poked.current
+      if (pt > 1.2) poked.current = null
+      else if (organic) {
+        // Sacudida que se apaga sola, como una rama que alguien ha rozado
+        const w = Math.exp(-pt * 4.5) * 0.11
+        swayX = Math.sin(pt * 22) * w
+        swayZ = Math.cos(pt * 17) * w * 0.7
+      } else if (pt < 0.4) {
+        hop = Math.sin((pt / 0.4) * Math.PI) * 0.12
+        squash *= 1 + Math.sin((pt / 0.4) * Math.PI) * 0.06
+      }
+    }
     g.scale.set(s / Math.sqrt(squash), s * squash, s / Math.sqrt(squash))
+    g.rotation.x = swayX
+    g.rotation.z = swayZ
     const follow = 1 - Math.exp(-delta * (moving ? 22 : 12))
     g.position.x += (target.current.x - g.position.x) * follow
     g.position.z += (target.current.z - g.position.z) * follow
     // Lo seleccionado o en movimiento flota un poco
     const lift = selected || moving ? 0.16 + Math.sin(now * 4) * 0.04 : 0
-    g.position.y += (GROUND_Y + lift - g.position.y) * (1 - Math.exp(-delta * 12))
+    base.current += (GROUND_Y + lift - base.current) * (1 - Math.exp(-delta * 12))
+    g.position.y = base.current + hop
     g.rotation.y += (yaw - g.rotation.y) * (1 - Math.exp(-delta * 10))
   })
 
@@ -396,7 +426,9 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
       rotation={[0, yaw, 0]}
       userData={{ itemId: item.id }}
     >
-      <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} growth={item.growth} />
+      {item.kind === 'fence' ? <ConnectedFence item={item} /> : <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} growth={item.growth} />}
+      {item.kind === 'campfire' && <Flame />}
+      {burst > 0 && <LeafBurst key={burst} color={paletteFor(item.kind, item.color)?.[0] ?? theme.leaf[0]} top={CANOPY[item.kind] ?? 0.45} />}
       {item.growth && selected && (
         <Html position={[0, 0.75, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
           <div className="growth-chip">
@@ -407,6 +439,134 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
           </div>
         </Html>
       )}
+    </group>
+  )
+}
+
+/** Unas hojas que se desprenden y caen girando al tocar una planta. */
+function LeafBurst({ color, top }: { color: string; top: number }) {
+  const group = useRef<Group>(null)
+  const start = useRef<number | null>(null)
+  const [done, setDone] = useState(false)
+  const leaves = useMemo(() => {
+    const rand = seeded(Math.floor(Math.random() * 1e6))
+    return Array.from({ length: 9 }, () => ({
+      x: (rand() - 0.5) * 0.7,
+      z: (rand() - 0.5) * 0.7,
+      y: top * (0.75 + rand() * 0.3),
+      fall: 0.35 + rand() * 0.35,
+      spin: (rand() - 0.5) * 9,
+      drift: rand() * Math.PI * 2,
+    }))
+  }, [top])
+  useFrame(({ clock }) => {
+    const g = group.current
+    if (!g) return
+    if (start.current === null) start.current = clock.elapsedTime
+    const t = clock.elapsedTime - start.current
+    if (t > 1.8) {
+      setDone(true)
+      return
+    }
+    g.children.forEach((m, i) => {
+      const l = leaves[i]
+      m.position.set(l.x + Math.sin(t * 3 + l.drift) * 0.08, Math.max(0.02, l.y - l.fall * t * (1 + t * 0.6)), l.z + Math.cos(t * 2.5 + l.drift) * 0.06)
+      m.rotation.set(t * l.spin, t * l.spin * 0.6, 0)
+      const mat = (m as Mesh).material as { opacity: number }
+      mat.opacity = Math.min(1, (1.8 - t) * 2)
+    })
+  })
+  if (done) return null
+  return (
+    <group ref={group}>
+      {leaves.map((l, i) => (
+        <mesh key={i} position={[l.x, l.y, l.z]}>
+          <planeGeometry args={[0.07, 0.045]} />
+          <meshStandardMaterial color={color} side={DoubleSide} transparent flatShading />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/** Llamas de la hoguera: parpadean siempre y de noche iluminan alrededor. */
+function Flame() {
+  const outer = useRef<Mesh>(null)
+  const inner = useRef<Mesh>(null)
+  const light = useRef<{ intensity: number } | null>(null)
+  const { night } = useDaylight()
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime
+    const f = 1 + Math.sin(t * 13) * 0.08 + Math.sin(t * 7.3) * 0.06
+    outer.current?.scale.set(1, f, 1)
+    inner.current?.scale.set(1, 1.05 + Math.sin(t * 11 + 1) * 0.1, 1)
+    if (light.current) light.current.intensity = (0.25 + night * 1.6) * (0.9 + Math.sin(t * 9) * 0.1)
+  })
+  return (
+    <group position={[0, 0.06, 0]}>
+      <mesh ref={outer} position={[0, 0.09, 0]}>
+        <coneGeometry args={[0.07, 0.2, 5]} />
+        <meshStandardMaterial color="#F28A3C" emissive="#F2702C" emissiveIntensity={1.6} flatShading toneMapped={false} />
+      </mesh>
+      <mesh ref={inner} position={[0, 0.07, 0]}>
+        <coneGeometry args={[0.04, 0.13, 5]} />
+        <meshStandardMaterial color="#FFD86B" emissive="#FFC94A" emissiveIntensity={2} flatShading toneMapped={false} />
+      </mesh>
+      <pointLight ref={light as never} position={[0, 0.2, 0]} color="#FF9A4D" distance={2.4} decay={1.6} />
+    </group>
+  )
+}
+
+const FENCE_DIRS: Array<[number, number]> = [
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+]
+
+/**
+ * Valla que se une sola con sus vecinas: un poste en el centro y travesaños hacia cada valla de al
+ * lado. Sin vecinas, es un tramo recto en la dirección en que la hayas girado.
+ */
+function ConnectedFence({ item }: { item: GardenItem }) {
+  // Máscara de vecinas (bit por dirección): solo cambia cuando se pone o quita una valla al lado
+  const mask = useGrove((s) =>
+    FENCE_DIRS.reduce((m, [dx, dz], i) => (s.items.some((o) => o.kind === 'fence' && o.x === item.x + dx && o.z === item.z + dz) ? m | (1 << i) : m), 0),
+  )
+  const [light, dark] = paletteFor('fence', item.color) ?? ['#B98A5E', '#9C7149']
+  const along = item.rot % 2 === 0 ? [0, 1] : [2, 3]
+  const arms = mask ? FENCE_DIRS.map((_, i) => i).filter((i) => mask & (1 << i)) : along
+  const half = CELL / 2
+  return (
+    <group>
+      <mesh position={[0, 0.15, 0]} castShadow>
+        <boxGeometry args={[0.055, 0.3, 0.055]} />
+        <Mat color={dark} />
+      </mesh>
+      <mesh position={[0, 0.305, 0]} castShadow>
+        <boxGeometry args={[0.07, 0.025, 0.07]} />
+        <Mat color={light} />
+      </mesh>
+      {arms.map((i) => {
+        const [dx, dz] = FENCE_DIRS[i]
+        return (
+          <group key={i} position={[(dx * half) / 2, 0, (dz * half) / 2]} rotation={[0, dx !== 0 ? 0 : Math.PI / 2, 0]}>
+            {[0.11, 0.22].map((y) => (
+              <mesh key={y} position={[0, y, 0]} castShadow>
+                <boxGeometry args={[half + 0.02, 0.04, 0.028]} />
+                <Mat color={light} />
+              </mesh>
+            ))}
+            {/* Poste del extremo, para que un tramo suelto no acabe en el aire */}
+            {!(mask & (1 << i)) && (
+              <mesh position={[(dx !== 0 ? dx : -dz) * (half / 2), 0.13, 0]} castShadow>
+                <boxGeometry args={[0.045, 0.26, 0.045]} />
+                <Mat color={dark} />
+              </mesh>
+            )}
+          </group>
+        )
+      })}
     </group>
   )
 }

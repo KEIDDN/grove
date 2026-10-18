@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { FLOORS } from '../game/floors'
+import { ISLAND_STYLES } from '../game/island'
 import { parcelsAllowed, useGrove } from '../game/store'
 import { VARIANTS } from '../game/variants'
 import { BagIcon, BoxIcon, BrushIcon, CheckIcon, CloseIcon, ExpandIcon, MoveIcon, PaletteIcon, RotateIcon } from './icons'
@@ -102,6 +103,8 @@ export function EditBar() {
   const setEditMode = useGrove((s) => s.setEditMode)
   const setEditTool = useGrove((s) => s.setEditTool)
   const setPaintFloor = useGrove((s) => s.setPaintFloor)
+  const islandStyleId = useGrove((s) => s.islandStyle)
+  const setIslandStyle = useGrove((s) => s.setIslandStyle)
   const setTab = useGrove((s) => s.setTab)
   const tab = useGrove((s) => s.tab)
   const rotate = useGrove((s) => s.rotateSelected)
@@ -127,6 +130,14 @@ export function EditBar() {
         ))}
       </SwatchRow>
     )
+  } else if (mode === 'expand') {
+    swatches = (
+      <SwatchRow key="island">
+        {ISLAND_STYLES.map((st, i) => (
+          <Swatch key={st.id} index={i} colors={st.rock.slice(0, 3)} label={st.name} selected={islandStyleId === st.id} onClick={() => setIslandStyle(st.id)} />
+        ))}
+      </SwatchRow>
+    )
   } else if (colorOpen && variants && selected) {
     swatches = (
       <SwatchRow key={`colors-${selected.id}`}>
@@ -149,9 +160,9 @@ export function EditBar() {
     )
   } else if (mode === 'expand') {
     bar = (
-      <Bar key="expand" label="Ampliar jardín">
+      <Bar key="expand" label="Isla">
         <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 14px', maxWidth: 200 }}>
-          <span style={{ fontSize: 13, fontWeight: 700 }}>Toca un hueco para ampliar</span>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{freeParcels > 0 ? 'Toca un hueco para ampliar' : 'Elige la roca'}</span>
           <span className="muted" style={{ fontSize: 11, fontWeight: 600 }}>
             {freeParcels > 0 ? `Te quedan ${freeParcels} parcela${freeParcels > 1 ? 's' : ''}` : 'No te quedan parcelas'}
           </span>
@@ -204,7 +215,7 @@ export function EditBar() {
         <Action label="Suelos" onClick={() => setEditTool('paint')}>
           <BrushIcon size={20} />
         </Action>
-        <Action label="Ampliar" onClick={() => setEditTool('expand')}>
+        <Action label="Isla" onClick={() => setEditTool('expand')}>
           <ExpandIcon size={20} />
           {freeParcels > 0 && <span className="badge">{freeParcels}</span>}
         </Action>

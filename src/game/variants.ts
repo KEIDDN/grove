@@ -16,6 +16,12 @@ const FOLIAGE: Variant[] = [
   { id: 'lilac', name: 'Glicina', colors: ['#CBBBE6', '#B9A5DB', '#D8CCEE', '#A48FCF'] },
 ]
 
+const STONE: Variant[] = [
+  { id: 'grey', name: 'Gris', colors: ['#C2C1BA', '#ABAAA3', '#B7B6AF'] },
+  { id: 'sand', name: 'Arenisca', colors: ['#E0C9A2', '#CBB08A', '#D6BE96'] },
+  { id: 'slate', name: 'Pizarra', colors: ['#8E959B', '#7A8187', '#868D93'] },
+]
+
 const WOOD: Variant[] = [
   { id: 'oak', name: 'Roble', colors: ['#B98A5E', '#9C7149'] },
   { id: 'white', name: 'Blanco', colors: ['#F2EEE6', '#D9D3C7'] },
@@ -27,6 +33,8 @@ export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
   tree: FOLIAGE,
   bush: FOLIAGE,
   birch: FOLIAGE,
+  roundtree: FOLIAGE,
+  palm: FOLIAGE,
   willow: FOLIAGE,
   berrybush: FOLIAGE,
   tent: [
@@ -61,11 +69,11 @@ export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
     { id: 'violet', name: 'Violeta', colors: ['#9A7BC8'] },
     { id: 'white', name: 'Blanca', colors: ['#EFE7DA'] },
   ],
-  rock: [
-    { id: 'grey', name: 'Gris', colors: ['#C2C1BA', '#ABAAA3', '#B7B6AF'] },
-    { id: 'sand', name: 'Arenisca', colors: ['#E0C9A2', '#CBB08A', '#D6BE96'] },
-    { id: 'slate', name: 'Pizarra', colors: ['#8E959B', '#7A8187', '#868D93'] },
-  ],
+  rock: STONE,
+  boulder: STONE,
+  menhir: STONE,
+  column: STONE,
+  stonehead: STONE,
   pumpkin: [
     { id: 'orange', name: 'Naranja', colors: ['#E58A3A', '#CC7330', '#EE9A4C'] },
     { id: 'white', name: 'Blanca', colors: ['#F1ECE0', '#DDD5C4', '#F7F3EA'] },
@@ -80,6 +88,8 @@ export const VARIANTS: Partial<Record<ItemKind, Variant[]>> = {
   fence: WOOD,
   birdhouse: WOOD,
   sign: WOOD,
+  canoe: WOOD,
+  boardwalk: WOOD,
   logpile: WOOD,
 }
 
@@ -95,3 +105,6 @@ export function paletteFor(kind: ItemKind, color?: string): string[] | undefined
 export function variantName(kind: ItemKind, color?: string): string | undefined {
   return VARIANTS[kind]?.find((x) => x.id === color)?.name
 }
+
+// El pino alto usa los mismos tonos que el pino
+VARIANTS.tallpine = VARIANTS.pine
