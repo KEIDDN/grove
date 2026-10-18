@@ -76,6 +76,8 @@ export function Page({
       transition={{ type: 'spring', stiffness: 330, damping: 36, mass: 0.9 }}
     >
       <div className={compact ? 'page-bar compact' : 'page-bar'}>
+        {/* Asa: indica que se puede cerrar deslizando hacia abajo */}
+        <span className="page-grab" aria-hidden="true" />
         <span className="page-bar-title">{title}</span>
         <div className="page-bar-actions">
           {aside}

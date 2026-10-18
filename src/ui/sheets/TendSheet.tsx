@@ -67,8 +67,12 @@ function Setup() {
 /** Semillas que crecen con Cultivar: cada sesión completada las riega todas a la vez. */
 function Growing() {
   const items = useGrove((s) => s.items)
+  const inventory = useGrove((s) => s.inventory)
+  const startPlacing = useGrove((s) => s.startPlacing)
   const growing = items.filter((it) => it.growth?.by === 'focus')
-  if (!growing.length)
+  // Semillas compradas que aún esperan en el inventario
+  const waiting = inventory.filter((it) => it.growth?.by === 'focus')
+  if (!growing.length && !waiting.length)
     return (
       <p className="muted" style={{ margin: 0, fontSize: 12, lineHeight: 1.5 }}>
         Planta semillas del Vivero: crecerán con los minutos que dediques aquí.
@@ -76,7 +80,26 @@ function Growing() {
     )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div className="eyebrow">Creciendo con tu tiempo</div>
+      {waiting.length > 0 && (
+        <>
+          <div className="eyebrow">Sin plantar</div>
+          {waiting.map((it) => (
+            <div key={it.id} className="row-card" style={{ padding: 12, gap: 12 }}>
+              <KindGlyph kind={it.kind} color={paletteFor(it.kind, it.color)?.[0]} size={36} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{KIND_NAMES[it.kind]}</div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                  Crece con {it.growth!.need} min de Cultivar
+                </div>
+              </div>
+              <button className="pill pill-dark press" onClick={() => startPlacing(it.id)} style={{ height: 34, padding: '0 14px', fontSize: 13 }}>
+                Plantar
+              </button>
+            </div>
+          ))}
+        </>
+      )}
+      {growing.length > 0 && <div className="eyebrow" style={{ marginTop: waiting.length ? 8 : 0 }}>Creciendo con tu tiempo</div>}
       {growing.map((it) => {
         const g = it.growth!
         return (

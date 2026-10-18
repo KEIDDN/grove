@@ -98,6 +98,8 @@ interface GroveState extends Saved {
   toast: { id: number; text: string } | null
   editMode: boolean
   selectedId: string | null
+  /** Objeto que se ha tocado fuera del modo edición para ver qué es y cuánto le falta. */
+  inspectId: string | null
   placing: Placing | null
   hoverCell: [number, number] | null
   editTool: 'select' | 'paint' | 'expand'
@@ -124,6 +126,7 @@ interface GroveState extends Saved {
 
   setEditMode: (on: boolean) => void
   select: (id: string | null) => void
+  inspect: (id: string | null) => void
   rotateSelected: () => void
   storeSelected: () => void
   startMove: () => void
@@ -312,6 +315,7 @@ export const useGrove = create<GroveState>()(
         toast: null,
         editMode: false,
         selectedId: null,
+        inspectId: null,
         placing: null,
         hoverCell: null,
         editTool: 'select',
@@ -322,7 +326,7 @@ export const useGrove = create<GroveState>()(
             ? Number(new URLSearchParams(window.location.search).get('hour'))
             : null,
 
-        setTab: (tab) => set({ tab }),
+        setTab: (tab) => set({ tab, inspectId: null }),
         openYou: (youSection) => set({ tab: 'you', youSection }),
         cycleSeason: () => {
           const current = get().seasonOverride ?? seasonForDate()
@@ -416,8 +420,9 @@ export const useGrove = create<GroveState>()(
           toast(entry.seed ? `Semilla de ${entry.name.toLowerCase()}: toca dónde plantarla` : `${entry.name}: toca dónde colocarlo`)
         },
 
-        setEditMode: (on) => set({ editMode: on, selectedId: null, placing: null, hoverCell: null, editTool: 'select', tab: 'garden' }),
+        setEditMode: (on) => set({ inspectId: null, editMode: on, selectedId: null, placing: null, hoverCell: null, editTool: 'select', tab: 'garden' }),
         select: (id) => set({ selectedId: id, placing: null }),
+        inspect: (inspectId) => set({ inspectId }),
         rotateSelected: () => {
           const { selectedId, items } = get()
           set({ items: items.map((it) => (it.id === selectedId ? { ...it, rot: (it.rot + 1) % 4 } : it)) })

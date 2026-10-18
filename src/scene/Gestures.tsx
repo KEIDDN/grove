@@ -132,7 +132,8 @@ export function Gestures({ garden }: { garden: RefObject<Group | null> }) {
         const p = ground(x, y)
         if (p) fn(p)
       }
-      if (!s.editMode) return { kind: 'camera', onTap: () => {} }
+      // Fuera de edición, tocar un objeto muestra qué es (y cuánto le falta si está creciendo)
+      if (!s.editMode) return { kind: 'camera', onTap: () => s.inspect(itemAt(x, y)) }
       if (s.editTool === 'paint') return { kind: 'paint' }
       if (s.editTool === 'expand')
         return {

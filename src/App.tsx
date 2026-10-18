@@ -6,6 +6,7 @@ import { AudioController } from './audio/AudioController'
 import { GardenCanvas } from './scene/GardenCanvas'
 import { useDaylight } from './scene/useDaylight'
 import { Dock } from './ui/Dock'
+import { InspectCard } from './ui/InspectCard'
 import { Onboarding } from './ui/Onboarding'
 import { Splash } from './ui/Splash'
 import { EditBar } from './ui/EditBar'
@@ -53,6 +54,7 @@ export function App() {
               {tab === 'you' && <YouSheet key="you" />}
               {tab === 'inventory' && <InventorySheet key="inventory" />}
             </AnimatePresence>
+            {tab === 'garden' && !editMode && <InspectCard />}
             <AnimatePresence mode="wait">{editMode ? <EditBar key="edit" /> : <Dock key="dock" />}</AnimatePresence>
           </motion.div>
         )}

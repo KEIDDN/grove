@@ -638,7 +638,7 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
   const moving = useGrove((s) => s.placing?.from === 'garden' && s.placing.itemId === item.id)
   // Solo el objeto que se mueve escucha la celda bajo el dedo; el resto no se vuelve a dibujar
   const hoverCell = useGrove((s) => (s.placing?.from === 'garden' && s.placing.itemId === item.id ? s.hoverCell : null))
-  const showGrowth = useGrove((s) => s.tab === 'tend')
+  const inspected = useGrove((s) => s.inspectId === item.id)
 
   const [cx, cz] = moving && hoverCell ? hoverCell : [item.x, item.z]
   const [wx, wz] = cellToWorld(cx, cz, item.kind)
@@ -647,6 +647,10 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
   // La posición inicial solo se usa al montar; después el objeto se desliza hasta su sitio
   const initial = useMemo<[number, number, number]>(() => [wx, GROUND_Y, wz], [])
   const target = useRef({ x: wx, z: wz })
+  // Al tocarlo da un saltito, para que se note cuál es
+  const wasInspected = useRef(false)
+  if (inspected && !wasInspected.current) landed.current = -1
+  wasInspected.current = inspected
   if (target.current.x !== wx || target.current.z !== wz) {
     target.current = { x: wx, z: wz }
     if (!moving) landed.current = -1 // marca un aterrizaje en el próximo fotograma
@@ -688,7 +692,7 @@ export function PlacedItem({ item, theme }: { item: GardenItem; theme: SeasonThe
       userData={{ itemId: item.id }}
     >
       <ItemModel kind={item.kind} color={item.color} seed={seed} theme={theme} growth={item.growth} />
-      {item.growth && (selected || showGrowth) && (
+      {item.growth && selected && (
         <Html position={[0, 0.75, 0]} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
           <div className="growth-chip">
             <span className="growth-bar">
