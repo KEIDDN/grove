@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ARTICLES, type Article } from '../../content/articles'
 import { useGrove } from '../../game/store'
 import { iriStyle } from '../glyphs'
-import { CheckIcon, ChevronIcon, HeartIcon } from '../icons'
+import { CheckIcon, ChevronIcon, HeartIcon, SproutIcon } from '../icons'
 import { Page } from '../Page'
 import { SwapIn } from '../Sheet'
 
@@ -41,7 +41,7 @@ export function ReadSheet() {
   const [open, setOpen] = useState<string | null>(null)
   const article = ARTICLES.find((a) => a.id === open)
   return (
-    <Page eyebrow={article ? article.category : 'Lecturas breves'} title={article ? 'Leer' : 'Brotes'} onClose={() => setTab('garden')}>
+    <Page eyebrow={article ? article.category : 'Lecturas breves'} title={article ? 'Leer' : 'Brotes'} accent="read" onClose={() => setTab('garden')}>
       <SwapIn id={open ?? 'list'}>{article ? <Reader article={article} onBack={() => setOpen(null)} /> : <List onOpen={setOpen} />}</SwapIn>
     </Page>
   )
@@ -68,11 +68,18 @@ function List({ onOpen }: { onOpen: (id: string) => void }) {
         Lecturas de dos o tres minutos para hacer una pausa. Terminar una también cuenta como día cuidándote.
       </p>
 
-      <button className="iri press" onClick={() => onOpen(featured.id)} style={{ ...iriStyle(3), borderRadius: 28, padding: 22, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <button
+        className="iri press"
+        onClick={() => onOpen(featured.id)}
+        style={{ ...iriStyle(3), borderRadius: 30, padding: 24, minHeight: 280, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', gap: 10 }}
+      >
+        <span aria-hidden="true" style={{ position: 'absolute', right: -26, top: -18, zIndex: 1, opacity: 0.1, color: '#1B1F1C' }}>
+          <SproutIcon size={190} />
+        </span>
         <span className="eyebrow" style={{ position: 'relative', zIndex: 2, color: '#5D645E' }}>
           Nuevo · {featured.category}
         </span>
-        <span style={{ position: 'relative', zIndex: 2, fontSize: 26, fontWeight: 700, letterSpacing: '-0.035em', lineHeight: 1.1, color: '#1B1F1C' }}>{featured.title}</span>
+        <span style={{ position: 'relative', zIndex: 2, fontSize: 32, fontWeight: 700, letterSpacing: '-0.04em', lineHeight: 1.04, color: '#1B1F1C' }}>{featured.title}</span>
         <span style={{ position: 'relative', zIndex: 2, fontSize: 14, lineHeight: 1.45, color: '#5D645E' }}>{featured.subtitle}</span>
         <Meta article={featured} read={read.includes(featured.id)} />
       </button>

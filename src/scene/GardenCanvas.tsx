@@ -19,6 +19,7 @@ import { PlacedItem } from './items'
 import { Life } from './Life'
 import { Particles } from './Particles'
 import { Sky } from './Sky'
+import { SkyGlow } from './SkyGlow'
 import { useDaylight } from './useDaylight'
 
 /** Móvil o tablet: pantalla táctil, GPU más modesta. */
@@ -142,6 +143,7 @@ export function GardenCanvas() {
       <Gestures garden={garden} />
       <CameraRig size={size} />
       <Sky light={light} />
+      <SkyGlow light={light} />
       <hemisphereLight args={[light.skyTop, '#B49470', light.hemiIntensity]} />
       <ambientLight intensity={0.22 + light.night * 0.1} color={light.night > 0.5 ? '#9FB0E0' : '#FFFFFF'} />
       <directionalLight

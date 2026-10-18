@@ -16,7 +16,7 @@ const COUNT = COARSE ? 110 : 170
 export function CloudSea({ size, skyBottom, night }: { size: number; skyBottom: string; night: number }) {
   const ref = useRef<InstancedMesh>(null)
   const group = useRef<Group>(null)
-  const geo = useMemo(() => jitter(new IcosahedronGeometry(1, 1), 0.12, 31), [])
+  const geo = useMemo(() => jitter(new IcosahedronGeometry(1, 2), 0.07, 31), [])
 
   // Muy por debajo de la isla, para que se vea que flota alto, y hasta el horizonte
   const puffs = useMemo(() => {
@@ -57,13 +57,14 @@ export function CloudSea({ size, skyBottom, night }: { size: number; skyBottom: 
     g.position.y = sink.current + Math.sin(clock.elapsedTime * 0.25) * 0.05
   })
 
-  const color = useMemo(() => new Color(mix('#FFFFFF', skyBottom, 0.3 + night * 0.4)), [skyBottom, night])
+  const color = useMemo(() => new Color(mix('#FFFFFF', skyBottom, 0.25 + night * 0.45)), [skyBottom, night])
   const glow = useMemo(() => new Color(mix('#FFFFFF', skyBottom, 0.5)), [skyBottom])
 
   return (
     <group ref={group}>
       <instancedMesh ref={ref} args={[geo, undefined, COUNT]} frustumCulled={false}>
-        <meshStandardMaterial color={color} emissive={glow} emissiveIntensity={0.18 + (1 - night) * 0.12} flatShading roughness={1} />
+        {/* Sombreado suave (sin facetas) y mucha luz propia: algodón, no piedras */}
+        <meshLambertMaterial color={color} emissive={glow} emissiveIntensity={0.42 - night * 0.2} />
       </instancedMesh>
     </group>
   )

@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { GROUP_NAMES, questionsFor } from '../../game/questions'
 import { useGrove, type RootAnswer, type RootEntry } from '../../game/store'
 import { dayKey } from '../../game/time'
-import { ChevronIcon, EditIcon, LockIcon } from '../icons'
+import { CheckIcon, ChevronIcon, EditIcon, LockIcon } from '../icons'
 import { Page as FullPage } from '../Page'
 import { Segments, SwapIn } from '../Sheet'
 
@@ -19,7 +19,7 @@ export function RootsSheet() {
   const setTab = useGrove((s) => s.setTab)
   const [view, setView] = useState<'today' | 'journal'>('today')
   return (
-    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" onClose={() => setTab('garden')}>
+    <FullPage eyebrow={longDate.format(new Date())} title="Raíces" accent="roots" hero={<WeekStrip />} onClose={() => setTab('garden')}>
       <Segments
         id="roots"
         items={[
@@ -33,19 +33,6 @@ export function RootsSheet() {
     </FullPage>
   )
 }
-
-const areaStyle = {
-  resize: 'none',
-  width: '100%',
-  border: '1px solid var(--line)',
-  borderRadius: 18,
-  background: 'rgba(255,255,255,0.6)',
-  padding: 14,
-  font: 'inherit',
-  fontSize: 15,
-  lineHeight: 1.5,
-  color: 'var(--ink)',
-} as const
 
 function Today() {
   const entries = useGrove((s) => s.entries)
@@ -81,38 +68,77 @@ function Today() {
   }
 
   return (
-    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+    <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {questions.map((q, i) => (
-        <div key={q.text} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <div className="eyebrow">
-            {i + 1} · {GROUP_NAMES[q.group]}
+        <div key={q.text} className="q-card">
+          <div className="q-head">
+            <span className="q-num">{String(i + 1).padStart(2, '0')}</span>
+            <span className={answers[i].trim() ? 'q-check on' : 'q-check'} aria-hidden="true">
+              <CheckIcon size={12} strokeWidth={2.6} />
+            </span>
           </div>
-          <label htmlFor={`q-${i}`} style={{ fontSize: 19, fontWeight: 650, letterSpacing: '-0.02em', lineHeight: 1.3 }}>
-            {q.text}
-          </label>
-          <textarea
-            id={`q-${i}`}
-            rows={2}
-            value={answers[i]}
-            onChange={(e) => setAnswers((prev) => prev.map((a, j) => (j === i ? e.target.value : a)))}
-            placeholder="Escribe con calma…"
-            style={areaStyle}
-          />
+          <div className="eyebrow">{GROUP_NAMES[q.group]}</div>
+          <label htmlFor={`q-${i}`}>{q.text}</label>
+          <AutoArea id={`q-${i}`} value={answers[i]} onChange={(v) => setAnswers((prev) => prev.map((a, j) => (j === i ? v : a)))} placeholder="Escribe con calma…" />
         </div>
       ))}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="q-card">
         <div className="eyebrow">Reflexión libre · opcional</div>
-        <label htmlFor="reflection" className="muted" style={{ fontSize: 13 }}>
+        <label htmlFor="reflection" style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-soft)' }}>
           Cualquier cosa que quieras dejar escrita hoy.
         </label>
-        <textarea id="reflection" rows={3} value={reflection} onChange={(e) => setReflection(e.target.value)} placeholder="Hoy…" style={areaStyle} />
+        <AutoArea id="reflection" value={reflection} onChange={setReflection} placeholder="Hoy…" />
       </div>
 
-      <button className="pill pill-dark press" disabled={!answered && !reflection.trim()} onClick={submit} style={{ height: 52, fontSize: 15 }}>
-        {today ? 'Guardar cambios' : `Guardar en Raíces${answered ? ` · ${answered}/3` : ''}`}
-      </button>
       <Privacy />
+      <div className="save-dock">
+        <button className="pill pill-dark press" disabled={!answered && !reflection.trim()} onClick={submit} style={{ height: 52, fontSize: 15, padding: '0 26px' }}>
+          {today ? 'Guardar cambios' : `Guardar en Raíces${answered ? ` · ${answered}/3` : ''}`}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Campo que crece con lo que escribes, sin barras de scroll dentro de la tarjeta. */
+function AutoArea({ id, value, onChange, placeholder }: { id: string; value: string; onChange: (v: string) => void; placeholder: string }) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${el.scrollHeight}px`
+  }, [value])
+  return <textarea ref={ref} id={id} rows={1} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+}
+
+/** La semana de un vistazo: qué días has escrito. */
+function WeekStrip() {
+  const entries = useGrove((s) => s.entries)
+  const written = new Set(entries.map((e) => e.date))
+  const today = new Date()
+  const monday = new Date(today)
+  monday.setDate(today.getDate() - ((today.getDay() + 6) % 7))
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday)
+    d.setDate(monday.getDate() + i)
+    return d
+  })
+  const letters = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+  return (
+    <div className="week-strip" role="list" aria-label="Días escritos esta semana">
+      {days.map((d, i) => {
+        const key = dayKey(d)
+        const done = written.has(key)
+        const isToday = key === dayKey(today)
+        return (
+          <div key={key} role="listitem" className={`week-day${done ? ' done' : ''}${isToday ? ' today' : ''}`} aria-label={`${letters[i]} ${done ? 'escrito' : 'sin escribir'}`}>
+            <i>{d.getDate()}</i>
+            {letters[i]}
+          </div>
+        )
+      })}
     </div>
   )
 }

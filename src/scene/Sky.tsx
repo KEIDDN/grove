@@ -6,80 +6,10 @@ import { seeded } from './lowpoly'
 
 const W = 512
 
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
-
-function rgba(hex: string, a: number) {
-  const n = parseInt(hex.slice(1), 16)
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
-}
-
 /**
- * Posición en pantalla de un astro que cruza el cielo de izquierda a derecha.
- * `t` va de 0 (sale) a 1 (se pone); a mitad de recorrido está en lo más alto.
- */
-function arc(t: number, h: number): [number, number] {
-  return [W * (0.1 + 0.8 * t), h * (0.36 - 0.24 * Math.sin(t * Math.PI))]
-}
-
-/** Visibilidad al salir y al ponerse: aparece y desaparece suave, nunca de golpe. */
-const edgeFade = (t: number) => clamp01(Math.min(t, 1 - t) / 0.08)
-
-function drawSun(ctx: CanvasRenderingContext2D, h: number, hour: number, color: string) {
-  const t = (hour - 6.6) / (20.2 - 6.6)
-  if (t <= 0 || t >= 1) return
-  const a = edgeFade(t)
-  const [x, y] = arc(t, h)
-  // Halo amplio y cálido, luego el disco con el borde suave
-  const halo = ctx.createRadialGradient(x, y, 0, x, y, W * 0.42)
-  halo.addColorStop(0, rgba(color, 0.55 * a))
-  halo.addColorStop(0.25, rgba(color, 0.18 * a))
-  halo.addColorStop(1, rgba(color, 0))
-  ctx.fillStyle = halo
-  ctx.fillRect(0, 0, W, h)
-  const r = W * 0.05
-  const disc = ctx.createRadialGradient(x, y, 0, x, y, r * 1.25)
-  disc.addColorStop(0, `rgba(255,253,246,${a})`)
-  disc.addColorStop(0.78, `rgba(255,250,236,${a})`)
-  disc.addColorStop(1, 'rgba(255,250,236,0)')
-  ctx.fillStyle = disc
-  ctx.beginPath()
-  ctx.arc(x, y, r * 1.25, 0, Math.PI * 2)
-  ctx.fill()
-}
-
-function drawMoon(ctx: CanvasRenderingContext2D, h: number, hour: number) {
-  // La luna cruza de las 19:30 a las 7
-  const t = (((hour - 19.5 + 24) % 24) / 11.5)
-  if (t <= 0 || t >= 1) return
-  const a = edgeFade(t)
-  const [x, y] = arc(t, h)
-  const halo = ctx.createRadialGradient(x, y, 0, x, y, W * 0.3)
-  halo.addColorStop(0, `rgba(200,212,255,${0.32 * a})`)
-  halo.addColorStop(1, 'rgba(200,212,255,0)')
-  ctx.fillStyle = halo
-  ctx.fillRect(0, 0, W, h)
-  // Creciente: un disco al que se le recorta otro desplazado, en un lienzo aparte
-  const r = W * 0.04
-  const off = document.createElement('canvas')
-  off.width = off.height = Math.ceil(r * 2 + 4)
-  const o = off.getContext('2d')!
-  const c = off.width / 2
-  o.fillStyle = '#F6F2E8'
-  o.beginPath()
-  o.arc(c, c, r, 0, Math.PI * 2)
-  o.fill()
-  o.globalCompositeOperation = 'destination-out'
-  o.beginPath()
-  o.arc(c + r * 0.55, c - r * 0.3, r * 0.92, 0, Math.PI * 2)
-  o.fill()
-  ctx.globalAlpha = a
-  ctx.drawImage(off, x - c, y - c)
-  ctx.globalAlpha = 1
-}
-
-/**
- * Fondo de cielo: degradado vertical, halo detrás del jardín, sol o luna que cruzan con la hora
- * real y estrellas de noche. También pone la niebla que funde el mar de nubes con el horizonte.
+ * Fondo de cielo: degradado vertical, halo detrás del jardín y estrellas de noche. El sol y la
+ * luna no se dibujan aquí (se quedarían pegados a la pantalla al girar): son un resplandor en
+ * la escena, ver SkyGlow. También pone la niebla que funde el mar de nubes con el horizonte.
  */
 export function Sky({ light }: { light: Daylight }) {
   const scene = useThree((s) => s.scene)
@@ -99,9 +29,6 @@ export function Sky({ light }: { light: Daylight }) {
   }, [canvas])
 
   const nightLevel = Math.round(light.night * 20) / 20
-  // Redibujar como mucho cada pocos minutos de "hora"
-  const hourStep = Math.round(light.hour * 12) / 12
-
   useEffect(() => {
     const ctx = canvas.getContext('2d')!
     const grad = ctx.createLinearGradient(0, 0, 0, H)
@@ -134,9 +61,6 @@ export function Sky({ light }: { light: Daylight }) {
       }
     }
 
-    drawSun(ctx, H, hourStep, light.sunColor)
-    drawMoon(ctx, H, hourStep)
-
     // Halo suave detrás del jardín
     const glow = ctx.createRadialGradient(W / 2, H * 0.5, 0, W / 2, H * 0.5, W * 0.75)
     glow.addColorStop(0, `rgba(255,255,255,${0.3 * (1 - nightLevel)})`)
@@ -144,7 +68,7 @@ export function Sky({ light }: { light: Daylight }) {
     ctx.fillStyle = glow
     ctx.fillRect(0, 0, W, H)
     texture.needsUpdate = true
-  }, [canvas, texture, H, light.skyTop, light.skyBottom, light.sunColor, nightLevel, hourStep])
+  }, [canvas, texture, H, light.skyTop, light.skyBottom, nightLevel])
 
   useEffect(() => {
     scene.background = texture

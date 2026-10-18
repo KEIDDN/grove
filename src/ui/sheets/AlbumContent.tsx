@@ -34,7 +34,7 @@ export function AlbumEntry() {
         </span>
       </button>
       <PageLayer open={open}>
-        <Page eyebrow="Visitantes" title="Álbum" onClose={() => setOpen(false)}>
+        <Page eyebrow="Visitantes" title="Álbum" accent="album" onClose={() => setOpen(false)}>
           <AlbumContent />
         </Page>
       </PageLayer>
