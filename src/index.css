@@ -2827,3 +2827,251 @@ input[type='range'].mood-slider {
   background: conic-gradient(#8f88cf, #d6cce2, #f29e72, #8f88cf);
   opacity: 0.9;
 }
+
+/* ——— Bienvenida cinematográfica ——— */
+
+.ob {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 16px) 22px calc(var(--safe-bottom) + 22px);
+  touch-action: pan-y;
+}
+
+/* Degradado abajo para que el texto se lea sobre las nubes */
+.ob-story::before {
+  content: '';
+  position: absolute;
+  inset: 45% 0 0;
+  background: linear-gradient(to bottom, rgba(250, 246, 240, 0), rgba(250, 246, 240, 0.9) 45%, rgba(250, 246, 240, 0.96));
+  pointer-events: none;
+}
+
+.app.night .ob-story::before {
+  background: linear-gradient(to bottom, rgba(14, 16, 36, 0), rgba(14, 16, 36, 0.85) 45%, rgba(14, 16, 36, 0.92));
+}
+
+.ob-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 36px;
+}
+
+.ob-progress {
+  flex: 1;
+  display: flex;
+  gap: 5px;
+}
+
+.ob-progress span {
+  position: relative;
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(27, 31, 28, 0.12);
+  overflow: hidden;
+}
+
+.ob-progress span.done {
+  background: var(--ink);
+}
+
+.ob-progress i {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  border-radius: inherit;
+}
+
+.app.night .ob-progress span {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ob-skip {
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ink-soft);
+  padding: 8px 0 8px 8px;
+}
+
+.ob-scene {
+  position: relative;
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 18px;
+}
+
+.ob-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.ob-brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.ob-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(27, 31, 28, 0.06);
+}
+
+.app.night .ob-chip {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ob-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  font-size: 54px;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.ob-title-hero {
+  font-size: 58px;
+}
+
+.ob-title span {
+  display: block;
+}
+
+.ob-body {
+  margin: 0;
+  max-width: 340px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.ob-card {
+  position: relative;
+  margin-top: auto;
+  margin-bottom: 14px;
+  border-radius: 30px;
+  padding: 22px;
+}
+
+@media (max-width: 999px) {
+  .ob-card.glass {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.97), rgba(253, 250, 245, 0.94) 60%, rgba(255, 255, 255, 0.96));
+  }
+
+  .app.night .ob-card.glass {
+    background: linear-gradient(160deg, rgba(48, 52, 88, 0.97), rgba(28, 31, 58, 0.95) 60%, rgba(36, 40, 74, 0.96));
+  }
+}
+
+.ob-input {
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 0 16px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.app.night .ob-input {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ob-areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ob-rhythm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.ob-rhythm .pill {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  font-size: 22px;
+}
+
+.ob-seeds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ob-seed {
+  border-radius: 22px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: box-shadow 0.25s var(--ease);
+}
+
+.ob-seed[aria-pressed='true'] {
+  box-shadow: inset 0 0 0 2px #1b1f1c;
+}
+
+.ob-actions {
+  position: relative;
+  display: flex;
+  gap: 10px;
+}
+
+.ob-next {
+  flex: 1;
+  height: 56px;
+  font-size: 16px;
+}
+
+.ob-back {
+  height: 56px;
+  padding: 0 22px;
+}
+
+@media (min-width: 1000px) {
+  .ob {
+    align-items: center;
+  }
+
+  .ob-top,
+  .ob-scene,
+  .ob-card,
+  .ob-actions {
+    width: 440px;
+  }
+}

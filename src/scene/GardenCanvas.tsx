@@ -7,7 +7,7 @@ import { plotBounds, type GardenItem, type Plot } from '../game/garden'
 import { useGrove, usePlots, useSeason } from '../game/store'
 import { SEASONS, type SeasonTheme } from '../game/seasons'
 import { breath } from './breath'
-import { resetView, stepView, view } from './camera'
+import { framing, resetView, stepView, view } from './camera'
 import { Gestures } from './Gestures'
 import { useSheetExpanded } from '../ui/Sheet'
 import { Clouds } from './Clouds'
@@ -52,8 +52,8 @@ function CameraRig({ size }: { size: number }) {
     const narrow = width < 1000
     // En el inicio el jardín baja para dejar sitio al nombre
     // La bienvenida ocupa más pantalla: el jardín sube más y se hace más pequeño
-    const lift = splash ? -height * 0.1 : onboarding && narrow ? height * 0.34 : sheetOpen && narrow ? height * 0.3 : rest ? height * 0.07 : height * 0.02
-    const factor = splash ? 0.85 : onboarding && narrow ? 0.45 : sheetOpen && narrow ? 0.55 : 1
+    const lift = onboarding && framing.active ? height * framing.lift : splash ? -height * 0.1 : onboarding && narrow ? height * 0.34 : sheetOpen && narrow ? height * 0.3 : rest ? height * 0.07 : height * 0.02
+    const factor = onboarding && framing.active ? framing.factor : splash ? 0.85 : onboarding && narrow ? 0.45 : sheetOpen && narrow ? 0.55 : 1
     const usable = Math.min(width, height * 0.78, 780)
     const targetZoom = ((usable * 0.9) / (size * 1.42 + 0.4)) * factor
     const k = 1 - Math.exp(-delta * 5)

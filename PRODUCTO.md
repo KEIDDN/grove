@@ -407,9 +407,9 @@ de fondo del copy: **cuidarte es lo que hace crecer esto**, sin decir nunca
 - **Ánimo en Raíces:** primer paso de la página del día, al estilo de Salud del
   iPhone: deslizador de 7 niveles → emociones → qué influye → nota. El
   deslizador es un **capullo low poly muy detallado** que se abre, del lavanda
-  frío al melocotón cálido (sin rojos). Calendario de ánimo en el diario. Se
-  puede registrar un momento suelto desde Tú › Hoy. **El ánimo nunca se refleja
-  en el jardín.**
+  frío al melocotón cálido (sin rojos). Calendario de ánimo en el diario. Es **uno al
+  día**, dentro de la página de Raíces (no se apunta varias veces). **El ánimo
+  nunca se refleja en el jardín.**
 - **Onboarding cinematográfico:** la isla aparece entre nubes con el lema
   *"Cuídate. Mira cómo florece."* (subtítulo: *"Un jardín que crece cuando te
   cuidas."*) → tres escenas de mecánica en vivo (Concéntrate, Escúchate, Hazlo

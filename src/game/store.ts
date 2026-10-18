@@ -760,20 +760,32 @@ export const useGrove = create<GroveState>()(
         completeOnboarding: ({ userName, gardenName, focusAreas, weekGoal, firstSeed }) => {
           const s = get()
           const entry = s.giftGiven ? undefined : CATALOG.find((c) => c.id === firstSeed)
+          // Lo que se enseñó en directo durante la bienvenida no se queda en el jardín
+          const base = s.items.filter((it) => !it.id.startsWith('ob-'))
           // La primera semilla es un regalo y se planta sola, cerca del centro
-          const items = entry ? autoPlace(s.items, s.plots, entry.kind, entry.color, { growth: entry.seed ? { ...entry.seed, progress: 0 } : undefined }) : null
+          const items = entry ? autoPlace(base, s.plots, entry.kind, entry.color, { growth: entry.seed ? { ...entry.seed, progress: 0 } : undefined }) : null
+          const planted = items?.find((it) => !base.includes(it))
+          const name = gardenName.trim() || 'Tu jardín'
           set({
             onboarded: true,
             giftGiven: true,
             userName: userName.trim(),
-            gardenName: gardenName.trim() || 'Tu jardín',
+            gardenName: name,
             focusAreas,
             weekGoal,
-            items: items ?? s.items,
+            items: items ?? base,
             stats: items ? { ...s.stats, seedsPlanted: s.stats.seedsPlanted + 1 } : s.stats,
             tab: 'garden',
           })
-          if (entry) setTimeout(() => notify(`Has plantado tu ${entry.name.toLowerCase()}. Cultivar la hará crecer.`, 'plant'), 700)
+          // El jardín nace: la celebración grande, mirando a la semilla recién plantada
+          celebrate({
+            level: 'big',
+            icon: 'plant',
+            eyebrow: s.giftGiven ? 'Bienvenido de nuevo' : 'Ha nacido tu jardín',
+            title: name,
+            detail: entry ? `Tu semilla de ${entry.name.toLowerCase()} ya está plantada. Crecerá con cada rato que te dediques.` : 'Cuídate. Mira cómo florece.',
+            focus: planted ? { kind: planted.kind, color: planted.color, x: planted.x, z: planted.z } : undefined,
+          })
         },
         replayOnboarding: () => set({ onboarded: false, tab: 'garden' }),
         markArticleRead: (id) => {

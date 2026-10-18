@@ -37,6 +37,25 @@ export const view = {
   speed: 9,
 }
 
+/**
+ * Encuadre a medida para la bienvenida: cuánto sube el jardín (fracción del alto) y cuánto se
+ * encoge. Mientras `active`, manda sobre el encuadre automático.
+ */
+export const framing = { active: false, lift: 0.1, factor: 0.8 }
+
+/** Plano de grúa: la cámara empieza lejos y alta y baja despacio hasta la vista de siempre. */
+export function craneIn() {
+  view.zoom = 0.35
+  view.polar = 0.55
+  view.azimuth = HOME_AZIMUTH - 0.9
+  view.targetZoom = 1
+  view.targetPolar = HOME_POLAR
+  view.targetAzimuth = HOME_AZIMUTH
+  view.targetPanX = 0
+  view.targetPanZ = 0
+  view.speed = 0.9
+}
+
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v))
 
 export function grab() {

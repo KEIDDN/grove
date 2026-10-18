@@ -44,12 +44,13 @@ export function App() {
       <CalmController />
       <AudioController />
       <AnimatePresence mode="wait">
-        {splash ? (
-          <Splash key="splash" />
-        ) : !onboarded ? (
+        {/* La primera vez no hay portada: la bienvenida ya empieza con la isla bajando entre nubes */}
+        {!onboarded ? (
           <motion.div key="onboarding" className="layer" exit={{ opacity: 0, transition: { duration: 0.25 } }}>
             <Onboarding />
           </motion.div>
+        ) : splash ? (
+          <Splash key="splash" />
         ) : rest ? (
           <RestMode key="rest" />
         ) : (
